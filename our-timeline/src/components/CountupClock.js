@@ -3,6 +3,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { formatDate } from "@/lib/dates";
 
+// Placeholder breakdown shown before the first client tick so the server and
+// initial client render stay in sync (hydrate without a mismatch).
+const PLACEHOLDER = {
+  years: 0,
+  months: 0,
+  weeks: 0,
+  days: 0,
+  hours: 0,
+  minutes: 0,
+  seconds: 0,
+};
+
 // Snapshots of time in years / months / weeks / days / hours / minutes / seconds.
 const UNITS = [
   ["years", "Y"],
@@ -46,12 +58,19 @@ function breakDown(start, now) {
 // been since the start date prop.
 export default function CountupClock({ startDateIso }) {
   const start = useMemo(() => new Date(startDateIso), [startDateIso]);
-  const [parts, setParts] = useState(() => breakDown(start, new Date()));
+  const [now, setNow] = useState(null);
+
+  const parts = useMemo(
+    () => (now ? breakDown(start, now) : PLACEHOLDER),
+    [start, now]
+  );
 
   useEffect(() => {
-    const timer = setInterval(() => setParts(breakDown(start, new Date())), 1000);
+    const tick = () => setNow(new Date());
+    tick();
+    const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
-  }, [start]);
+  }, []);
 
   return (
     <div className="mt-6">
