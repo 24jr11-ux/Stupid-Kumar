@@ -1,36 +1,79 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Stupid & Kumar — Our Timeline
 
-## Getting Started
+A private, passphrase-gated memory timeline built with **Next.js 16 (App Router)**, **Tailwind CSS 4**, **Supabase**, and **next-pwa**.
 
-First, run the development server:
+- 🔐 A passphrase gate (passphrase from the environment, never hardcoded) unlocks everything
+- ⏱️ Live count-up clock since a start date you set in `src/app/page.js`
+- 📅 Vertical timeline of memories, ordered by entry number
+- 📸 Per-memory photo galleries uploaded to Supabase Storage
+- 🎵 Embedded Spotify / YouTube player per memory
+- 🔞 A per-memory NSFW section hidden behind a toggle
+- 📱 Installable PWA with a Workbox service worker
+
+## Required environment variables
+
+Copy `.env.example` to `.env.local` and fill in real values:
+
+| Variable                       | Description                                             |
+| ------------------------------ | ------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`     | Your Supabase project URL, e.g. `https://abc.supabase.co` |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public anon key (Supabase → Settings → API)             |
+| `PASSPHRASE`                   | The passphrase visitors must enter to unlock the site   |
+
+> `.env.local` is gitignored. Never commit it.
+
+## Supabase setup
+
+1. Create a project at [supabase.com](https://supabase.com).
+2. Open the **SQL editor** and run [`schema.sql`](./schema.sql). This creates:
+   - the `memories` table (all fields the form uses),
+   - RLS policies that allow reads/writes via the public anon key (this is a private, passphrase-gated app),
+   - a public `memories` storage bucket (10 MB max per image) with read/upload policies.
+3. Copy your project URL and anon key into `.env.local`.
+
+The photo upload helper lives in `src/lib/supabase.js` (`uploadPhoto`) — it uploads to the `memories` bucket and returns a public URL stored in `memories.photo_urls`.
+
+## Running locally
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000), enter your `PASSPHRASE`, and you're in.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+- `npm run dev` / `npm run build` use `--webpack` because the `next-pwa` plugin hooks into webpack (Next 16 defaults to Turbopack).
+- The service worker (`/sw.js`) is generated into `public/` at build time.
+- Set a start date for the count-up clock at the top of `src/app/page.js` (`RELATIONSHIP_START_DATE`).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Deploying to Vercel
 
-## Learn More
+1. Push the repo to GitHub/GitLab/Bitbucket and import it into [Vercel](https://vercel.com).
+2. In the project settings, add the three environment variables from above.
+3. The build command is `npm run build` (which runs `next build --webpack`).
+4. Deploy. The passphrase gate will be active from the first visit.
 
-To learn more about Next.js, take a look at the following resources:
+> The service worker needs HTTPS — Vercel provides it automatically.
+> If self-hosting, add `Cache-Control: no-cache` for `/sw.js` (see the PWA docs).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Project structure
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+src/proxy.js                     # Next 16 "middleware" — the passphrase gate
+src/app/gate/                    # Passphrase entry page + unlock server action
+src/lib/auth.js                  # Passphrase/cookie helpers (env-driven)
+src/lib/supabase.js              # Supabase client + photo upload helper
+src/lib/player.js                # Spotify/YouTube → embed URL parser
+src/lib/dates.js                 # Date formatting
+src/app/page.js                  # Count-up clock + vertical timeline home
+src/app/memory/[id]/page.js      # Memory detail page
+src/app/memory/new/page.js       # Add a memory
+src/app/memory/[id]/edit/page.js # Edit a memory
+src/components/MemoryForm.js     # Shared add/edit form (all schema fields)
+src/components/MemoryDetail.js   # Detail view: gallery, NSFW toggle, song player
+src/components/CountupClock.js   # Live count-up clock
+src/components/SWRegister.js     # Service worker registration
+schema.sql                       # Table + RLS + storage bucket setup
+```
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Nothing personal is hardcoded — every bit of content goes through the form into Supabase.
