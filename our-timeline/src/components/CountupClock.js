@@ -1,7 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { formatDate } from "@/lib/dates";
+import {
+  addYears,
+  addMonths,
+  addWeeks,
+  addDays,
+  addHours,
+  addMinutes,
+  differenceInSeconds,
+} from "date-fns";
 
 // Placeholder breakdown shown before the first client tick so the server and
 // initial client render stay in sync (hydrate without a mismatch).
@@ -26,32 +34,62 @@ const UNITS = [
   ["seconds", "SEC"],
 ];
 
-// Same calendar day-of-month `n` months from `start` (clamped to month end).
-function addMonths(start, months) {
-  const y = start.getFullYear();
-  const m = start.getMonth() + months;
-  return new Date(y, m, start.getDate());
-}
-
-// Calendar-aware breakdown from `start` up to `now`:
-// years + months computed via the calendar; the leftover time is then
-// expressed as weeks / days / hours / minutes / seconds.
+// Calendar-aware breakdown from `start` up to `now`. Each unit is subtracted
+// sequentially (years first, then months, weeks, ... seconds) so that differing
+// month lengths and timezone/DST shifts are handled precisely by date-fns.
 function breakDown(start, now) {
+  let cursor = start;
+  let years = 0;
+  while (true) {
+    const next = addYears(cursor, 1);
+    if (next > now) break;
+    cursor = next;
+    years += 1;
+  }
+
   let months = 0;
-  while (addMonths(start, months + 1) <= now) months += 1;
+  while (true) {
+    const next = addMonths(cursor, 1);
+    if (next > now) break;
+    cursor = next;
+    months += 1;
+  }
 
-  const remaining = Math.max(0, now.getTime() - addMonths(start, months).getTime());
-  const totalDays = Math.floor(remaining / 86400000);
+  let weeks = 0;
+  while (true) {
+    const next = addWeeks(cursor, 1);
+    if (next > now) break;
+    cursor = next;
+    weeks += 1;
+  }
 
-  return {
-    years: Math.floor(months / 12),
-    months: months % 12,
-    weeks: Math.floor(totalDays / 7),
-    days: totalDays % 7,
-    hours: Math.floor((remaining % 86400000) / 3600000),
-    minutes: Math.floor((remaining % 3600000) / 60000),
-    seconds: Math.floor((remaining % 60000) / 1000),
-  };
+  let days = 0;
+  while (true) {
+    const next = addDays(cursor, 1);
+    if (next > now) break;
+    cursor = next;
+    days += 1;
+  }
+
+  let hours = 0;
+  while (true) {
+    const next = addHours(cursor, 1);
+    if (next > now) break;
+    cursor = next;
+    hours += 1;
+  }
+
+  let minutes = 0;
+  while (true) {
+    const next = addMinutes(cursor, 1);
+    if (next > now) break;
+    cursor = next;
+    minutes += 1;
+  }
+
+  const seconds = differenceInSeconds(now, cursor);
+
+  return { years, months, weeks, days, hours, minutes, seconds };
 }
 
 // Live count-up clock. Ticks every second client-side and shows how long it's
@@ -90,7 +128,7 @@ export default function CountupClock({ startDateIso }) {
         ))}
       </div>
       <p className="mt-3 text-center text-xs text-neutral-400">
-        …and counting since <span className="font-medium text-neutral-500">{formatDate(startDateIso)}</span>
+        …and counting since April 5th, 2025
       </p>
     </div>
   );
