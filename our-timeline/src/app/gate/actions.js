@@ -2,18 +2,31 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { AUTH_COOKIE, authCookieValue, passphraseMatches, sanitizeNextPath } from "@/lib/auth";
+import { AUTH_COOKIE, authCookieValue, sanitizeNextPath } from "@/lib/auth";
+import { QUESTIONS } from "@/lib/questions";
 
-// Server action behind the /gate form. Verifies the submitted passphrase
-// against PASSPHRASE (env), then stores an auth cookie and redirects on.
+// Server action behind the /gate form. Verifies the submitted answer against
+// the randomized question, then stores an auth cookie and redirects on.
 export async function unlock(prevState, formData) {
-  const submitted = String(formData.get("passphrase") || "");
+  const questionId = Number(formData.get("questionId"));
+  const answer = String(formData.get("answer") || "").trim();
 
-  if (!passphraseMatches(submitted)) {
-    return { error: "Incorrect passphrase. Please try again." };
+  const question = QUESTIONS.find((q) => q.id === questionId);
+  if (!question) {
+    return { error: "That question is no longer valid. Please try again." };
   }
 
-  // Persist auth in a cookie (never the raw passphrase).
+  const matches =
+    answer &&
+    question.answers.some(
+      (correct) => correct.trim().toLowerCase() === answer.trim().toLowerCase()
+    );
+
+  if (!matches) {
+    return { error: "Incorrect answer. Please try again." };
+  }
+
+  // Persist auth in a cookie (never the raw answer).
   const store = await cookies();
   store.set(AUTH_COOKIE, authCookieValue(), {
     httpOnly: true,

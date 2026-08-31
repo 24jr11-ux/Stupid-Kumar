@@ -24,7 +24,7 @@ function SubmitButton() {
 
 // The passphrase form. Submits to the `unlock` server action; on success the
 // action sets a cookie and redirects back to where the visitor was going.
-export default function GateForm({ next }) {
+export default function GateForm({ next, question, questionId }) {
   const [state, formAction] = useActionState(unlock, initialState);
 
   return (
@@ -37,18 +37,24 @@ export default function GateForm({ next }) {
       </div>
       <h1 className="text-xl font-semibold tracking-tight text-neutral-900">Private timeline</h1>
       <p className="mt-1 text-sm text-neutral-500">
-        Enter the passphrase to keep scrolling through the good stuff.
+        Answer the question to keep scrolling through the good stuff.
       </p>
 
       <input type="hidden" name="next" value={next} />
+      <input type="hidden" name="questionId" value={questionId} />
+
+      <label htmlFor="answer" className="mt-6 block text-sm font-medium text-neutral-700">
+        {question}
+      </label>
 
       <input
-        type="password"
-        name="passphrase"
+        id="answer"
+        type="text"
+        name="answer"
         required
         autoFocus
-        placeholder="Passphrase"
-        className="mt-6 w-full rounded-xl border border-neutral-300 bg-neutral-50 px-4 py-3 text-sm text-neutral-900 outline-none transition placeholder:text-neutral-400 focus:border-neutral-500 focus:bg-white"
+        placeholder="Your answer"
+        className="mt-3 w-full rounded-xl border border-neutral-300 bg-neutral-50 px-4 py-3 text-sm text-neutral-900 outline-none transition placeholder:text-neutral-400 focus:border-neutral-500 focus:bg-white"
       />
 
       {state?.error && (
