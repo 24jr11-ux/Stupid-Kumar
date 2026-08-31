@@ -25,11 +25,11 @@ const PLACEHOLDER = {
 
 // Snapshots of time in years / months / weeks / days / hours / minutes / seconds.
 const UNITS = [
-  ["years", "Y"],
-  ["months", "MO"],
-  ["weeks", "W"],
-  ["days", "D"],
-  ["hours", "HR"],
+  ["years", "YRS"],
+  ["months", "MOS"],
+  ["weeks", "WKS"],
+  ["days", "DAYS"],
+  ["hours", "HRS"],
   ["minutes", "MIN"],
   ["seconds", "SEC"],
 ];
@@ -111,24 +111,24 @@ export default function CountupClock({ startDateIso }) {
   }, []);
 
   return (
-    <div className="mt-6">
+    <div className="mt-8">
       <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
         {UNITS.map(([key, label]) => (
           <div
             key={key}
-            className="rounded-xl border border-neutral-200 bg-white px-2 py-3 text-center shadow-sm"
+            className="rounded-2xl border border-[#E8E2D9] bg-[#FFFDF9] px-2.5 py-3 text-center shadow-xs transition hover:border-[#D8CEBF]"
           >
-            <div className="font-mono text-lg font-semibold tabular-nums text-neutral-900 sm:text-xl">
+            <div className="font-mono text-xl font-bold tabular-nums text-[#C85A32] sm:text-2xl">
               {String(parts[key]).padStart(2, "0")}
             </div>
-            <div className="mt-1 text-[10px] font-medium uppercase tracking-wide text-neutral-400">
+            <div className="mt-1 text-[10px] font-semibold tracking-wider text-[#8C827A]">
               {label}
             </div>
           </div>
         ))}
       </div>
-      <p className="mt-3 text-center text-xs text-neutral-400">
-        …and counting since April 5th, 2025
+      <p className="mt-3 text-center text-xs font-medium text-[#8C827A]">
+        …and counting our moments together since April 5th, 2025
       </p>
     </div>
   );

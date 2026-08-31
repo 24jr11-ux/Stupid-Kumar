@@ -37,3 +37,37 @@ export async function uploadPhoto(file, folder = "general") {
   const { data } = supabase.storage.from(PHOTO_BUCKET).getPublicUrl(path);
   return data.publicUrl;
 }
+
+// Deletes photos from Supabase Storage given an array of public URLs.
+// Extracts the relative path within the PHOTO_BUCKET and removes them.
+export async function deleteMemoryPhotos(photoUrls = []) {
+  if (!photoUrls || !Array.isArray(photoUrls) || photoUrls.length === 0) {
+    return;
+  }
+
+  const paths = photoUrls
+    .map((url) => {
+      try {
+        if (!url || typeof url !== "string") return null;
+        // Typical URL format: https://<project>.supabase.co/storage/v1/object/public/memories/memories/...
+        const marker = `/${PHOTO_BUCKET}/`;
+        const idx = url.indexOf(marker);
+        if (idx !== -1) {
+          const rawPath = url.substring(idx + marker.length);
+          return decodeURIComponent(rawPath.split("?")[0]);
+        }
+        return null;
+      } catch (err) {
+        console.error("Failed to parse photo URL for deletion:", url, err);
+        return null;
+      }
+    })
+    .filter(Boolean);
+
+  if (paths.length > 0) {
+    const { error } = await supabase.storage.from(PHOTO_BUCKET).remove(paths);
+    if (error) {
+      console.error("Failed to delete storage photos:", error);
+    }
+  }
+}

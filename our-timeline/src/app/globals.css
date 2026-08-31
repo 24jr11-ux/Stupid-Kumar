@@ -1,26 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #FAF7F2;
+  --foreground: #2C2523;
+  /* Single font variable for handwriting: swap font name or custom font file URL here */
+  --font-handwriting: 'Caveat', cursive, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --font-sans: var(--font-sans);
+  --font-handwriting: var(--font-handwriting);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-cream-50: #FDFBF7;
+  --color-cream-100: #FAF7F2;
+  --color-cream-200: #F4EFE6;
+  --color-cream-300: #E8E2D9;
+  
+  --color-terracotta-50: #FDF2EC;
+  --color-terracotta-100: #FBE0D2;
+  --color-terracotta-500: #C85A32;
+  --color-terracotta-600: #B34B24;
+  --color-terracotta-700: #933B19;
+
+  --color-sage-50: #EFF4F0;
+  --color-sage-100: #DEE9E0;
+  --color-sage-500: #5C7A60;
+  --color-sage-600: #48644C;
+  --color-sage-700: #354B38;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-handwriting {
+  font-family: var(--font-handwriting);
 }

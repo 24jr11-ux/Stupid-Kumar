@@ -21,18 +21,20 @@ export default async function EditMemoryPage({ params }) {
   if (!memory) notFound();
 
   return (
-    <div className="flex flex-1 justify-center bg-neutral-50 px-4 pb-16">
-      <main className="w-full max-w-2xl pt-8">
+    <div className="flex flex-1 justify-center bg-[#FAF7F2] px-4 pb-20">
+      <main className="w-full max-w-2xl pt-8 sm:pt-10">
         <nav className="text-sm">
           <Link
             href={`/memory/${memory.id}`}
-            className="inline-flex items-center gap-1.5 font-medium text-neutral-500 transition hover:text-neutral-800"
+            className="inline-flex items-center gap-2 rounded-full border border-[#E8E2D9] bg-[#FFFDF9] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#786F6A] shadow-2xs transition hover:border-[#D8CEBF] hover:text-[#2C2523]"
           >
-            <ArrowLeft size={16} />
+            <ArrowLeft size={15} />
             Back to memory
           </Link>
         </nav>
-        <h1 className="mt-4 text-3xl font-bold tracking-tight text-neutral-900">Edit memory</h1>
+        <h1 className="mt-5 font-handwriting text-4xl font-bold tracking-tight text-[#2C2523]">
+          Edit Memory
+        </h1>
         <MemoryForm mode="edit" memory={memory} memoryId={memory.id} />
       </main>
     </div>

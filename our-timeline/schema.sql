@@ -28,8 +28,12 @@ create table if not exists public.memories (
   song_url text,                                  -- Spotify / YouTube link to embed
   photo_urls text[],                              -- public URLs returned by uploadPhoto
   chapter_tag text,                               -- optional chapter / season label
+  color_tag text not null default '#C85A32',     -- warm palette accent color hex (e.g. #C85A32)
   created_at timestamptz not null default now()
 );
+
+-- If you already had an existing memories table, run this line to add the color_tag column:
+alter table public.memories add column if not exists color_tag text not null default '#C85A32';
 
 -- The timeline is ordered by entry_number, so index it for fast reads.
 create index if not exists memories_entry_number_idx
@@ -61,9 +65,7 @@ on conflict (id) do update
       file_size_limit = excluded.file_size_limit,
       allowed_mime_types = excluded.allowed_mime_types;
 
--- Allow the anon (public) key to read and upload photos, since readers must
--- be able to fetch images and the passphrase gate covers write access from the
--- app itself.
+-- Allow the anon (public) key to read, upload, and delete photos.
 drop policy if exists "public read memories bucket" on storage.objects;
 create policy "public read memories bucket"
   on storage.objects for select
@@ -73,3 +75,8 @@ drop policy if exists "public upload memories bucket" on storage.objects;
 create policy "public upload memories bucket"
   on storage.objects for insert
   with check (bucket_id = 'memories');
+
+drop policy if exists "public delete memories bucket" on storage.objects;
+create policy "public delete memories bucket"
+  on storage.objects for delete
+  using (bucket_id = 'memories');

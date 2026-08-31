@@ -27,21 +27,21 @@ export default async function MemoryPage({ params }) {
   if (!memory) notFound();
 
   return (
-    <div className="flex flex-1 justify-center bg-neutral-50 px-4 pb-16">
-      <main className="w-full max-w-2xl pt-8">
+    <div className="flex flex-1 justify-center bg-[#FAF7F2] px-4 pb-20">
+      <main className="w-full max-w-2xl pt-8 sm:pt-10">
         <nav className="flex items-center justify-between text-sm">
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 font-medium text-neutral-500 transition hover:text-neutral-800"
+            className="inline-flex items-center gap-2 rounded-full border border-[#E8E2D9] bg-[#FFFDF9] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#786F6A] shadow-2xs transition hover:border-[#D8CEBF] hover:text-[#2C2523]"
           >
-            <ArrowLeft size={16} />
+            <ArrowLeft size={15} />
             Timeline
           </Link>
           <Link
             href={`/memory/${memory.id}/edit`}
-            className="inline-flex items-center gap-1.5 rounded-full border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 shadow-sm transition hover:border-neutral-400 hover:text-neutral-900"
+            className="inline-flex items-center gap-1.5 rounded-full border border-[#E8E2D9] bg-[#FFFDF9] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#786F6A] shadow-2xs transition hover:border-[#D8CEBF] hover:text-[#2C2523]"
           >
-            <Pencil size={14} />
+            <Pencil size={13} />
             Edit
           </Link>
         </nav>

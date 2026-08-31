@@ -1,16 +1,5 @@
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import SWRegister from "@/components/SWRegister";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata = {
   title: {
@@ -33,16 +22,13 @@ export const metadata = {
 export const viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#171717",
+  themeColor: "#FAF7F2",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col" suppressHydrationWarning>
+    <html lang="en" className="h-full antialiased">
+      <body className="min-h-full flex flex-col bg-[#FAF7F2] text-[#2C2523]" suppressHydrationWarning>
         {children}
         {/* Registers the service worker that makes the app installable / offline-aware. */}
         <SWRegister />
