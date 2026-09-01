@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import { HeartHandshake, Lock } from "lucide-react";
+import { Lock } from "lucide-react";
 import { unlock } from "./actions";
 
 const initialState = { error: null };
@@ -75,10 +75,7 @@ export default function GateForm({ next, question, questionId }) {
 
       <SubmitButton />
 
-      <div className="mt-6 flex items-center justify-center gap-1.5 text-xs text-[#A89F95]">
-        <HeartHandshake size={14} className="text-[#C85A32]" />
-        <span>Made with love for us</span>
-      </div>
+
     </form>
   );
 }

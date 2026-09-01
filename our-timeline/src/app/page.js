@@ -1,10 +1,22 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Camera, CirclePlus, MapPin, Sparkles } from "lucide-react";
+import { Camera, Sparkles } from "lucide-react";
 import CountupClock from "@/components/CountupClock";
+import AddMemoryButton from "@/components/AddMemoryButton";
 import { supabase } from "@/lib/supabase";
-import { formatDate } from "@/lib/dates";
 import { getColorTagConfig } from "@/lib/colors";
+
+// Date formats for the polaroid card. mm/dd/yy on the top band.
+function polaroidTopDate(isoDate) {
+  if (!isoDate) return "";
+  const date = new Date(`${isoDate}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return isoDate;
+  return date.toLocaleDateString("en-US", {
+    year: "2-digit",
+    month: "2-digit",
+    day: "2-digit",
+  });
+}
 
 // ------------------------------------------------------------------
 // When "we" began — edit this one constant and the count-up clock starts
@@ -37,15 +49,9 @@ export default async function Home() {
       <main className="w-full max-w-2xl pt-10 sm:pt-14">
         {/* Header */}
         <div className="text-center">
-          <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#C85A32]">
+          <h1 className="font-handwriting text-4xl font-bold tracking-tight text-[#2C2523] sm:text-6xl">
             Stupid &amp; Kumar
-          </p>
-          <h1 className="mt-2 font-handwriting text-4xl font-bold tracking-tight text-[#2C2523] sm:text-6xl">
-            Our Timeline
           </h1>
-          <p className="mt-1 text-sm text-[#786F6A]">
-            Every little adventure, laugh, and memory along the way.
-          </p>
         </div>
 
         {/* Live count-up clock */}
@@ -53,22 +59,11 @@ export default async function Home() {
 
         {/* Action bar */}
         <div className="mt-12 flex items-center justify-between gap-4 border-b border-[#E8E2D9] pb-4">
-          <div className="flex items-center gap-2">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-[#786F6A]">
-              Memories
-            </h2>
-            <span className="rounded-full bg-[#EFE8DC] px-2.5 py-0.5 text-xs font-semibold text-[#5C534E]">
-              {memories.length}
-            </span>
-          </div>
+          <h2 className="text-xs font-bold uppercase tracking-widest text-[#786F6A]">
+            Memories
+          </h2>
 
-          <Link
-            href="/memory/new"
-            className="inline-flex items-center gap-2 rounded-full bg-[#C85A32] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#B34B24] active:scale-[0.98]"
-          >
-            <CirclePlus size={17} />
-            <span>Add Memory</span>
-          </Link>
+          <AddMemoryButton />
         </div>
 
         {/* Vertical timeline */}
@@ -87,7 +82,20 @@ export default async function Home() {
         ) : (
           <ol className="relative mt-8 space-y-10 border-l-2 border-[#E8E2D9] pl-6 sm:pl-8">
             {memories.map((memory) => {
-              const coverPhoto = memory.photo_urls?.[0];
+              // The cover is the photo the user explicitly picked (if its URL is
+              // still in the photo list); otherwise fall back to the first photo.
+              const photos = memory.photo_urls ?? [];
+              const pickedCover = memory.cover_photo_url;
+              const coverPhoto =
+                photos.includes(pickedCover) ? pickedCover : photos[0];
+              const coverPos =
+                typeof memory.cover_photo_position === "object" &&
+                memory.cover_photo_position !== null
+                  ? (memory.cover_photo_position.x ?? 50) +
+                    "% " +
+                    (memory.cover_photo_position.y ?? 50) +
+                    "%"
+                  : "50% 50%";
               const colorConfig = getColorTagConfig(memory.color_tag);
 
               return (
@@ -95,79 +103,58 @@ export default async function Home() {
                   {/* Dot on the timeline */}
                   <span
                     aria-hidden
-                    className="absolute -left-[31px] sm:-left-[39px] top-6 h-4 w-4 rounded-full border-3 border-[#FAF7F2] shadow-xs"
+                    className="absolute -left-[31px] sm:-left-[39px] top-10 h-4 w-4 rounded-full border-3 border-[#FAF7F2] shadow-xs"
                     style={{ backgroundColor: colorConfig.hex }}
                   />
 
-                  {/* Polaroid-style Memory Card */}
+                  {/* -----------------------------------------------------
+                      POLAROID CARD
+                      A real polaroid: white/off-white frame, square corners
+                      (no border-radius on this component), a top band with
+                      the mm/dd/yy date, a square cover photo in the middle,
+                      and a handwritten caption band at the bottom. Clicking
+                      the whole card opens that entry's detail page.
+                      ----------------------------------------------------- */}
                   <Link
                     href={`/memory/${memory.id}`}
-                    className="group block rounded-3xl border border-[#E8E2D9] bg-[#FFFDF9] p-4 sm:p-6 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-[#D8CEBF] hover:shadow-md"
+                    className="group mx-auto block max-w-sm bg-[#FDFBF6] p-3 pb-5 shadow-[0_1px_2px_rgba(44,37,35,0.12),0_8px_24px_-8px_rgba(44,37,35,0.2)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_2px_4px_rgba(44,37,35,0.16),0_14px_34px_-8px_rgba(44,37,35,0.28)]"
                   >
-                    {/* TOP OF POLAROID: Title & Date in Handwritten Font */}
-                    <div className="pb-3 border-b border-[#F2ECE1]">
-                      <div className="flex items-start justify-between gap-3">
-                        <h3 className="font-handwriting text-2xl sm:text-3xl font-bold leading-tight text-[#2C2523] group-hover:text-[#C85A32] transition-colors">
-                          {memory.title}
-                        </h3>
-
-                        <span
-                          className="shrink-0 rounded-full px-2.5 py-0.5 font-mono text-xs font-semibold"
-                          style={{
-                            backgroundColor: colorConfig.bgLight,
-                            color: colorConfig.text,
-                            borderColor: colorConfig.border,
-                          }}
-                        >
-                          #{memory.entry_number}
-                        </span>
-                      </div>
-
-                      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 font-handwriting text-lg sm:text-xl text-[#786F6A]">
-                        <span>{formatDate(memory.date)}</span>
-                        {memory.location && (
-                          <span className="inline-flex items-center gap-1 text-sm font-sans text-[#8C827A]">
-                            <MapPin size={13} className="text-[#C85A32]" />
-                            {memory.location}
-                          </span>
-                        )}
-                        {memory.chapter_tag && (
-                          <span className="ml-auto rounded-full bg-[#FAF7F2] border border-[#E8E2D9] px-2.5 py-0.5 text-xs font-sans font-medium text-[#786F6A]">
-                            {memory.chapter_tag}
-                          </span>
-                        )}
-                      </div>
+                    {/* TOP BAND: calendar date, mm/dd/yy */}
+                    <div className="px-1.5 pb-2.5 pt-1 text-center font-mono text-sm font-semibold tracking-[0.18em] text-[#786F6A]">
+                      {polaroidTopDate(memory.date)}
                     </div>
 
-                    {/* PHOTO: Square-cropped cover photo directly below title/date */}
-                    <div className="mt-4 relative aspect-square w-full overflow-hidden rounded-2xl bg-[#F4EFE6] border border-[#EAE3D7]">
+                    {/* MIDDLE: square-cropped cover photo */}
+                    <div className="relative aspect-square w-full overflow-hidden bg-[#EFE8DC]">
                       {coverPhoto ? (
                         <Image
                           src={coverPhoto}
                           alt={memory.title}
                           fill
-                          sizes="(max-width: 640px) 100vw, 600px"
-                          className="object-cover transition duration-300 group-hover:scale-[1.02]"
+                          sizes="(max-width: 640px) 80vw, 400px"
+                          style={{ objectPosition: coverPos }}
+                          className="object-cover transition duration-300 group-hover:scale-[1.03]"
                           unoptimized
                         />
                       ) : (
                         <div className="flex h-full w-full flex-col items-center justify-center gap-2 p-6 text-center text-[#A89F95]">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#EFE8DC] text-[#786F6A]">
+                          <div className="flex h-12 w-12 items-center justify-center bg-[#F1E9DC] text-[#A08F7F]">
                             <Camera size={22} />
                           </div>
-                          <span className="font-handwriting text-xl text-[#786F6A]">
-                            No photo attached
+                          <span className="font-handwriting text-xl text-[#9E8E7F]">
+                            No photo yet
                           </span>
                         </div>
                       )}
                     </div>
 
-                    {/* Short description story snippet */}
-                    {memory.description && (
-                      <p className="mt-4 line-clamp-2 text-sm leading-relaxed text-[#5C534E]">
-                        {memory.description}
-                      </p>
-                    )}
+                    {/* BOTTOM BAND: handwritten caption — the Date Title */}
+                    <div
+                      className="px-1.5 pt-3 text-center font-handwriting text-2xl font-bold leading-tight text-[#2C2523] transition-colors group-hover:text-[#C85A32]"
+                      style={{ fontFamily: "var(--font-handwriting)" }}
+                    >
+                      {memory.title || "Untitled"}
+                    </div>
                   </Link>
                 </li>
               );

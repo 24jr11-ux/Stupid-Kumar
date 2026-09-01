@@ -128,7 +128,7 @@ export default function CountupClock({ startDateIso }) {
         ))}
       </div>
       <p className="mt-3 text-center text-xs font-medium text-[#8C827A]">
-        …and counting our moments together since April 5th, 2025
+        …and counting since April 5th, 2025
       </p>
     </div>
   );
