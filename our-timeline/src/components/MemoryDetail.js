@@ -36,7 +36,12 @@ import {
 } from "lucide-react";
 import { formatDate } from "@/lib/dates";
 import { playerEmbedUrl } from "@/lib/player";
-import { getColorTagConfig, MEMORY_COLOR_TAGS, DEFAULT_COLOR_TAG } from "@/lib/colors";
+import {
+  getColorTagConfig,
+  MEMORY_COLOR_TAGS,
+  DEFAULT_COLOR_TAG,
+  WARM_OLIVE_GREEN,
+} from "@/lib/colors";
 import { supabase, uploadPhoto, deleteMemoryPhotos } from "@/lib/supabase";
 import { compressImage } from "@/lib/imageCompression";
 
@@ -45,9 +50,8 @@ import { compressImage } from "@/lib/imageCompression";
 // ---------------------------------------------------------------------------
 // Each memory's content lives in `memory.moments`, a jsonb array of objects:
 //   { id: string(uuid), text: string, is_nsfw: boolean, position: number }
-// `id` is a client-generated uuid used as the React key and the drag-and-drop
-// id. `position` is the sort order; it is recomputed whenever the list is
-// reordered and persisted back to the memories row on save.
+// `id` is a client-generated uuid used as the React key and drag-and-drop id.
+// `position` is the sort order persisted back to the memories row on save.
 // ---------------------------------------------------------------------------
 
 function newMomentId() {
@@ -57,7 +61,7 @@ function newMomentId() {
   return `m_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
-// Initialize a draft moments array with positions derived from array index.
+// Initialize draft moments array with positions derived from array index.
 function normalizeMoments(moments = []) {
   return moments.map((m, i) => ({
     id: m?.id || newMomentId(),
@@ -67,8 +71,7 @@ function normalizeMoments(moments = []) {
   }));
 }
 
-function SortableMomentRow({ moment, onChange, onRemove, editing }) {
-  // `useSortable` provides the drag handle behavior for this row.
+function SortableMomentRow({ moment, onChange, onRemove }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: moment.id });
 
@@ -81,16 +84,16 @@ function SortableMomentRow({ moment, onChange, onRemove, editing }) {
     <li
       ref={setNodeRef}
       style={style}
-      className={`flex items-start gap-2 rounded-2xl border p-3 ${
+      className={`flex items-start gap-2.5 rounded-2xl border p-3.5 transition ${
         moment.is_nsfw
-          ? "border-[#F9DCD0] bg-[#FDF2EC]"
-          : "border-[#E8E2D9] bg-[#FAF7F2]"
-      } ${isDragging ? "z-10 opacity-90 shadow-lg" : ""}`}
+          ? "border-[#8F9648] bg-[#2E2818]"
+          : "border-[#5D433C] bg-[#2D1E1A]"
+      } ${isDragging ? "z-20 opacity-95 shadow-2xl scale-[1.01]" : ""}`}
     >
-      {/* Drag handle — only draggable while moments editing is active */}
+      {/* Drag handle */}
       <button
         type="button"
-        className="mt-1 shrink-0 cursor-grab touch-none rounded-lg p-1 text-[#B8ADA1] hover:text-[#786F6A] active:cursor-grabbing"
+        className="mt-1 shrink-0 cursor-grab touch-none rounded-lg p-1 text-[#D4C8BA]/60 hover:text-[#FAF7F2] active:cursor-grabbing"
         aria-label="Drag to reorder"
         {...attributes}
         {...listeners}
@@ -104,14 +107,14 @@ function SortableMomentRow({ moment, onChange, onRemove, editing }) {
         onChange={(e) => onChange(moment.id, { text: e.target.value })}
         placeholder={moment.is_nsfw ? "Write an NSFW moment…" : "Write a moment…"}
         className={`w-full bg-transparent text-sm outline-none ${
-          moment.is_nsfw ? "text-[#933B19]" : "text-[#2C2523]"
-        } placeholder:text-[#A89F95]`}
+          moment.is_nsfw ? "text-[#DCE38E] font-medium" : "text-[#FAF7F2]"
+        } placeholder:text-[#D4C8BA]/40`}
       />
 
       {moment.is_nsfw && (
         <span
-          className="mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
-          style={{ backgroundColor: "#F9DCD0", color: "#933B19" }}
+          className="mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide border border-[#8F9648]"
+          style={{ backgroundColor: WARM_OLIVE_GREEN.bgLight, color: WARM_OLIVE_GREEN.text }}
         >
           NSFW
         </span>
@@ -121,7 +124,7 @@ function SortableMomentRow({ moment, onChange, onRemove, editing }) {
         type="button"
         onClick={() => onRemove(moment.id)}
         aria-label="Remove moment"
-        className="shrink-0 rounded-lg p-1.5 text-[#B8ADA1] transition hover:bg-[#FDF0EA] hover:text-[#C85A32]"
+        className="shrink-0 rounded-lg p-1.5 text-[#D4C8BA]/60 transition hover:bg-[#382722] hover:text-[#F8B79D]"
       >
         <Trash2 size={15} />
       </button>
@@ -130,19 +133,12 @@ function SortableMomentRow({ moment, onChange, onRemove, editing }) {
 }
 
 // ---------------------------------------------------------------------------
-// Cover photo crop modal
-// ---------------------------------------------------------------------------
-// Shows a square window over the selected photo. The photo is draggable so the
-// user can position it precisely the way it'll appear on the polaroid. The
-// resulting (x, y) is a 0-100 percentage that becomes `object-position`.
+// Cover photo crop modal — Solid Opaque Dialog
 // ---------------------------------------------------------------------------
 function CoverCropModal({ src, title, initialPos, onConfirm, onCancel }) {
   const [dragStart, setDragStart] = useState(null);
   const [lastPos, setLastPos] = useState(initialPos);
 
-  // Drag repositions the photo. The image is rendered with the exact same
-  // object-cover + object-position the polaroid uses, so the on-screen framing
-  // is a pixel-perfect preview of the final polaroid thumb on the timeline.
   function handlePointerDown(e) {
     const rect = e.currentTarget.getBoundingClientRect();
     setDragStart({
@@ -157,8 +153,8 @@ function CoverCropModal({ src, title, initialPos, onConfirm, onCancel }) {
   }
   function handlePointerMove(e) {
     if (!dragStart) return;
-    const dx = (e.clientX - dragStart.px) / dragStart.w * 100;
-    const dy = (e.clientY - dragStart.py) / dragStart.h * 100;
+    const dx = ((e.clientX - dragStart.px) / dragStart.w) * 100;
+    const dy = ((e.clientY - dragStart.py) / dragStart.h) * 100;
     const nextX = Math.max(0, Math.min(100, dragStart.x + dx));
     const nextY = Math.max(0, Math.min(100, dragStart.y + dy));
     setLastPos({ x: nextX, y: nextY });
@@ -168,28 +164,27 @@ function CoverCropModal({ src, title, initialPos, onConfirm, onCancel }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#2C2523]/60 p-4 backdrop-blur-xs">
-      <div className="w-full max-w-md rounded-3xl border border-[#E8E2D9] bg-[#FFFDF9] p-5 shadow-2xl sm:p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4">
+      <div className="w-full max-w-md rounded-3xl border border-[#5D433C] bg-[#352520] p-6 shadow-2xl">
         <div className="flex items-center justify-between gap-2">
-          <h3 className="text-sm font-bold text-[#2C2523]">Set as cover photo</h3>
+          <h3 className="text-base font-bold text-[#FAF7F2]">Set as cover photo</h3>
           <button
             type="button"
             onClick={onCancel}
             aria-label="Close"
-            className="rounded-full p-1.5 text-[#B8ADA1] transition hover:bg-[#FDF0EA] hover:text-[#C85A32]"
+            className="rounded-full p-1.5 text-[#D4C8BA] transition hover:bg-[#261A16] hover:text-white"
           >
-            <X size={16} />
+            <X size={18} />
           </button>
         </div>
 
-        <p className="mt-1 text-xs text-[#8C827A]">
-          Drag the photo to frame it the way you want it on the polaroid.
+        <p className="mt-1 text-xs text-[#D4C8BA]">
+          Drag the photo to frame it precisely for the home timeline polaroid.
         </p>
 
-        {/* Square framing window. The image uses the same object-cover +
-            object-position as the polaroid, so dragging = live preview. */}
+        {/* Square framing preview window */}
         <div
-          className="relative mt-4 aspect-square w-full select-none touch-none overflow-hidden rounded-2xl bg-[#EFE8DC]"
+          className="relative mt-4 aspect-square w-full select-none touch-none overflow-hidden rounded-2xl bg-[#261A16] border border-[#5D433C]"
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
@@ -207,13 +202,13 @@ function CoverCropModal({ src, title, initialPos, onConfirm, onCancel }) {
               objectPosition: `${lastPos.x}% ${lastPos.y}%`,
             }}
           />
-          {/* 5x5 square grid overlay to show the proportional layout */}
+          {/* 5x5 subtle grid overlay */}
           <div
-            aria-hidden
+            aria-hidden="true"
             className="pointer-events-none absolute inset-0"
             style={{
               backgroundImage:
-                "linear-gradient(rgba(255,255,255,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.3) 1px, transparent 1px)",
+                "linear-gradient(rgba(255,255,255,0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.2) 1px, transparent 1px)",
               backgroundSize: "20% 20%",
             }}
           />
@@ -223,14 +218,14 @@ function CoverCropModal({ src, title, initialPos, onConfirm, onCancel }) {
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-full px-4 py-2.5 text-sm font-semibold text-[#786F6A] transition hover:text-[#2C2523]"
+            className="rounded-full px-4 py-2 text-sm font-semibold text-[#D4C8BA] transition hover:text-[#FAF7F2]"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={() => onConfirm(lastPos)}
-            className="inline-flex items-center gap-2 rounded-full bg-[#C85A32] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#B34B24]"
+            className="inline-flex items-center gap-2 rounded-full bg-[#C85A32] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_4px_16px_rgba(200,90,50,0.4)] transition hover:bg-[#B34B24]"
           >
             <Check size={15} /> Use as cover
           </button>
@@ -249,7 +244,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
   const [showNsfw, setShowNsfw] = useState(false);
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
 
-  // --- page-level edit fields (independent local drafts) -------------------
+  // --- page-level edit fields -----------------------------------------------
   const [title, setTitle] = useState(memory.title ?? "");
   const [dateStr, setDateStr] = useState(memory.date ?? "");
   const [entryNumber, setEntryNumber] = useState(memory.entry_number ?? 1);
@@ -257,12 +252,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
   const [songUrl, setSongUrl] = useState(memory.song_url ?? "");
   const [photoUrls, setPhotoUrls] = useState(memory.photo_urls ?? []);
   const [newFiles, setNewFiles] = useState([]);
-  // Newly picked files are wrapped so each has a stable local id (used as the
-  // React key and to track which one is the future cover before its upload URL
-  // exists).
-  // Cover photo: we track WHICH photo is the polaroid cover plus where it's
-  // positioned. `cover` is { kind: "existing"|"new", id } — for an existing
-  // photo id is its URL, for a new file id is the file's local id.
+
   const [cover, setCover] = useState(
     memory.cover_photo_url && (memory.photo_urls ?? []).includes(memory.cover_photo_url)
       ? { kind: "existing", id: memory.cover_photo_url }
@@ -276,12 +266,9 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
         }
       : { x: 50, y: 50 }
   );
-  // Which photo we're framing in the crop modal. { kind, id } or null when closed.
   const [coverCrop, setCoverCrop] = useState(null);
 
   // --- moments edit state ---------------------------------------------------
-  // Kept entirely separate from the page-level fields above so the two edit
-  // toggles can be used independently and save independently.
   const [moments, setMoments] = useState(() => normalizeMoments(memory.moments ?? []));
 
   // --- status flags ---------------------------------------------------------
@@ -300,29 +287,22 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
   const embedUrl = playerEmbedUrl(songUrl);
   const colorConfig = getColorTagConfig(colorTag);
 
-  // dnd-kit sensors — pointer + keyboard support for accessibility.
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
   );
 
-  // --- object URLs for new-file previews ------------------------------------
-  // newFiles is [{ id, file, objectUrl }]. Each entry carries its own preview
-  // URL (created at pick time) so it can be shared by the grid + crop modal
-  // without touching a ref during render.
   const newFileUrls = useMemo(
     () => newFiles.map((entry) => entry.objectUrl),
     [newFiles]
   );
   const pastObjectUrls = useRef([]);
   useEffect(() => {
-    // Revoke object URLs once the component unmounts.
     const urls = pastObjectUrls.current;
     return () => {
       urls.forEach((u) => URL.revokeObjectURL(u));
     };
   }, []);
 
-  // --- metadata -------------------------------------------------------------
   const orderedMoments = useMemo(
     () => [...moments].sort((a, b) => a.position - b.position),
     [moments]
@@ -330,8 +310,6 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
   const hasAnyMoment = moments.some((m) => m.text.trim() !== "");
   const hasNsfwMoment = moments.some((m) => m.is_nsfw && m.text.trim() !== "");
 
-  // True when this is a freshly-created, still-unchanged draft. Used to decide
-  // whether exiting edit mode should delete the empty row (see Part 3).
   const isStillEmptyDraft =
     isNewDraft &&
     (title || "").trim() === (memory.title || "").trim() &&
@@ -391,7 +369,6 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
       const oldIndex = prev.findIndex((m) => m.id === active.id);
       const newIndex = prev.findIndex((m) => m.id === over.id);
       if (oldIndex === -1 || newIndex === -1) return prev;
-      // Reorder then re-index `position` to match array order.
       return arrayMove(prev, oldIndex, newIndex).map((m, i) => ({
         ...m,
         position: i,
@@ -403,7 +380,6 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
     setError(null);
     setStatus("");
     try {
-      // Only persist moments that have text (ignore blank draft rows).
       const clean = moments
         .filter((m) => m.text.trim() !== "")
         .map((m, i) => ({
@@ -420,7 +396,6 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
 
       if (dbError) throw dbError;
 
-      // Refresh the row's moments so the bulleted view reflects changes.
       const { data, error: fetchErr } = await supabase
         .from("memories")
         .select("moments")
@@ -458,11 +433,9 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
       if (removed?.objectUrl) URL.revokeObjectURL(removed.objectUrl);
       return prev.filter((entry) => entry.id !== id);
     });
-    // If the removed file was the picked cover, clear it.
     setCover((prev) => (prev && prev.kind === "new" && prev.id === id ? null : prev));
   }
 
-  // --- cover photo helpers ---------------------------------------------------
   function isCover(target) {
     return !!cover && cover.kind === target.kind && cover.id === target.id;
   }
@@ -488,7 +461,6 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
     setStatus("");
 
     try {
-      // 1. Compress + upload any newly picked photos.
       const uploadedUrls = [];
       if (newFiles.length > 0) {
         setStatus(`Compressing ${newFiles.length} photo(s)…`);
@@ -504,9 +476,6 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
 
       const finalPhotoUrls = [...photoUrls, ...uploadedUrls];
 
-      // Resolve the picked cover to a concrete URL now that uploads are done:
-      // "existing" -> its URL must still be in the final list; "new" -> the
-      // uploaded URL at the new file's index. Fall back to the first photo.
       let finalCoverUrl = null;
       if (cover) {
         if (cover.kind === "existing" && finalPhotoUrls.includes(cover.id)) {
@@ -552,7 +521,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
     }
   }
 
-  // --- delete this memory ---------------------------------------------------
+  // --- delete memory row ----------------------------------------------------
   async function deleteMemoryRow() {
     setDeleting(true);
     setError(null);
@@ -575,17 +544,12 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
     }
   }
 
-  // --- exiting page edit mode ----------------------------------------------
-  // Centralized so both the Save path, Cancel, and the pencil toggle behave
-  // consistently. If this is a freshly created empty draft, leaving edit mode
-  // without adding anything deletes the empty row (Part 3).
   function exitEditMode({ discard = false } = {}) {
     if (isStillEmptyDraft) {
       deleteMemoryRow();
       return;
     }
     if (discard) {
-      // Throw away unsaved page-level edits and moments edits.
       setTitle(memory.title ?? "");
       setDateStr(memory.date ?? "");
       setEntryNumber(memory.entry_number ?? 1);
@@ -613,47 +577,32 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
     setEditMode(false);
   }
 
-  // View-mode bulleted moments list (this is the full content of the date).
-  // All moments are always shown in order; NSFW moments just render as a
-  // "[NSFW]" bullet until the toggle flips `showNsfw` to reveal their text.
   const visibleMoments = orderedMoments;
 
   return (
     <>
       <article className="relative mt-4">
-        {/* Soft gradient wash behind the header */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -top-10 -left-12 -right-12 h-96 rounded-b-[60px] opacity-40 blur-3xl"
-          style={{
-            background: `radial-gradient(ellipse at 50% 20%, ${colorConfig.hex} 0%, ${colorConfig.bgLight} 70%, transparent 100%)`,
-          }}
-        />
-
-        <div className="relative">
-          {/* Header metadata + the edit controls (top right) */}
+        <div className="relative z-10">
+          {/* Header metadata + Edit controls (top right) */}
           <div className="flex flex-wrap items-center gap-2.5">
             <span
-              className="rounded-full px-3 py-1 font-mono text-xs font-bold shadow-2xs"
+              className="rounded-full px-3 py-1 font-mono text-xs font-bold shadow-xs border"
               style={{
                 backgroundColor: colorConfig.bgLight,
                 color: colorConfig.text,
-                border: `1px solid ${colorConfig.border}`,
+                borderColor: colorConfig.border,
               }}
             >
-              {/* UI label: entry_number displays as "Date #" */}
-              Date #{memory.entry_number}
+              Date #{entryNumber}
             </span>
 
             {editMode ? (
-              /* In edit mode the top-right holds the save/cancel/delete
-                 actions stacked vertically — no separate "Done" toggle. */
               <div className="ml-auto flex flex-col items-end gap-1.5">
                 <button
                   type="button"
                   onClick={handleSave}
                   disabled={saving}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-[#C85A32] px-5 py-2 text-xs font-bold uppercase tracking-wider text-white shadow-sm transition hover:bg-[#B34B24] disabled:opacity-60"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#C85A32] px-5 py-2 text-xs font-bold uppercase tracking-wider text-white shadow-[0_4px_16px_rgba(200,90,50,0.4)] transition hover:bg-[#B34B24] disabled:opacity-60"
                 >
                   {saving ? (
                     <>
@@ -671,7 +620,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                   type="button"
                   onClick={() => exitEditMode({ discard: true })}
                   disabled={saving}
-                  className="rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider text-[#786F6A] transition hover:text-[#2C2523]"
+                  className="rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider text-[#D4C8BA] transition hover:text-[#FAF7F2]"
                 >
                   Cancel
                 </button>
@@ -679,7 +628,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                 <button
                   type="button"
                   onClick={() => setShowDeleteModal(true)}
-                  className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold text-[#A85858] transition hover:bg-[#FDF2EC] hover:text-[#C85A32]"
+                  className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold text-[#F8B79D] transition hover:bg-[#382722] hover:text-white"
                 >
                   <Trash2 size={13} /> Delete memory
                 </button>
@@ -688,7 +637,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
               <button
                 type="button"
                 onClick={() => setEditMode(true)}
-                className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-[#E8E2D9] bg-[#FFFDF9] px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider text-[#786F6A] transition hover:border-[#D8CEBF] hover:text-[#2C2523]"
+                className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-[#5D433C] bg-[#382722] px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider text-[#D4C8BA] shadow-md transition hover:border-[#C85A32] hover:text-[#FAF7F2]"
               >
                 <Pencil size={13} />
                 Edit
@@ -703,19 +652,24 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Date Title"
-              className="mt-3 w-full border-b-2 border-[#DCD3C7] bg-transparent font-handwriting text-4xl font-bold tracking-tight text-[#2C2523] outline-none focus:border-[#C85A32] sm:text-5xl"
+              className="mt-3 w-full border-b-2 border-[#5D433C] bg-transparent font-handwriting text-4xl font-bold tracking-tight text-[#FAF7F2] outline-none focus:border-[#C85A32] sm:text-5xl placeholder:text-[#D4C8BA]/40"
             />
           ) : (
-            <h1 className="mt-3 font-handwriting text-4xl font-bold tracking-tight text-[#2C2523] sm:text-5xl leading-tight">
+            <h1
+              className="mt-3 font-handwriting text-4xl font-bold tracking-tight text-[#FAF7F2] sm:text-5xl leading-tight"
+              style={{
+                textShadow: `0 0 24px ${colorConfig.hex}50, 0 2px 6px rgba(0, 0, 0, 0.5)`,
+              }}
+            >
               {title || "Untitled"}
             </h1>
           )}
 
-          {/* Date # and calendar date (editable inline) */}
-          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 font-handwriting text-xl text-[#786F6A]">
+          {/* Date # and calendar date */}
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 font-handwriting text-xl text-[#D4C8BA]">
             {editMode ? (
               <>
-                <label className="inline-flex items-center gap-2 font-sans text-sm text-[#8C827A]">
+                <label className="inline-flex items-center gap-2 font-sans text-sm text-[#D4C8BA]">
                   Date #
                   <input
                     type="number"
@@ -723,16 +677,16 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                     step="1"
                     value={entryNumber}
                     onChange={(e) => setEntryNumber(e.target.value)}
-                    className="w-20 rounded-xl border border-[#DCD3C7] bg-[#FFFDF9] px-3 py-1.5 font-semibold text-[#2C2523] outline-none focus:border-[#C85A32]"
+                    className="w-20 rounded-xl border border-[#5D433C] bg-[#2D1E1A] px-3 py-1.5 font-semibold text-[#FAF7F2] outline-none focus:border-[#C85A32]"
                   />
                 </label>
-                <label className="inline-flex items-center gap-2 font-sans text-sm text-[#8C827A]">
+                <label className="inline-flex items-center gap-2 font-sans text-sm text-[#D4C8BA]">
                   Date
                   <input
                     type="date"
                     value={dateStr}
                     onChange={(e) => setDateStr(e.target.value)}
-                    className="rounded-xl border border-[#DCD3C7] bg-[#FFFDF9] px-3 py-1.5 font-semibold text-[#2C2523] outline-none focus:border-[#C85A32]"
+                    className="rounded-xl border border-[#5D433C] bg-[#2D1E1A] px-3 py-1.5 font-semibold text-[#FAF7F2] outline-none focus:border-[#C85A32]"
                   />
                 </label>
               </>
@@ -741,14 +695,14 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
             )}
           </div>
 
-          {/* Color dropdown (only in page edit mode — select, not free picker) */}
+          {/* Color dropdown (only in page edit mode) */}
           {editMode && (
-            <div className="mt-3 flex items-center gap-2 font-sans text-sm text-[#8C827A]">
+            <div className="mt-3 flex items-center gap-2 font-sans text-sm text-[#D4C8BA]">
               <span className="text-xs font-bold uppercase tracking-wider">Color</span>
               <select
                 value={colorTag}
                 onChange={(e) => setColorTag(e.target.value)}
-                className="rounded-xl border border-[#DCD3C7] bg-[#FFFDF9] px-3 py-1.5 text-sm font-semibold text-[#2C2523] outline-none focus:border-[#C85A32]"
+                className="rounded-xl border border-[#5D433C] bg-[#2D1E1A] px-3 py-1.5 text-sm font-semibold text-[#FAF7F2] outline-none focus:border-[#C85A32]"
               >
                 {MEMORY_COLOR_TAGS.map((c) => (
                   <option key={c.id} value={c.hex}>
@@ -760,16 +714,13 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
           )}
 
           {/* ---------------------------------------------------------------
-              SONG EMBED — moved to the TOP of the page, shrunk to a compact
-              card (~84px tall). If no song_url is set we skip the section in
-              view mode; in edit mode we show a compact input with a live
-              preview that updates as you type.
+              SONG EMBED — Solid Opaque Panel
               --------------------------------------------------------------- */}
           {(embedUrl || editMode) && (
             <div className="mt-8">
               {editMode ? (
-                <div className="rounded-2xl border border-[#E8E2D9] bg-[#FFFDF9] p-3 shadow-sm">
-                  <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#786F6A]">
+                <div className="rounded-2xl border border-[#5D433C] bg-[#382722] p-4 shadow-xl">
+                  <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#D4C8BA]">
                     <Music2 size={14} style={{ color: colorConfig.hex }} />
                     Memory Song (Spotify / YouTube link)
                   </label>
@@ -778,15 +729,15 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                     value={songUrl}
                     onChange={(e) => setSongUrl(e.target.value)}
                     placeholder="https://open.spotify.com/track/…"
-                    className="mt-2 w-full rounded-xl border border-[#DCD3C7] bg-[#FAF7F2] px-3 py-2 text-sm text-[#2C2523] outline-none focus:border-[#C85A32]"
+                    className="mt-2 w-full rounded-xl border border-[#5D433C] bg-[#2D1E1A] px-3.5 py-2 text-sm text-[#FAF7F2] outline-none placeholder:text-[#D4C8BA]/40 focus:border-[#C85A32]"
                   />
                   {embedUrl && (
-                    <div className="mt-2 flex items-center gap-2">
+                    <div className="mt-3 flex items-center gap-2">
                       <iframe
                         src={embedUrl}
                         title={`Song preview for ${title}`}
                         allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                        className="h-[84px] w-full"
+                        className="h-[84px] w-full rounded-xl border border-[#5D433C]"
                       />
                     </div>
                   )}
@@ -794,10 +745,10 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
               ) : (
                 <div className="flex items-center gap-2">
                   <span
-                    className="flex h-16 w-1 shrink-0"
+                    className="flex h-16 w-1 shrink-0 rounded-full"
                     style={{ backgroundColor: colorConfig.hex }}
                   />
-                  <div className="flex-1 overflow-hidden rounded-xl border border-[#E8E2D9] bg-[#FAF7F2] shadow-sm">
+                  <div className="flex-1 overflow-hidden rounded-2xl border border-[#5D433C] bg-[#382722] shadow-xl">
                     <iframe
                       src={embedUrl}
                       title={`Song for ${title}`}
@@ -812,14 +763,13 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
           )}
 
           {/* ---------------------------------------------------------------
-              PHOTO CAROUSEL — swipe + always-visible arrows. In edit mode we
-              also render add/remove controls below the carousel.
+              PHOTO CAROUSEL — Solid Opaque Panel
               --------------------------------------------------------------- */}
-          <div className="mt-8 rounded-3xl border border-[#E8E2D9] bg-[#FFFDF9] p-4 sm:p-6 shadow-sm">
+          <div className="mt-8 rounded-3xl border border-[#5D433C] bg-[#382722] p-4 sm:p-6 shadow-2xl">
             {photoUrlsForCarousel.length > 0 ? (
               <div className="relative">
                 <div
-                  className="relative aspect-4/3 sm:aspect-16/10 w-full overflow-hidden rounded-2xl bg-[#F4EFE6] select-none touch-pan-y"
+                  className="relative aspect-4/3 sm:aspect-16/10 w-full overflow-hidden rounded-2xl bg-[#261A16] select-none touch-pan-y border border-[#5D433C]"
                   onTouchStart={handleTouchStart}
                   onTouchMove={handleTouchMove}
                   onTouchEnd={handleTouchEnd}
@@ -840,7 +790,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                         type="button"
                         onClick={prevPhoto}
                         aria-label="Previous photo"
-                        className="absolute left-3 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-[#2C2523]/75 text-white backdrop-blur-xs transition hover:bg-[#2C2523] active:scale-95 shadow-md"
+                        className="absolute left-3 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-[#261A16]/90 text-white transition hover:bg-black active:scale-95 shadow-md border border-[#5D433C]"
                       >
                         <ChevronLeft size={22} />
                       </button>
@@ -848,7 +798,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                         type="button"
                         onClick={nextPhoto}
                         aria-label="Next photo"
-                        className="absolute right-3 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-[#2C2523]/75 text-white backdrop-blur-xs transition hover:bg-[#2C2523] active:scale-95 shadow-md"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-[#261A16]/90 text-white transition hover:bg-black active:scale-95 shadow-md border border-[#5D433C]"
                       >
                         <ChevronRight size={22} />
                       </button>
@@ -858,7 +808,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
 
                 {photoUrlsForCarousel.length > 1 && (
                   <div className="mt-4 flex items-center justify-between px-1">
-                    <span className="text-xs font-semibold text-[#8C827A]">
+                    <span className="text-xs font-semibold text-[#D4C8BA]">
                       Photo {activePhotoIndex + 1} of {photoUrlsForCarousel.length}
                     </span>
                     <div className="flex items-center gap-1.5">
@@ -869,7 +819,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                           onClick={() => setActivePhotoIndex(i)}
                           aria-label={`Go to photo ${i + 1}`}
                           className={`h-2 rounded-full transition-all ${
-                            i === activePhotoIndex ? "w-6" : "w-2 bg-[#DCD3C7] hover:bg-[#B8ADA1]"
+                            i === activePhotoIndex ? "w-6" : "w-2 bg-white/25 hover:bg-white/40"
                           }`}
                           style={{
                             backgroundColor: i === activePhotoIndex ? colorConfig.hex : undefined,
@@ -881,23 +831,22 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                 )}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#DFD6C9] py-14 text-center text-[#8C827A]">
-                <ImageOff size={28} className="text-[#B8ADA1]" />
-                <p className="font-handwriting text-2xl text-[#786F6A]">
+              <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#5D433C] py-14 text-center text-[#D4C8BA]">
+                <ImageOff size={28} className="text-[#D4C8BA]/60" />
+                <p className="font-handwriting text-2xl text-[#FAF7F2]">
                   No photos added yet
                 </p>
               </div>
             )}
 
-            {/* Photo management — appears only in page edit mode */}
+            {/* Photo management in edit mode */}
             {editMode && (
-              <div className="mt-4 border-t border-[#F2ECE1] pt-4">
-                <p className="text-xs font-bold uppercase tracking-wider text-[#786F6A]">
+              <div className="mt-4 border-t border-[#5D433C] pt-4">
+                <p className="text-xs font-bold uppercase tracking-wider text-[#D4C8BA]">
                   Photos
                 </p>
 
-                {/* removed-photo grid: stored existing photos with remove +
-                    "Set as cover photo" option under each */}
+                {/* Stored photos grid */}
                 {photoUrls.length > 0 && (
                   <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-4">
                     {photoUrls.map((url, i) => {
@@ -906,10 +855,10 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                       return (
                         <div
                           key={url}
-                          className={`group relative rounded-2xl overflow-hidden bg-[#EFE8DC] border transition ${
+                          className={`group relative rounded-2xl overflow-hidden bg-[#261A16] border transition ${
                             current
                               ? "border-2 border-[#C85A32]"
-                              : "border-[#E8E2D9]"
+                              : "border-[#5D433C]"
                           }`}
                         >
                           <div className="relative aspect-square">
@@ -930,7 +879,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                               type="button"
                               onClick={() => setPhotoUrls((prev) => prev.filter((u) => u !== url))}
                               aria-label="Remove photo"
-                              className="absolute right-2 top-2 rounded-full bg-[#2C2523]/70 p-1.5 text-white backdrop-blur-xs transition hover:bg-[#C85A32]"
+                              className="absolute right-2 top-2 rounded-full bg-[#261A16]/90 p-1.5 text-white transition hover:bg-[#C85A32]"
                             >
                               <X size={13} />
                             </button>
@@ -940,8 +889,8 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                             onClick={() => openCoverCrop(target)}
                             className={`w-full border-t px-2 py-2 text-center text-[11px] font-semibold transition ${
                               current
-                                ? "border-[#F0C7B8] bg-[#FDF2EC] text-[#C85A32]"
-                                : "border-[#F2ECE1] bg-[#FAF7F2] text-[#786F6A] hover:bg-[#FDF2EC] hover:text-[#C85A32]"
+                                ? "border-[#C85A32]/50 bg-[#C85A32]/20 text-[#F8B79D]"
+                                : "border-[#5D433C] bg-[#2D1E1A] text-[#D4C8BA] hover:bg-[#382722] hover:text-white"
                             }`}
                           >
                             {current ? "Edit cover position" : "Set as cover photo"}
@@ -952,8 +901,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                   </div>
                 )}
 
-                {/* new-file grid: freshly picked files awaiting upload, each
-                    with the same "Set as cover photo" option */}
+                {/* Newly picked files grid */}
                 {newFiles.length > 0 && (
                   <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-4">
                     {newFiles.map((entry, i) => {
@@ -962,10 +910,10 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                       return (
                         <div
                           key={entry.id}
-                          className={`group relative rounded-2xl overflow-hidden bg-[#EFE8DC] border transition ${
+                          className={`group relative rounded-2xl overflow-hidden bg-[#261A16] border transition ${
                             current
                               ? "border-2 border-[#C85A32]"
-                              : "border-[#E8E2D9]"
+                              : "border-[#5D433C]"
                           }`}
                         >
                           <div className="relative aspect-square">
@@ -984,7 +932,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                               type="button"
                               onClick={() => removeNewFile(entry.id)}
                               aria-label="Remove photo"
-                              className="absolute right-2 top-2 rounded-full bg-[#2C2523]/70 p-1.5 text-white backdrop-blur-xs transition hover:bg-[#C85A32]"
+                              className="absolute right-2 top-2 rounded-full bg-[#261A16]/90 p-1.5 text-white transition hover:bg-[#C85A32]"
                             >
                               <X size={13} />
                             </button>
@@ -994,8 +942,8 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                             onClick={() => openCoverCrop(target)}
                             className={`w-full border-t px-2 py-2 text-center text-[11px] font-semibold transition ${
                               current
-                                ? "border-[#F0C7B8] bg-[#FDF2EC] text-[#C85A32]"
-                                : "border-[#F2ECE1] bg-[#FAF7F2] text-[#786F6A] hover:bg-[#FDF2EC] hover:text-[#C85A32]"
+                                ? "border-[#C85A32]/50 bg-[#C85A32]/20 text-[#F8B79D]"
+                                : "border-[#5D433C] bg-[#2D1E1A] text-[#D4C8BA] hover:bg-[#382722] hover:text-white"
                             }`}
                           >
                             {current ? "Edit cover position" : "Set as cover photo"}
@@ -1006,7 +954,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                   </div>
                 )}
 
-                <label className="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-xl border-2 border-dashed border-[#DCD3C7] bg-[#FAF7F2] px-4 py-2.5 text-xs font-semibold text-[#5C534E] transition hover:border-[#C85A32] hover:text-[#C85A32]">
+                <label className="mt-4 inline-flex cursor-pointer items-center gap-2 rounded-xl border-2 border-dashed border-[#5D433C] bg-[#2D1E1A] px-4 py-2.5 text-xs font-semibold text-[#D4C8BA] transition hover:border-[#C85A32] hover:text-[#FAF7F2]">
                   <Upload size={15} />
                   Add photos
                   <input
@@ -1022,18 +970,17 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
           </div>
 
           {/* ---------------------------------------------------------------
-              MOMENTS LIST — the full content of the date. Has its own
-              independent "edit moments" pencil toggle.
+              MOMENTS LIST — Solid Opaque Panel
               --------------------------------------------------------------- */}
-          <section className="mt-8 rounded-3xl border border-[#E8E2D9] bg-[#FFFDF9] p-6 sm:p-8 shadow-xs">
-            <div className="flex items-center justify-between gap-4 border-b border-[#F2ECE1] pb-4">
-              <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#786F6A]">
+          <section className="mt-8 rounded-3xl border border-[#5D433C] bg-[#382722] p-6 sm:p-8 shadow-2xl">
+            <div className="flex items-center justify-between gap-4 border-b border-[#5D433C] pb-4">
+              <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#D4C8BA]">
                 <Flame size={14} style={{ color: colorConfig.hex }} />
                 Moments
               </h2>
 
               <div className="flex items-center gap-2">
-                {/* NSFW view toggle — unrelated to editing; filters the list */}
+                {/* NSFW view toggle */}
                 {hasNsfwMoment && !momentsEditMode && (
                   <button
                     type="button"
@@ -1041,22 +988,21 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                     aria-pressed={showNsfw}
                     className="inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition"
                     style={{
-                      backgroundColor: showNsfw ? colorConfig.bgLight : "#FFFDF9",
-                      borderColor: showNsfw ? colorConfig.border : "#DCD3C7",
-                      color: showNsfw ? colorConfig.text : "#786F6A",
+                      backgroundColor: showNsfw ? WARM_OLIVE_GREEN.bgLight : "#2D1E1A",
+                      borderColor: showNsfw ? WARM_OLIVE_GREEN.border : "#5D433C",
+                      color: showNsfw ? WARM_OLIVE_GREEN.text : "#D4C8BA",
                     }}
                   >
-                    <Flame size={13} style={{ color: colorConfig.hex }} />
+                    <Flame size={13} style={{ color: WARM_OLIVE_GREEN.hex }} />
                     {showNsfw ? "Hide NSFW" : "Show NSFW"}
                   </button>
                 )}
 
-                {/* Second pencil — the moments edit toggle (independent) */}
+                {/* Edit moments toggle */}
                 <button
                   type="button"
                   onClick={() => {
                     if (momentsEditMode) {
-                      // Exiting moments edit without saving => discard edits.
                       setMoments(normalizeMoments(memory.moments ?? []));
                     }
                     setMomentsEditMode((v) => !v);
@@ -1064,8 +1010,8 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                   aria-pressed={momentsEditMode}
                   className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider transition ${
                     momentsEditMode
-                      ? "border-[#C85A32] bg-[#FDF2EC] text-[#C85A32]"
-                      : "border-[#E8E2D9] bg-[#FFFDF9] text-[#786F6A] hover:border-[#D8CEBF] hover:text-[#2C2523]"
+                      ? "border-[#C85A32] bg-[#48281E] text-[#F8B79D]"
+                      : "border-[#5D433C] bg-[#2D1E1A] text-[#D4C8BA] hover:border-[#C85A32] hover:text-[#FAF7F2]"
                   }`}
                 >
                   <GripVertical size={13} />
@@ -1087,7 +1033,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                     strategy={verticalListSortingStrategy}
                   >
                     {moments.length === 0 ? (
-                      <p className="text-sm text-[#8C827A]">
+                      <p className="text-sm text-[#D4C8BA]">
                         No moments yet. Add your first one below.
                       </p>
                     ) : (
@@ -1109,23 +1055,27 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                   <button
                     type="button"
                     onClick={() => addMoment(false)}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-[#FAF7F2] border border-[#DCD3C7] px-4 py-2 text-xs font-semibold text-[#2C2523] transition hover:border-[#C85A32] hover:text-[#C85A32]"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-[#2D1E1A] border border-[#5D433C] px-4 py-2 text-xs font-semibold text-[#FAF7F2] transition hover:border-[#C85A32]"
                   >
                     <Plus size={14} /> Add Moment
                   </button>
                   <button
                     type="button"
                     onClick={() => addMoment(true)}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-[#FDF2EC] border border-[#F0C7B8] px-4 py-2 text-xs font-semibold text-[#933B19] transition hover:border-[#C85A32]"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-[#8F9648] px-4 py-2 text-xs font-semibold transition hover:bg-[#3E341C]"
+                    style={{
+                      backgroundColor: WARM_OLIVE_GREEN.bgLight,
+                      color: WARM_OLIVE_GREEN.text,
+                    }}
                   >
-                    <Flame size={14} /> Add NSFW Moment
+                    <Flame size={14} style={{ color: WARM_OLIVE_GREEN.hex }} /> Add NSFW Moment
                   </button>
 
                   <button
                     type="button"
                     onClick={saveMoments}
                     disabled={savingMoments}
-                    className="ml-auto inline-flex items-center gap-2 rounded-full bg-[#C85A32] px-5 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#B34B24] disabled:opacity-60"
+                    className="ml-auto inline-flex items-center gap-2 rounded-full bg-[#C85A32] px-5 py-2.5 text-xs font-semibold text-white shadow-[0_4px_16px_rgba(200,90,50,0.4)] transition hover:bg-[#B34B24] disabled:opacity-60"
                   >
                     {savingMoments ? (
                       <>
@@ -1142,29 +1092,39 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
             ) : (
               /* ---------------- MOMENTS VIEWING ---------------- */
               hasAnyMoment ? (
-                <ul className="mt-5 space-y-3">
+                <ul className="mt-5 space-y-3.5">
                   {visibleMoments.map((moment) => {
                     const revealed = !moment.is_nsfw || showNsfw;
                     return (
                       <li
                         key={moment.id}
-                        className={`flex items-start gap-3 text-sm sm:text-base ${
+                        className={`flex items-start gap-3 text-sm sm:text-base leading-relaxed ${
                           moment.is_nsfw ? "italic" : ""
                         }`}
                         style={{
-                          color: moment.is_nsfw ? colorConfig.text : "#2C2523",
+                          color: moment.is_nsfw ? WARM_OLIVE_GREEN.text : "#FAF7F2",
                         }}
                       >
+                        {/* Dot indicator: Olive green for NSFW, entry's color_tag for standard moments */}
                         <span
-                          aria-hidden
+                          aria-hidden="true"
                           className="mt-2 h-2 w-2 shrink-0 rounded-full"
-                          style={{ backgroundColor: colorConfig.hex }}
+                          style={{
+                            backgroundColor: moment.is_nsfw ? WARM_OLIVE_GREEN.hex : colorConfig.hex,
+                            boxShadow: moment.is_nsfw
+                              ? `0 0 10px ${WARM_OLIVE_GREEN.hex}`
+                              : `0 0 10px ${colorConfig.hex}`,
+                          }}
                         />
                         {moment.is_nsfw ? (
                           <>
                             <span
-                              className="font-sans text-xs font-bold uppercase tracking-wide"
-                              style={{ color: colorConfig.text }}
+                              className="font-sans text-xs font-bold uppercase tracking-wide not-italic px-1.5 py-0.5 rounded-sm"
+                              style={{
+                                backgroundColor: WARM_OLIVE_GREEN.bgLight,
+                                color: WARM_OLIVE_GREEN.text,
+                                border: `1px solid ${WARM_OLIVE_GREEN.border}`,
+                              }}
                             >
                               [NSFW]
                             </span>
@@ -1178,8 +1138,8 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                   })}
                 </ul>
               ) : (
-                <div className="mt-5 flex flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-[#DFD6C9] py-10 text-center text-[#8C827A]">
-                  <p className="font-handwriting text-2xl text-[#786F6A]">
+                <div className="mt-5 flex flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-[#5D433C] py-10 text-center text-[#D4C8BA]">
+                  <p className="font-handwriting text-2xl text-[#FAF7F2]">
                     No moments yet
                   </p>
                   <p className="text-sm">Tap “Edit Moments” to add some.</p>
@@ -1189,14 +1149,14 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
           </section>
 
           {error && (
-            <p role="alert" className="mt-4 rounded-2xl border border-[#F8D4C8] bg-[#FDF2EC] p-4 text-sm font-medium text-[#C85A32]">
+            <p role="alert" className="mt-4 rounded-2xl border border-[#C85A32] bg-[#2D1E1A] p-4 text-sm font-medium text-[#F8B79D]">
               {error}
             </p>
           )}
         </div>
       </article>
 
-      {/* Cover photo crop modal — choose + position the polaroid cover */}
+      {/* Cover photo crop modal */}
       {coverCrop && coverSrcFor(coverCrop) && (
         <CoverCropModal
           src={coverSrcFor(coverCrop)}
@@ -1209,17 +1169,17 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#2C2523]/50 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-md rounded-3xl border border-[#E8E2D9] bg-[#FFFDF9] p-6 shadow-2xl sm:p-8">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FDF2EC] text-[#C85A32]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4">
+          <div className="w-full max-w-md rounded-3xl border border-[#5D433C] bg-[#352520] p-6 shadow-2xl sm:p-8">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#C85A32]/20 text-[#F8B79D] border border-[#C85A32]/40">
               <AlertTriangle size={24} />
             </div>
 
-            <h3 className="mt-4 text-xl font-bold text-[#2C2523]">
+            <h3 className="mt-4 text-xl font-bold text-[#FAF7F2]">
               Delete this memory?
             </h3>
 
-            <p className="mt-2 text-sm leading-relaxed text-[#786F6A]">
+            <p className="mt-2 text-sm leading-relaxed text-[#D4C8BA]">
               Are you sure you want to delete &ldquo;{title || "this memory"}&rdquo;?
               This will permanently remove the timeline entry and delete all attached
               photos from storage. This cannot be undone.
@@ -1230,7 +1190,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                 type="button"
                 onClick={() => setShowDeleteModal(false)}
                 disabled={deleting}
-                className="rounded-full px-4 py-2.5 text-sm font-semibold text-[#786F6A] transition hover:text-[#2C2523]"
+                className="rounded-full px-4 py-2.5 text-sm font-semibold text-[#D4C8BA] transition hover:text-[#FAF7F2]"
               >
                 Cancel
               </button>
@@ -1238,7 +1198,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                 type="button"
                 onClick={deleteMemoryRow}
                 disabled={deleting}
-                className="inline-flex items-center gap-2 rounded-full bg-[#C85A32] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#B34B24] disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-full bg-[#C85A32] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_4px_16px_rgba(200,90,50,0.4)] transition hover:bg-[#B34B24] disabled:opacity-60"
               >
                 {deleting ? (
                   <>

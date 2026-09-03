@@ -21,7 +21,7 @@ const PLACEHOLDER = {
   seconds: 0,
 };
 
-// Snapshots of time in years / months / weeks / days / hours / minutes / seconds.
+// Snapshots of time in years / months / days / hours / minutes / seconds.
 const UNITS = [
   ["years", "YRS"],
   ["months", "MOS"],
@@ -31,9 +31,7 @@ const UNITS = [
   ["seconds", "SEC"],
 ];
 
-// Calendar-aware breakdown from `start` up to `now`. Each unit is subtracted
-// sequentially (years first, then months, weeks, ... seconds) so that differing
-// month lengths and timezone/DST shifts are handled precisely by date-fns.
+// Calendar-aware breakdown from `start` up to `now`.
 function breakDown(start, now) {
   let cursor = start;
   let years = 0;
@@ -81,8 +79,8 @@ function breakDown(start, now) {
   return { years, months, days, hours, minutes, seconds };
 }
 
-// Live count-up clock. Ticks every second client-side and shows how long it's
-// been since the start date prop.
+// Live count-up clock.
+// Solid opaque rich espresso cards with crisp glowing borders in accent orange.
 export default function CountupClock({ startDateIso }) {
   const start = useMemo(() => new Date(startDateIso), [startDateIso]);
   const [now, setNow] = useState(null);
@@ -101,23 +99,23 @@ export default function CountupClock({ startDateIso }) {
 
   return (
     <div className="mt-8">
-      <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+      <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-6 sm:gap-3">
         {UNITS.map(([key, label]) => (
           <div
             key={key}
-            className="rounded-2xl border border-[#E8E2D9] bg-[#FFFDF9] px-2.5 py-3 text-center shadow-xs transition hover:border-[#D8CEBF]"
+            className="group relative rounded-2xl border border-[#C85A32]/45 bg-[#382722] px-2.5 py-3.5 text-center shadow-[0_6px_24px_rgba(0,0,0,0.45),0_0_14px_rgba(200,90,50,0.22)] transition-all duration-300 hover:border-[#C85A32] hover:shadow-[0_8px_30px_rgba(0,0,0,0.55),0_0_22px_rgba(200,90,50,0.4)] hover:-translate-y-0.5"
           >
-            <div className="font-mono text-xl font-bold tabular-nums text-[#C85A32] sm:text-2xl">
+            <div className="font-mono text-2xl font-bold tabular-nums text-[#FAF7F2] drop-shadow-xs sm:text-3xl">
               {String(parts[key]).padStart(2, "0")}
             </div>
-            <div className="mt-1 text-[10px] font-semibold tracking-wider text-[#8C827A]">
+            <div className="mt-1 text-[11px] font-semibold tracking-wider text-[#D4C8BA]">
               {label}
             </div>
           </div>
         ))}
       </div>
-      <p className="mt-3 text-center text-xs font-medium text-[#8C827A]">
-        …and counting since April 5th, 2025
+      <p className="mt-3.5 text-center text-xs font-medium tracking-wide text-[#D4C8BA]">
+        …and counting every moment together since April 5th, 2025
       </p>
     </div>
   );

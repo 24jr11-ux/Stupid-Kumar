@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import MemoryDetail from "@/components/MemoryDetail";
+import AmbientBackground from "@/components/AmbientBackground";
 import { supabase } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
@@ -35,12 +36,15 @@ export default async function MemoryPage({ params, searchParams }) {
   const isNewDraft = qs?.new === "1";
 
   return (
-    <div className="flex flex-1 justify-center bg-[#FAF7F2] px-4 pb-20">
-      <main className="w-full max-w-2xl pt-8 sm:pt-10">
+    <div className="relative min-h-screen flex flex-1 justify-center bg-[#4A352F] px-4 pb-24 overflow-x-hidden">
+      {/* Vivid multi-blob screen-blend ambient glow using this memory's color_tag */}
+      <AmbientBackground mode="detail" colorTag={memory.color_tag} />
+
+      <main className="relative z-10 w-full max-w-2xl pt-8 sm:pt-10">
         <nav className="text-sm">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 rounded-full border border-[#E8E2D9] bg-[#FFFDF9] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#786F6A] shadow-2xs transition hover:border-[#D8CEBF] hover:text-[#2C2523]"
+            className="inline-flex items-center gap-2 rounded-full border border-[#5D433C] bg-[#382722] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#D4C8BA] shadow-md transition hover:border-[#C85A32] hover:text-[#FAF7F2]"
           >
             <ArrowLeft size={15} />
             Timeline

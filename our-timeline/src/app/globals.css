@@ -2,11 +2,17 @@
 @import "tailwindcss";
 
 :root {
-  --background: #FAF7F2;
-  --foreground: #2C2523;
-  /* Single font variable for handwriting: swap font name or custom font file URL here */
+  /* Warm deep espresso base background */
+  --background: #4A352F;
+  /* Cream body text for high-contrast WCAG AA readability */
+  --foreground: #FAF7F2;
   --font-handwriting: 'Caveat', cursive, sans-serif;
   --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* Ambient gradient blob colors (mix-blend-mode: screen) */
+  --blob-orange: #C85A32;
+  --blob-green: #96B82D;
+  --blob-amber: #D47E28;
 }
 
 @theme inline {
@@ -15,31 +21,163 @@
   --font-sans: var(--font-sans);
   --font-handwriting: var(--font-handwriting);
 
+  --color-espresso-950: #261A16;
+  --color-espresso-900: #352520;
+  --color-espresso-850: #382722;
+  --color-espresso-800: #4A352F;
+  --color-espresso-700: #5D433C;
+  --color-espresso-600: #74544B;
+
   --color-cream-50: #FDFBF7;
   --color-cream-100: #FAF7F2;
   --color-cream-200: #F4EFE6;
   --color-cream-300: #E8E2D9;
+  --color-cream-400: #D4C8BA;
   
-  --color-terracotta-50: #FDF2EC;
-  --color-terracotta-100: #FBE0D2;
   --color-terracotta-500: #C85A32;
   --color-terracotta-600: #B34B24;
   --color-terracotta-700: #933B19;
 
-  --color-sage-50: #EFF4F0;
-  --color-sage-100: #DEE9E0;
-  --color-sage-500: #5C7A60;
-  --color-sage-600: #48644C;
-  --color-sage-700: #354B38;
+  --color-olive-500: #96B82D;
+  --color-olive-600: #85A324;
+  --color-olive-700: #6F8B1A;
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
 }
 
 .font-handwriting {
   font-family: var(--font-handwriting);
+}
+
+/* --------------------------------------------------------------------------
+   VIVID SCREEN-BLEND LAVA LAMP ANIMATIONS
+   GPU-accelerated transform animations (translate + scale).
+   mix-blend-mode: screen adds light colors together like illumination,
+   ensuring overlapping blobs brighten into glowing amber without muddying.
+   -------------------------------------------------------------------------- */
+
+.blob-screen {
+  mix-blend-mode: screen;
+  will-change: transform;
+}
+
+@keyframes lava1 {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(-70px, 80px) scale(1.18);
+  }
+  66% {
+    transform: translate(50px, -60px) scale(0.88);
+  }
+  100% {
+    transform: translate(30px, 40px) scale(1.08);
+  }
+}
+
+@keyframes lava2 {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(80px, -50px) scale(0.9);
+  }
+  66% {
+    transform: translate(-60px, 70px) scale(1.22);
+  }
+  100% {
+    transform: translate(-40px, -30px) scale(0.96);
+  }
+}
+
+@keyframes lava3 {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(-80px, -60px) scale(1.15);
+  }
+  66% {
+    transform: translate(70px, 60px) scale(0.85);
+  }
+  100% {
+    transform: translate(40px, -40px) scale(1.05);
+  }
+}
+
+@keyframes lava4 {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(65px, 75px) scale(0.92);
+  }
+  66% {
+    transform: translate(-75px, -50px) scale(1.2);
+  }
+  100% {
+    transform: translate(-30px, 50px) scale(1.02);
+  }
+}
+
+@keyframes lava5 {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  50% {
+    transform: translate(-50px, 60px) scale(1.25);
+  }
+  100% {
+    transform: translate(60px, -50px) scale(0.88);
+  }
+}
+
+@keyframes lava6 {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  50% {
+    transform: translate(55px, -65px) scale(0.9);
+  }
+  100% {
+    transform: translate(-50px, 55px) scale(1.18);
+  }
+}
+
+.animate-lava-1 {
+  animation: lava1 26s ease-in-out infinite alternate;
+}
+
+.animate-lava-2 {
+  animation: lava2 32s ease-in-out infinite alternate;
+}
+
+.animate-lava-3 {
+  animation: lava3 38s ease-in-out infinite alternate;
+}
+
+.animate-lava-4 {
+  animation: lava4 30s ease-in-out infinite alternate;
+}
+
+.animate-lava-5 {
+  animation: lava5 44s ease-in-out infinite alternate;
+}
+
+.animate-lava-6 {
+  animation: lava6 36s ease-in-out infinite alternate;
+}
+
+/* Solid opaque panel styling */
+.solid-panel {
+  background-color: #382722;
+  border: 1px solid #5D433C;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.45);
 }
