@@ -19,7 +19,7 @@ export async function unlock(prevState, formData) {
   const matches = verifyAnswer(questionId, answer);
 
   if (!matches) {
-    return { error: "Incorrect answer. Please try again." };
+    return { error: "Try again." };
   }
 
   // Persist auth in a cookie (never the raw answer).

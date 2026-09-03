@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import {
   addYears,
   addMonths,
-  addWeeks,
   addDays,
   addHours,
   addMinutes,
@@ -16,7 +15,6 @@ import {
 const PLACEHOLDER = {
   years: 0,
   months: 0,
-  weeks: 0,
   days: 0,
   hours: 0,
   minutes: 0,
@@ -27,7 +25,6 @@ const PLACEHOLDER = {
 const UNITS = [
   ["years", "YRS"],
   ["months", "MOS"],
-  ["weeks", "WKS"],
   ["days", "DAYS"],
   ["hours", "HRS"],
   ["minutes", "MIN"],
@@ -53,14 +50,6 @@ function breakDown(start, now) {
     if (next > now) break;
     cursor = next;
     months += 1;
-  }
-
-  let weeks = 0;
-  while (true) {
-    const next = addWeeks(cursor, 1);
-    if (next > now) break;
-    cursor = next;
-    weeks += 1;
   }
 
   let days = 0;
@@ -89,7 +78,7 @@ function breakDown(start, now) {
 
   const seconds = differenceInSeconds(now, cursor);
 
-  return { years, months, weeks, days, hours, minutes, seconds };
+  return { years, months, days, hours, minutes, seconds };
 }
 
 // Live count-up clock. Ticks every second client-side and shows how long it's
@@ -112,7 +101,7 @@ export default function CountupClock({ startDateIso }) {
 
   return (
     <div className="mt-8">
-      <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
         {UNITS.map(([key, label]) => (
           <div
             key={key}
