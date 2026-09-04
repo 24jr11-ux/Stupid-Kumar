@@ -2,17 +2,13 @@
 @import "tailwindcss";
 
 :root {
-  /* Warm deep espresso base background */
-  --background: #4A352F;
+  /* Pure flat black page base. No tinted/color background — the app now runs
+     on a clean solid black backdrop. */
+  --background: #000000;
   /* Cream body text for high-contrast WCAG AA readability */
   --foreground: #FAF7F2;
   --font-handwriting: 'Caveat', cursive, sans-serif;
   --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-
-  /* Ambient gradient blob colors (mix-blend-mode: screen) */
-  --blob-orange: #C85A32;
-  --blob-green: #96B82D;
-  --blob-amber: #D47E28;
 }
 
 @theme inline {
@@ -53,126 +49,6 @@ body {
 
 .font-handwriting {
   font-family: var(--font-handwriting);
-}
-
-/* --------------------------------------------------------------------------
-   VIVID SCREEN-BLEND LAVA LAMP ANIMATIONS
-   GPU-accelerated transform animations (translate + scale).
-   mix-blend-mode: screen adds light colors together like illumination,
-   ensuring overlapping blobs brighten into glowing amber without muddying.
-   -------------------------------------------------------------------------- */
-
-.blob-screen {
-  mix-blend-mode: screen;
-  will-change: transform;
-}
-
-@keyframes lava1 {
-  0% {
-    transform: translate(0px, 0px) scale(1);
-  }
-  33% {
-    transform: translate(-70px, 80px) scale(1.18);
-  }
-  66% {
-    transform: translate(50px, -60px) scale(0.88);
-  }
-  100% {
-    transform: translate(30px, 40px) scale(1.08);
-  }
-}
-
-@keyframes lava2 {
-  0% {
-    transform: translate(0px, 0px) scale(1);
-  }
-  33% {
-    transform: translate(80px, -50px) scale(0.9);
-  }
-  66% {
-    transform: translate(-60px, 70px) scale(1.22);
-  }
-  100% {
-    transform: translate(-40px, -30px) scale(0.96);
-  }
-}
-
-@keyframes lava3 {
-  0% {
-    transform: translate(0px, 0px) scale(1);
-  }
-  33% {
-    transform: translate(-80px, -60px) scale(1.15);
-  }
-  66% {
-    transform: translate(70px, 60px) scale(0.85);
-  }
-  100% {
-    transform: translate(40px, -40px) scale(1.05);
-  }
-}
-
-@keyframes lava4 {
-  0% {
-    transform: translate(0px, 0px) scale(1);
-  }
-  33% {
-    transform: translate(65px, 75px) scale(0.92);
-  }
-  66% {
-    transform: translate(-75px, -50px) scale(1.2);
-  }
-  100% {
-    transform: translate(-30px, 50px) scale(1.02);
-  }
-}
-
-@keyframes lava5 {
-  0% {
-    transform: translate(0px, 0px) scale(1);
-  }
-  50% {
-    transform: translate(-50px, 60px) scale(1.25);
-  }
-  100% {
-    transform: translate(60px, -50px) scale(0.88);
-  }
-}
-
-@keyframes lava6 {
-  0% {
-    transform: translate(0px, 0px) scale(1);
-  }
-  50% {
-    transform: translate(55px, -65px) scale(0.9);
-  }
-  100% {
-    transform: translate(-50px, 55px) scale(1.18);
-  }
-}
-
-.animate-lava-1 {
-  animation: lava1 26s ease-in-out infinite alternate;
-}
-
-.animate-lava-2 {
-  animation: lava2 32s ease-in-out infinite alternate;
-}
-
-.animate-lava-3 {
-  animation: lava3 38s ease-in-out infinite alternate;
-}
-
-.animate-lava-4 {
-  animation: lava4 30s ease-in-out infinite alternate;
-}
-
-.animate-lava-5 {
-  animation: lava5 44s ease-in-out infinite alternate;
-}
-
-.animate-lava-6 {
-  animation: lava6 36s ease-in-out infinite alternate;
 }
 
 /* Solid opaque panel styling */

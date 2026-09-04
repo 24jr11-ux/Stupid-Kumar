@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import MemoryDetail from "@/components/MemoryDetail";
-import AmbientBackground from "@/components/AmbientBackground";
+import AnimatedBackground from "@/components/AnimatedBackground";
 import { supabase } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
@@ -36,9 +36,8 @@ export default async function MemoryPage({ params, searchParams }) {
   const isNewDraft = qs?.new === "1";
 
   return (
-    <div className="relative min-h-screen flex flex-1 justify-center bg-[#4A352F] px-4 pb-24 overflow-x-hidden">
-      {/* Vivid multi-blob screen-blend ambient glow using this memory's color_tag */}
-      <AmbientBackground mode="detail" colorTag={memory.color_tag} />
+    <div className="min-h-screen flex flex-1 justify-center px-4 pb-24">
+      <AnimatedBackground colorTag={memory.color_tag} />
 
       <main className="relative z-10 w-full max-w-2xl pt-8 sm:pt-10">
         <nav className="text-sm">

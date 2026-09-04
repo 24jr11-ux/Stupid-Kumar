@@ -22,13 +22,13 @@ export const metadata = {
 export const viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#4A352F",
+  themeColor: "#000000",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className="h-full antialiased bg-[#4A352F]">
-      <body className="min-h-full flex flex-col bg-[#4A352F] text-[#FAF7F2]" suppressHydrationWarning>
+    <html lang="en" className="h-full antialiased bg-black">
+      <body className="min-h-full flex flex-col bg-black text-[#FAF7F2]" suppressHydrationWarning>
         {children}
         {/* Registers the service worker that makes the app installable / offline-aware. */}
         <SWRegister />

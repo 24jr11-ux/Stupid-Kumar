@@ -3,7 +3,7 @@ import Image from "next/image";
 import { Camera, Sparkles } from "lucide-react";
 import CountupClock from "@/components/CountupClock";
 import AddMemoryButton from "@/components/AddMemoryButton";
-import AmbientBackground from "@/components/AmbientBackground";
+import AnimatedBackground from "@/components/AnimatedBackground";
 import { supabase } from "@/lib/supabase";
 import { getColorTagConfig } from "@/lib/colors";
 
@@ -46,9 +46,8 @@ export default async function Home() {
   const memories = await getMemories();
 
   return (
-    <div className="relative min-h-screen flex flex-1 justify-center bg-[#4A352F] px-4 pb-24 overflow-x-hidden">
-      {/* Vivid multi-blob screen-blend lava lamp background */}
-      <AmbientBackground mode="home" />
+    <div className="min-h-screen flex flex-1 justify-center px-4 pb-24">
+      <AnimatedBackground />
 
       <main className="relative z-10 w-full max-w-2xl pt-12 sm:pt-16">
         {/* Header Hero */}
