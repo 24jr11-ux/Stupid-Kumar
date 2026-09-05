@@ -71,6 +71,48 @@ function normalizeMoments(moments = []) {
   }));
 }
 
+// mm/dd/yy date for the carousel polaroid's top band, matching home timeline.
+function polaroidTopDate(isoDate) {
+  if (!isoDate) return "";
+  const date = new Date(`${isoDate}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return isoDate;
+  return date.toLocaleDateString("en-US", {
+    year: "2-digit",
+    month: "2-digit",
+    day: "2-digit",
+  });
+}
+
+// Auto-growing multi-line textarea so moment text wraps while editing.
+function MomentTextarea({ value, onChange, placeholder, isNsfw }) {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight + 2}px`;
+  }, [value]);
+
+  return (
+    <textarea
+      ref={ref}
+      value={value}
+      rows={1}
+      onChange={(e) => {
+        const el = e.currentTarget;
+        el.style.height = "auto";
+        el.style.height = `${el.scrollHeight + 2}px`;
+        onChange(el.value);
+      }}
+      placeholder={placeholder}
+      className={`w-full resize-none overflow-hidden bg-transparent text-sm outline-none ${
+        isNsfw ? "text-[#DCE38E] font-medium" : "text-[#FAF7F2]"
+      } placeholder:text-[#D4C8BA]/40`}
+    />
+  );
+}
+
 function SortableMomentRow({ moment, onChange, onRemove }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: moment.id });
@@ -101,14 +143,11 @@ function SortableMomentRow({ moment, onChange, onRemove }) {
         <GripVertical size={16} />
       </button>
 
-      <input
-        type="text"
+      <MomentTextarea
         value={moment.text}
-        onChange={(e) => onChange(moment.id, { text: e.target.value })}
+        onChange={(text) => onChange(moment.id, { text })}
         placeholder={moment.is_nsfw ? "Write an NSFW moment…" : "Write a moment…"}
-        className={`w-full bg-transparent text-sm outline-none ${
-          moment.is_nsfw ? "text-[#DCE38E] font-medium" : "text-[#FAF7F2]"
-        } placeholder:text-[#D4C8BA]/40`}
+        isNsfw={moment.is_nsfw}
       />
 
       {moment.is_nsfw && (
@@ -279,9 +318,8 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  // --- touch swipe ----------------------------------------------------------
-  const touchStartX = useRef(null);
-  const touchEndX = useRef(null);
+  // --- photo carousel -------------------------------------------------------
+  const carouselRef = useRef(null);
 
   const photoUrlsForCarousel = photoUrls;
   const embedUrl = playerEmbedUrl(songUrl);
@@ -321,30 +359,60 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
     (songUrl || "").trim() === (memory.song_url || "").trim();
 
   // --- photo carousel -------------------------------------------------------
+  function carouselGoTo(index, behavior = "smooth") {
+    const container = carouselRef.current;
+    if (!container || container.children.length === 0) return;
+    const clamped = Math.max(0, Math.min(index, container.children.length - 1));
+    const child = container.children[clamped];
+    const target =
+      child.offsetLeft + child.offsetWidth / 2 - container.clientWidth / 2;
+    container.scrollTo({ left: target, behavior });
+    setActivePhotoIndex(clamped);
+  }
+  function carouselCenterIndex() {
+    const container = carouselRef.current;
+    if (!container || container.children.length === 0) return 0;
+    const mid = container.clientWidth / 2;
+    let best = 0;
+    let bestDist = Infinity;
+    Array.from(container.children).forEach((child, i) => {
+      const dist = Math.abs(
+        child.offsetLeft + child.offsetWidth / 2 - container.scrollLeft - mid
+      );
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = i;
+      }
+    });
+    return best;
+  }
+  function handleCarouselScroll() {
+    const container = carouselRef.current;
+    if (!container) return;
+    setActivePhotoIndex(carouselCenterIndex());
+  }
   function prevPhoto() {
-    setActivePhotoIndex((prev) =>
-      prev === 0 ? photoUrlsForCarousel.length - 1 : prev - 1
-    );
+    const container = carouselRef.current;
+    if (!container || container.children.length === 0) return;
+    const current = carouselCenterIndex();
+    carouselGoTo((current + container.children.length - 1) % container.children.length);
   }
   function nextPhoto() {
-    setActivePhotoIndex((prev) =>
-      prev === photoUrlsForCarousel.length - 1 ? 0 : prev + 1
-    );
+    const container = carouselRef.current;
+    if (!container || container.children.length === 0) return;
+    const current = carouselCenterIndex();
+    carouselGoTo((current + 1) % container.children.length);
   }
-  function handleTouchStart(e) {
-    touchStartX.current = e.targetTouches[0].clientX;
-  }
-  function handleTouchMove(e) {
-    touchEndX.current = e.targetTouches[0].clientX;
-  }
-  function handleTouchEnd() {
-    if (!touchStartX.current || !touchEndX.current) return;
-    const distance = touchStartX.current - touchEndX.current;
-    if (distance > 45) nextPhoto();
-    else if (distance < -45) prevPhoto();
-    touchStartX.current = null;
-    touchEndX.current = null;
-  }
+
+  // Center the first polaroid once layout is known (mount / photo list change).
+  useEffect(() => {
+    const container = carouselRef.current;
+    if (!container || container.children.length === 0) return;
+    setActivePhotoIndex(0);
+    const child = container.children[0];
+    container.scrollLeft =
+      child.offsetLeft + child.offsetWidth / 2 - container.clientWidth / 2;
+  }, [photoUrlsForCarousel.length]);
 
   // --- moments helpers ------------------------------------------------------
   function updateMoment(id, patch) {
@@ -770,20 +838,40 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
               <div className="relative">
                 <div className="relative">
                   <div
-                    className="relative aspect-4/3 sm:aspect-16/10 w-full overflow-hidden rounded-2xl bg-[#261A16] select-none touch-pan-y border border-[#5D433C]"
-                    onTouchStart={handleTouchStart}
-                    onTouchMove={handleTouchMove}
-                    onTouchEnd={handleTouchEnd}
+                    ref={carouselRef}
+                    onScroll={handleCarouselScroll}
+                    className="relative flex snap-x snap-mandatory items-center gap-4 overflow-x-auto scroll-smooth py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                   >
-                    <Image
-                      src={photoUrlsForCarousel[activePhotoIndex]}
-                      alt={`${title} — photo ${activePhotoIndex + 1}`}
-                      fill
-                      sizes="(max-width: 640px) 100vw, 700px"
-                      className="object-cover transition-opacity duration-300"
-                      unoptimized
-                      priority
-                    />
+                    {photoUrlsForCarousel.map((url, i) => (
+                      <div
+                        key={url}
+                        className="w-max max-w-full shrink-0 snap-center bg-[#FDFBF6] p-3 pb-5 shadow-[0_8px_30px_rgba(0,0,0,0.5),0_1px_3px_rgba(0,0,0,0.2)]"
+                      >
+                        <div className="px-1.5 pb-2.5 pt-1 text-center font-mono text-sm font-semibold tracking-[0.18em] text-[#786F6A]">
+                          {polaroidTopDate(dateStr)}
+                        </div>
+                        <div className="bg-[#EFE8DC]">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={url}
+                            alt={`${title} — photo ${i + 1}`}
+                            draggable={false}
+                            loading={i === 0 ? "eager" : "lazy"}
+                            onLoad={() => {
+                              if (carouselCenterIndex() === i) carouselGoTo(i, "auto");
+                            }}
+                            className="block h-auto w-auto max-w-full select-none"
+                            style={{ maxHeight: "calc(70vh - 8rem)" }}
+                          />
+                        </div>
+                        <div
+                          className="px-1.5 pt-3.5 text-center font-handwriting text-2xl font-bold leading-tight text-[#2C2523]"
+                          style={{ fontFamily: "var(--font-handwriting)" }}
+                        >
+                          {title || "Untitled"}
+                        </div>
+                      </div>
+                    ))}
                   </div>
 
                   {photoUrlsForCarousel.length > 1 && (
@@ -818,7 +906,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                         <button
                           key={i}
                           type="button"
-                          onClick={() => setActivePhotoIndex(i)}
+                          onClick={() => carouselGoTo(i)}
                           aria-label={`Go to photo ${i + 1}`}
                           className={`h-2 rounded-full transition-all ${
                             i === activePhotoIndex ? "w-6" : "w-2 bg-white/25 hover:bg-white/40"
@@ -1119,7 +1207,9 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                           }}
                         />
                         {moment.is_nsfw ? (
-                          <>
+                          revealed ? (
+                            <span>{moment.text}</span>
+                          ) : (
                             <span
                               className="font-sans text-xs font-bold uppercase tracking-wide not-italic px-1.5 py-0.5 rounded-sm"
                               style={{
@@ -1130,8 +1220,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                             >
                               [NSFW]
                             </span>
-                            {revealed && <span>{moment.text}</span>}
-                          </>
+                          )
                         ) : (
                           <span>{moment.text}</span>
                         )}
