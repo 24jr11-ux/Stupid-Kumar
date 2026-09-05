@@ -768,21 +768,23 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
           <div className="mt-8 rounded-3xl border border-[#5D433C] bg-[#382722] p-4 sm:p-6 shadow-2xl">
             {photoUrlsForCarousel.length > 0 ? (
               <div className="relative">
-                <div
-                  className="relative aspect-4/3 sm:aspect-16/10 w-full overflow-hidden rounded-2xl bg-[#261A16] select-none touch-pan-y border border-[#5D433C]"
-                  onTouchStart={handleTouchStart}
-                  onTouchMove={handleTouchMove}
-                  onTouchEnd={handleTouchEnd}
-                >
-                  <Image
-                    src={photoUrlsForCarousel[activePhotoIndex]}
-                    alt={`${title} — photo ${activePhotoIndex + 1}`}
-                    fill
-                    sizes="(max-width: 640px) 100vw, 700px"
-                    className="object-cover transition-opacity duration-300"
-                    unoptimized
-                    priority
-                  />
+                <div className="relative">
+                  <div
+                    className="relative aspect-4/3 sm:aspect-16/10 w-full overflow-hidden rounded-2xl bg-[#261A16] select-none touch-pan-y border border-[#5D433C]"
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                  >
+                    <Image
+                      src={photoUrlsForCarousel[activePhotoIndex]}
+                      alt={`${title} — photo ${activePhotoIndex + 1}`}
+                      fill
+                      sizes="(max-width: 640px) 100vw, 700px"
+                      className="object-cover transition-opacity duration-300"
+                      unoptimized
+                      priority
+                    />
+                  </div>
 
                   {photoUrlsForCarousel.length > 1 && (
                     <>
@@ -790,7 +792,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                         type="button"
                         onClick={prevPhoto}
                         aria-label="Previous photo"
-                        className="absolute left-3 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-[#261A16]/90 text-white transition hover:bg-black active:scale-95 shadow-md border border-[#5D433C]"
+                        className="absolute -left-5 top-1/2 -translate-y-1/2 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-[#261A16] text-white transition hover:bg-black active:scale-95 shadow-md border border-[#5D433C]"
                       >
                         <ChevronLeft size={22} />
                       </button>
@@ -798,7 +800,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                         type="button"
                         onClick={nextPhoto}
                         aria-label="Next photo"
-                        className="absolute right-3 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-[#261A16]/90 text-white transition hover:bg-black active:scale-95 shadow-md border border-[#5D433C]"
+                        className="absolute -right-5 top-1/2 -translate-y-1/2 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-[#261A16] text-white transition hover:bg-black active:scale-95 shadow-md border border-[#5D433C]"
                       >
                         <ChevronRight size={22} />
                       </button>
