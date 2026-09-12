@@ -5,18 +5,38 @@
 export const FALLBACK_QUESTIONS = [
   {
     id: 1,
-    question: "Where did we first meet?",
-    answers: ["The Coffee Shop", "Coffee Shop", "Cafe"],
+    question: "What was the first movie we watched together?",
+    answers: ["Superman"],
   },
   {
     id: 2,
-    question: "What is our favorite season?",
-    answers: ["Fall", "Autumn"],
+    question: "What was the first place we went to in Laguna together called?",
+    answers: ["Top of the world"],
   },
   {
     id: 3,
-    question: "What is our favorite cozy dinner?",
-    answers: ["Pizza", "Pasta", "Ramen", "Tacos"],
+    question: "What was the first album you ever made me listen to?",
+    answers: ["Folklore"],
+  },
+  {
+    id: 4,
+    question: "What was the game I got on as a kid just to talk to you?",
+    answers: ["Animal jam"],
+  },
+  {
+    id: 5,
+    question: "What was the first thing you ever privately texted me?",
+    answers: ["Hey lol"],
+  },
+  {
+    id: 6,
+    question: "What is the name of the monkey you gave me?",
+    answers: ["Sebastian"],
+  },
+  {
+    id: 7,
+    question: "What ice cream flavor did we get on the Seal Beach date?",
+    answers: ["Root beer"],
   },
 ];
 
