@@ -60,9 +60,6 @@ export default async function Home() {
           >
             Stupid &amp; Kumar
           </h1>
-          <p className="mt-2 text-sm font-medium tracking-wide text-[#D4C8BA]">
-            Our private keepsake of favorite moments and dates.
-          </p>
         </div>
 
         {/* Live count-up clock on solid glowing espresso cards */}

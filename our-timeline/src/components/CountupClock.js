@@ -115,7 +115,7 @@ export default function CountupClock({ startDateIso }) {
         ))}
       </div>
       <p className="mt-3.5 text-center text-xs font-medium tracking-wide text-[#D4C8BA]">
-        …and counting every moment together since April 5th, 2025
+        …since April 5th, 2025
       </p>
     </div>
   );

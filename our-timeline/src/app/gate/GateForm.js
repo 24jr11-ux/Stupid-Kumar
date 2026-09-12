@@ -19,7 +19,7 @@ function SubmitButton() {
       disabled={pending}
       className="mt-6 w-full rounded-full bg-[#C85A32] px-6 py-3.5 text-sm font-semibold text-white shadow-[0_4px_20px_rgba(200,90,50,0.4)] transition-all duration-200 hover:bg-[#B34B24] hover:shadow-[0_6px_24px_rgba(200,90,50,0.55)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
     >
-      {pending ? "Checking…" : "Unlock Our Timeline"}
+      {pending ? "Checking…" : "Unlock"}
     </button>
   );
 }
@@ -78,22 +78,14 @@ export default function GateForm({ next, question, questionId }) {
           <Lock size={24} />
         </div>
 
-        <p
-          className="font-handwriting text-3xl font-bold text-[#FAF7F2]"
+        <h1
+          className="font-handwriting text-5xl font-bold tracking-tight text-[#FAF7F2]"
           style={{
             textShadow: "0 0 24px rgba(200, 90, 50, 0.4)",
           }}
         >
           Stupid &amp; Kumar
-        </p>
-
-        <h1 className="mt-1 text-2xl font-bold tracking-tight text-[#FAF7F2]">
-          Private Timeline
         </h1>
-
-        <p className="mt-2 text-sm leading-relaxed text-[#D4C8BA]">
-          Answer our secret question to unlock our photos and memories.
-        </p>
 
         <input type="hidden" name="next" value={next} />
         <input type="hidden" name="questionId" value={questionId} />
@@ -112,7 +104,7 @@ export default function GateForm({ next, question, questionId }) {
             name="answer"
             required
             autoFocus
-            placeholder="Type your answer…"
+            placeholder=""
             className="mt-2.5 w-full rounded-2xl border border-[#5D433C] bg-[#2D1E1A]/90 px-4 py-3.5 text-sm text-[#FAF7F2] outline-none transition placeholder:text-[#D4C8BA]/40 focus:border-[#C85A32] focus:bg-[#352520] focus:ring-2 focus:ring-[#C85A32]/30"
           />
         </div>
