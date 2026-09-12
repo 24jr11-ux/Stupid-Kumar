@@ -23,7 +23,7 @@ function polaroidTopDate(isoDate) {
 // When "we" began — edit this one constant and the count-up clock starts
 // somewhere new. (Personal dates belong here, nothing hardcoded elsewhere.)
 // ------------------------------------------------------------------
-const RELATIONSHIP_START_DATE = new Date("2025-04-05T23:30:00-07:00");
+const RELATIONSHIP_START_DATE = new Date("2025-04-05T00:00:00-07:00");
 
 // Always render fresh on each request so new memories appear immediately.
 export const dynamic = "force-dynamic";
