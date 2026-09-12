@@ -1,12 +1,12 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 import { AUTH_COOKIE, authCookieValue, sanitizeNextPath } from "@/lib/auth";
 import { verifyAnswer, getQuestionById } from "@/lib/questions";
 
 // Server action behind the /gate form. Verifies the submitted answer against
-// the randomized question, then stores an auth cookie and redirects on.
+// the randomized question, then stores an auth cookie. Navigation itself is
+// driven client-side so the gate can animate the lava "flowing out" first.
 export async function unlock(prevState, formData) {
   const questionId = Number(formData.get("questionId"));
   const answer = String(formData.get("answer") || "").trim();
@@ -33,5 +33,5 @@ export async function unlock(prevState, formData) {
   });
 
   const destination = sanitizeNextPath(String(formData.get("next") || ""));
-  redirect(destination);
+  return { success: true, next: destination };
 }
