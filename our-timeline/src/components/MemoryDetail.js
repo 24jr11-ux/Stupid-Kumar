@@ -20,8 +20,10 @@ import { CSS } from "@dnd-kit/utilities";
 import {
   AlertTriangle,
   Check,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
   Flame,
   GripVertical,
   ImageOff,
@@ -269,6 +271,8 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
   const [editMode, setEditMode] = useState(initialEdit);
   const [momentsEditMode, setMomentsEditMode] = useState(false);
   const [showNsfw, setShowNsfw] = useState(false);
+  const [forceShownIds, setForceShownIds] = useState(() => new Set());
+  const [forceHiddenIds, setForceHiddenIds] = useState(() => new Set());
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
 
   // --- page-level edit fields -----------------------------------------------
@@ -408,6 +412,21 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
   }
   function removeMoment(id) {
     setMoments((prev) => prev.filter((m) => m.id !== id));
+  }
+  // Per-moment NSFW reveal override, independent of the global flame toggle.
+  function setNsfwReveal(id, reveal) {
+    setForceShownIds((prev) => {
+      const next = new Set(prev);
+      if (reveal) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+    setForceHiddenIds((prev) => {
+      const next = new Set(prev);
+      if (reveal) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   }
   function addMoment(isNsfw) {
     const newMoment = {
@@ -1181,40 +1200,68 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
               hasAnyMoment ? (
                 <ul className="mt-5 space-y-3.5">
                   {visibleMoments.map((moment) => {
-                    const revealed = !moment.is_nsfw || showNsfw;
+                    const isNsfw = moment.is_nsfw;
+                    const revealed =
+                      !isNsfw ||
+                      ((showNsfw || forceShownIds.has(moment.id)) &&
+                        !forceHiddenIds.has(moment.id));
                     return (
                       <li
                         key={moment.id}
                         className={`flex items-start gap-3 text-sm sm:text-base leading-relaxed ${
-                          moment.is_nsfw ? "italic" : ""
+                          isNsfw ? "italic" : ""
                         }`}
                         style={{
-                          color: moment.is_nsfw ? colorConfig.text : "#FAF7F2",
+                          color: isNsfw ? colorConfig.text : "#FAF7F2",
                         }}
                       >
                         {/* Squiggle: always uses the date's assigned color */}
                         <span
                           aria-hidden="true"
-                          className="shrink-0 select-none font-handwriting text-xl font-bold leading-tight"
+                          className="shrink-0 select-none font-handwriting text-2xl font-bold leading-tight"
                           style={{ color: colorConfig.hex }}
                         >
                           ~
                         </span>
-                        {moment.is_nsfw ? (
-                          revealed ? (
-                            <span>{moment.text}</span>
-                          ) : (
-                            <span
-                              className="font-sans text-xs font-bold uppercase tracking-wide not-italic px-1.5 py-0.5 rounded-sm"
-                              style={{
-                                backgroundColor: colorConfig.bgLight,
-                                color: colorConfig.text,
-                                border: `1px solid ${colorConfig.border}`,
-                              }}
-                            >
-                              [NSFW]
+                        {isNsfw ? (
+                          <span className="flex min-w-0 flex-col items-start gap-1.5 not-italic">
+                            <span className="flex items-center gap-2">
+                              <span
+                                className="shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+                                style={{
+                                  backgroundColor: WARM_OLIVE_GREEN.bgLight,
+                                  color: WARM_OLIVE_GREEN.text,
+                                  borderColor: WARM_OLIVE_GREEN.border,
+                                }}
+                              >
+                                NSFW
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setNsfwReveal(moment.id, !revealed)}
+                                aria-label={
+                                  revealed
+                                    ? "Hide this NSFW moment"
+                                    : "Reveal this NSFW moment"
+                                }
+                                className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition hover:bg-[#3E341C]"
+                                style={{
+                                  backgroundColor: WARM_OLIVE_GREEN.bgLight,
+                                  color: WARM_OLIVE_GREEN.text,
+                                  borderColor: WARM_OLIVE_GREEN.border,
+                                }}
+                              >
+                                {revealed ? (
+                                  <ChevronUp size={12} />
+                                ) : (
+                                  <ChevronDown size={12} />
+                                )}
+                              </button>
                             </span>
-                          )
+                            {revealed && (
+                              <span className="min-w-0">{moment.text}</span>
+                            )}
+                          </span>
                         ) : (
                           <span>{moment.text}</span>
                         )}
