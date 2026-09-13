@@ -71,18 +71,6 @@ function normalizeMoments(moments = []) {
   }));
 }
 
-// mm/dd/yy date for the carousel polaroid's top band, matching home timeline.
-function polaroidTopDate(isoDate) {
-  if (!isoDate) return "";
-  const date = new Date(`${isoDate}T00:00:00`);
-  if (Number.isNaN(date.getTime())) return isoDate;
-  return date.toLocaleDateString("en-US", {
-    year: "2-digit",
-    month: "2-digit",
-    day: "2-digit",
-  });
-}
-
 // Auto-growing multi-line textarea so moment text wraps while editing.
 function MomentTextarea({ value, onChange, placeholder, isNsfw }) {
   const ref = useRef(null);
@@ -848,7 +836,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                         className="w-max max-w-full shrink-0 snap-center bg-[#FDFBF6] p-3 pb-5 shadow-[0_8px_30px_rgba(0,0,0,0.5),0_1px_3px_rgba(0,0,0,0.2)]"
                       >
                         <div className="px-1.5 pb-2.5 pt-1 text-center font-mono text-sm font-semibold tracking-[0.18em] text-[#786F6A]">
-                          {polaroidTopDate(dateStr)}
+                          <span aria-hidden="true">&nbsp;</span>
                         </div>
                         <div className="bg-[#EFE8DC]">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -868,7 +856,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                           className="px-1.5 pt-3.5 text-center font-handwriting text-2xl font-bold leading-tight text-[#2C2523]"
                           style={{ fontFamily: "var(--font-handwriting)" }}
                         >
-                          {title || "Untitled"}
+                          <span aria-hidden="true">&nbsp;</span>
                         </div>
                       </div>
                     ))}
@@ -1064,31 +1052,39 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
               --------------------------------------------------------------- */}
           <section className="mt-8 rounded-3xl border border-[#5D433C] bg-[#382722] p-6 sm:p-8 shadow-2xl">
             <div className="flex items-center justify-between gap-4 border-b border-[#5D433C] pb-4">
-              <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#D4C8BA]">
-                <Flame size={14} style={{ color: colorConfig.hex }} />
-                Moments
+              <h2
+                className="font-handwriting text-3xl font-bold tracking-tight leading-tight text-[#FAF7F2]"
+                style={{
+                  textShadow: `0 0 24px ${colorConfig.hex}50, 0 2px 6px rgba(0, 0, 0, 0.5)`,
+                }}
+              >
+                {title || "Untitled"}
               </h2>
 
-              <div className="flex items-center gap-2">
-                {/* NSFW view toggle */}
+              <div className="flex shrink-0 items-center gap-2">
+                {/* NSFW view toggle — simple fire button */}
                 {hasNsfwMoment && !momentsEditMode && (
                   <button
                     type="button"
                     onClick={() => setShowNsfw((v) => !v)}
                     aria-pressed={showNsfw}
-                    className="inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition"
+                    aria-label={showNsfw ? "Hide NSFW moments" : "Show NSFW moments"}
+                    className="flex h-9 w-9 items-center justify-center rounded-full border transition"
                     style={{
-                      backgroundColor: showNsfw ? WARM_OLIVE_GREEN.bgLight : "#2D1E1A",
-                      borderColor: showNsfw ? WARM_OLIVE_GREEN.border : "#5D433C",
-                      color: showNsfw ? WARM_OLIVE_GREEN.text : "#D4C8BA",
+                      backgroundColor: showNsfw ? colorConfig.bgLight : "#2D1E1A",
+                      borderColor: showNsfw ? colorConfig.border : "#5D433C",
+                      color: showNsfw ? colorConfig.text : "#D4C8BA",
                     }}
                   >
-                    <Flame size={13} style={{ color: WARM_OLIVE_GREEN.hex }} />
-                    {showNsfw ? "Hide NSFW" : "Show NSFW"}
+                    <Flame
+                      size={15}
+                      fill={showNsfw ? "currentColor" : "none"}
+                      style={{ color: showNsfw ? colorConfig.hex : "#D4C8BA" }}
+                    />
                   </button>
                 )}
 
-                {/* Edit moments toggle */}
+                {/* Edit moments toggle — just a pencil */}
                 <button
                   type="button"
                   onClick={() => {
@@ -1098,14 +1094,15 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                     setMomentsEditMode((v) => !v);
                   }}
                   aria-pressed={momentsEditMode}
-                  className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider transition ${
-                    momentsEditMode
-                      ? "border-[#C85A32] bg-[#48281E] text-[#F8B79D]"
-                      : "border-[#5D433C] bg-[#2D1E1A] text-[#D4C8BA] hover:border-[#C85A32] hover:text-[#FAF7F2]"
-                  }`}
+                  aria-label={momentsEditMode ? "Finish editing moments" : "Edit moments"}
+                  className="flex h-9 w-9 items-center justify-center rounded-full border transition"
+                  style={{
+                    backgroundColor: momentsEditMode ? colorConfig.bgLight : "#2D1E1A",
+                    borderColor: momentsEditMode ? colorConfig.border : "#5D433C",
+                    color: momentsEditMode ? colorConfig.text : "#D4C8BA",
+                  }}
                 >
-                  <GripVertical size={13} />
-                  {momentsEditMode ? "Done" : "Edit Moments"}
+                  <Pencil size={15} />
                 </button>
               </div>
             </div>
@@ -1192,20 +1189,17 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                           moment.is_nsfw ? "italic" : ""
                         }`}
                         style={{
-                          color: moment.is_nsfw ? WARM_OLIVE_GREEN.text : "#FAF7F2",
+                          color: moment.is_nsfw ? colorConfig.text : "#FAF7F2",
                         }}
                       >
-                        {/* Dot indicator: Olive green for NSFW, entry's color_tag for standard moments */}
+                        {/* Squiggle: always uses the date's assigned color */}
                         <span
                           aria-hidden="true"
-                          className="mt-2 h-2 w-2 shrink-0 rounded-full"
-                          style={{
-                            backgroundColor: moment.is_nsfw ? WARM_OLIVE_GREEN.hex : colorConfig.hex,
-                            boxShadow: moment.is_nsfw
-                              ? `0 0 10px ${WARM_OLIVE_GREEN.hex}`
-                              : `0 0 10px ${colorConfig.hex}`,
-                          }}
-                        />
+                          className="shrink-0 select-none font-handwriting text-xl font-bold leading-tight"
+                          style={{ color: colorConfig.hex }}
+                        >
+                          ~
+                        </span>
                         {moment.is_nsfw ? (
                           revealed ? (
                             <span>{moment.text}</span>
@@ -1213,9 +1207,9 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                             <span
                               className="font-sans text-xs font-bold uppercase tracking-wide not-italic px-1.5 py-0.5 rounded-sm"
                               style={{
-                                backgroundColor: WARM_OLIVE_GREEN.bgLight,
-                                color: WARM_OLIVE_GREEN.text,
-                                border: `1px solid ${WARM_OLIVE_GREEN.border}`,
+                                backgroundColor: colorConfig.bgLight,
+                                color: colorConfig.text,
+                                border: `1px solid ${colorConfig.border}`,
                               }}
                             >
                               [NSFW]
@@ -1233,7 +1227,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                   <p className="font-handwriting text-2xl text-[#FAF7F2]">
                     No moments yet
                   </p>
-                  <p className="text-sm">Tap “Edit Moments” to add some.</p>
+                  <p className="text-sm">Tap the pencil to add some.</p>
                 </div>
               )
             )}
