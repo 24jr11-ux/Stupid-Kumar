@@ -20,6 +20,72 @@ function polaroidTopDate(isoDate) {
 }
 
 // ------------------------------------------------------------------
+// ------------------------------------------------------------------
+// Deterministic "instant film" variation per memory. Keyed on the
+// stable entry_number so the same memory always gets the same subtle
+// treatment (no new database fields needed).
+// ------------------------------------------------------------------
+function filmSeed(value) {
+  let h = 2166136261;
+  const str = String(value ?? "");
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+function polaroidFilmLook(key) {
+  // Deterministic xorshift stream seeded from the hash, so each of the
+  // subtle per-photo amounts spreads across its whole range while still
+  // producing identical results for the same memory every time.
+  let s = filmSeed(key) | 0;
+  const rand = () => {
+    s ^= s << 13;
+    s ^= s >>> 17;
+    s ^= s << 5;
+    s |= 0;
+    return (s >>> 0) / 4294967296; // 0..1
+  };
+  const r = Array.from({ length: 8 }, rand);
+  const LEAK_CORNERS = [
+    "ellipse 90% 68% at 80% 20%", // top-right
+    "ellipse 90% 68% at 20% 80%", // bottom-left
+    "ellipse 90% 68% at 80% 80%", // bottom-right
+    "ellipse 90% 68% at 20% 20%", // top-left
+  ];
+
+  return {
+    filter: `sepia(${(0.1 + r[0] * 0.05).toFixed(3)}) saturate(${(0.84 + r[1] * 0.08).toFixed(3)}) contrast(${(0.9 + r[2] * 0.06).toFixed(3)}) brightness(${(1.02 + r[3] * 0.04).toFixed(3)}) blur(0.25px)`,
+    fade: {
+      backgroundColor: `rgba(112, 86, 64, ${(0.07 + r[4] * 0.09).toFixed(3)})`,
+    },
+    grain: {
+      opacity: 0.26 + r[5] * 0.26,
+    },
+    vignette: {
+      background: `radial-gradient(ellipse at center, transparent 50%, rgba(32, 22, 15, ${(0.12 + r[6] * 0.1).toFixed(3)}) 100%)`,
+    },
+    leak: {
+      background: `radial-gradient(${LEAK_CORNERS[filmSeed(key) & 3]}, rgba(255, 108, 32, ${(0.05 + r[7] * 0.07).toFixed(3)}) 0%, rgba(255, 108, 32, 0) 65%)`,
+    },
+  };
+}
+
+// Styling overlays layered over the timeline cover photo. Purely
+// decorative — pointer-events disabled so clicks/hover pass through.
+function PolaroidFilm({ treatment }) {
+  if (!treatment) return null;
+  return (
+    <>
+      <div className="pf-fade" style={treatment.fade} aria-hidden="true" />
+      <div className="pf-vignette" style={treatment.vignette} aria-hidden="true" />
+      <div className="pf-leak" style={treatment.leak} aria-hidden="true" />
+      <div className="pf-grain" style={treatment.grain} aria-hidden="true" />
+    </>
+  );
+}
+
 // When "we" began — edit this one constant and the count-up clock starts
 // somewhere new. (Personal dates belong here, nothing hardcoded elsewhere.)
 // ------------------------------------------------------------------
@@ -108,6 +174,7 @@ export default async function Home() {
                     "%"
                   : "50% 50%";
               const colorConfig = getColorTagConfig(memory.color_tag);
+              const film = polaroidFilmLook(memory.entry_number ?? memory.id);
 
               return (
                 <li key={memory.id} className="relative">
@@ -136,17 +203,20 @@ export default async function Home() {
                     </div>
 
                     {/* MIDDLE: square-cropped cover photo */}
-                    <div className="relative aspect-square w-full overflow-hidden bg-[#EFE8DC]">
+                    <div className="pf-stage relative aspect-square w-full overflow-hidden bg-[#EFE8DC]">
                       {coverPhoto ? (
-                        <Image
-                          src={coverPhoto}
-                          alt={memory.title}
-                          fill
-                          sizes="(max-width: 640px) 80vw, 400px"
-                          style={{ objectPosition: coverPos }}
-                          className="object-cover transition duration-300 group-hover:scale-[1.03]"
-                          unoptimized
-                        />
+                        <>
+                          <Image
+                            src={coverPhoto}
+                            alt={memory.title}
+                            fill
+                            sizes="(max-width: 640px) 80vw, 400px"
+                            style={{ objectPosition: coverPos, filter: film.filter }}
+                            className="pf-img object-cover transition duration-300 group-hover:scale-[1.03]"
+                            unoptimized
+                          />
+                          <PolaroidFilm treatment={film} />
+                        </>
                       ) : (
                         <div className="flex h-full w-full flex-col items-center justify-center gap-2 p-6 text-center text-[#A89F95]">
                           <div className="flex h-12 w-12 items-center justify-center bg-[#F1E9DC] text-[#A08F7F]">
