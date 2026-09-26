@@ -9,7 +9,7 @@ A private, passphrase/question-gated memory timeline built with **Next.js 16 (Ap
 - 🖼️ **Swipeable Carousel**: Mobile swipe gestures and desktop arrows for multi-photo memories.
 - ⚡ **Client-Side Image Compression**: Automatic resizing before upload to keep loads fast and save storage.
 - 🗑️ **Delete Memories**: Delete entries and automatically clean up associated storage files.
-- 🎵 **Music Player**: Embedded Spotify / YouTube player per memory.
+- 🎵 **Music Player**: Circular Componentry vinyl with in-app YouTube playback, editable song title/artist, and automatic thumbnails.
 - 🔞 **NSFW Highlight Section**: Discreetly hidden behind a cozy fall-styled toggle.
 - 📱 **Installable PWA**: Works on iOS and Android with custom app icons and offline support.
 
@@ -52,6 +52,16 @@ Example `SECURITY_QUESTIONS` format:
 3. Copy your project URL and anon key into `.env.local`.
 
 ## Running locally
+
+For an existing database, add the nullable song metadata columns in the Supabase SQL editor before saving memories with this version:
+
+```sql
+alter table public.memories add column if not exists song_title text;
+alter table public.memories add column if not exists song_artist text;
+alter table public.memories add column if not exists song_cover_url text;
+```
+
+Song links support YouTube watch, short share, embed, and Shorts URLs. Metadata uses server-side YouTube oEmbed with no API key; artist is manually editable. Existing YouTube links without metadata still render. Old non-YouTube links remain stored and can be replaced or removed in edit mode.
 
 ```bash
 npm install

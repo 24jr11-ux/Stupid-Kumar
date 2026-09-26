@@ -43,7 +43,10 @@ create table if not exists public.memories (
   title text not null,
   date date not null,
   moments jsonb not null default '[]'::jsonb,     -- array of { id, text, is_nsfw, position }
-  song_url text,                                  -- Spotify / YouTube link to embed
+  song_url text,                               -- YouTube video URL for in-app playback
+  song_title text,                             -- editable song display title
+  song_artist text,                            -- manually supplied artist
+  song_cover_url text,                         -- YouTube thumbnail/artwork URL
   photo_urls text[],                              -- public URLs returned by uploadPhoto
   color_tag text not null default '#C85A32',     -- warm palette accent color hex
   created_at timestamptz not null default now()
@@ -66,6 +69,11 @@ alter table public.memories add column if not exists moments jsonb not null defa
 
 -- If you already had an existing memories table, run this line to add the color_tag column:
 alter table public.memories add column if not exists color_tag text not null default '#C85A32';
+
+-- YouTube vinyl player metadata (nullable for memories saved before this feature).
+alter table public.memories add column if not exists song_title text;
+alter table public.memories add column if not exists song_artist text;
+alter table public.memories add column if not exists song_cover_url text;
 
 -- Cover photo: lets the user pick a specific photo + drag position for the polaroid.
 -- `cover_photo_url` is the public URL of the chosen photo (falls back to photo_urls[0]).

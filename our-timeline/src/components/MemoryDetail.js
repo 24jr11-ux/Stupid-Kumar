@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
@@ -29,7 +29,6 @@ import {
   ImageOff,
   Image as ImageIcon,
   Loader2,
-  Music2,
   Pencil,
   Plus,
   Trash2,
@@ -37,15 +36,17 @@ import {
   X,
 } from "lucide-react";
 import { formatDate } from "@/lib/dates";
-import { playerEmbedUrl } from "@/lib/player";
+import { youtubeVideoId, youtubeSongUrl, youtubeCoverUrls } from "@/lib/player";
+import MemorySong from "@/components/MemorySong";
 import {
   getColorTagConfig,
-  MEMORY_COLOR_TAGS,
+  memoryColorHex,
   DEFAULT_COLOR_TAG,
   WARM_OLIVE_GREEN,
 } from "@/lib/colors";
 import { supabase, uploadPhoto, deleteMemoryPhotos } from "@/lib/supabase";
 import { compressImage } from "@/lib/imageCompression";
+import { memoryPhotoTransitionName } from "@/lib/viewTransitions";
 
 // ---------------------------------------------------------------------------
 // Moments data structure
@@ -96,9 +97,9 @@ function MomentTextarea({ value, onChange, placeholder, isNsfw }) {
         onChange(el.value);
       }}
       placeholder={placeholder}
-      className={`w-full resize-none overflow-hidden bg-transparent text-sm outline-none ${
-        isNsfw ? "text-[#DCE38E] font-medium" : "text-[#FAF7F2]"
-      } placeholder:text-[#D4C8BA]/40`}
+      className={`w-full resize-none overflow-hidden bg-transparent text-sm leading-6 outline-none ${
+        isNsfw ? "font-medium text-[#52591D]" : "text-[#332923]"
+      } placeholder:text-[#806F5B]/55`}
     />
   );
 }
@@ -116,16 +117,16 @@ function SortableMomentRow({ moment, onChange, onRemove }) {
     <li
       ref={setNodeRef}
       style={style}
-      className={`flex items-start gap-2.5 rounded-2xl border p-3.5 transition ${
+      className={`flex items-start gap-2.5 border p-3.5 text-[#332923] shadow-[0_8px_20px_rgba(0,0,0,0.22)] transition ${
         moment.is_nsfw
-          ? "border-[#8F9648] bg-[#2E2818]"
-          : "border-[#5D433C] bg-[#2D1E1A]"
+          ? "border-[#8F9648]/70 bg-[#F4EDCF]"
+          : "border-[#B7A98D] bg-[#FBF3DF]"
       } ${isDragging ? "z-20 opacity-95 shadow-2xl scale-[1.01]" : ""}`}
     >
       {/* Drag handle */}
       <button
         type="button"
-        className="mt-1 shrink-0 cursor-grab touch-none rounded-lg p-1 text-[#D4C8BA]/60 hover:text-[#FAF7F2] active:cursor-grabbing"
+        className="mt-1 shrink-0 cursor-grab touch-none rounded-lg p-1 text-[#806F5B] hover:bg-black/5 hover:text-[#3E3028] active:cursor-grabbing"
         aria-label="Drag to reorder"
         {...attributes}
         {...listeners}
@@ -153,10 +154,66 @@ function SortableMomentRow({ moment, onChange, onRemove }) {
         type="button"
         onClick={() => onRemove(moment.id)}
         aria-label="Remove moment"
-        className="shrink-0 rounded-lg p-1.5 text-[#D4C8BA]/60 transition hover:bg-[#382722] hover:text-[#F8B79D]"
+        className="shrink-0 rounded-lg p-1.5 text-[#806F5B] transition hover:bg-black/5 hover:text-[#A44228]"
       >
         <Trash2 size={15} />
       </button>
+    </li>
+  );
+}
+
+function MomentPaper({
+  moment,
+  revealed,
+  onReveal,
+  className = "",
+}) {
+  const isNsfw = moment.is_nsfw;
+
+  return (
+    <li
+      className={`moment-paper moment-paper--taped ${isNsfw ? "moment-paper--nsfw" : ""} ${className}`}
+    >
+      <div className="flex min-h-[9rem] items-center justify-center px-6 py-7 text-center sm:min-h-[10rem] sm:px-9 sm:py-8">
+        {isNsfw ? (
+          <div className="flex min-w-0 w-full flex-col items-center gap-3">
+            <div className="flex flex-col items-center gap-2">
+              <span
+                className="shrink-0 border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em]"
+                style={{
+                  backgroundColor: "#E8E9C5",
+                  color: "#414A16",
+                  borderColor: WARM_OLIVE_GREEN.border,
+                }}
+              >
+                NSFW
+              </span>
+              <button
+                type="button"
+                onClick={() => onReveal(!revealed)}
+                aria-label={revealed ? "Hide this NSFW moment" : "Reveal this NSFW moment"}
+                className="inline-flex h-7 items-center gap-1.5 border border-[#A4A85E] bg-[#F8F2CF] px-2.5 text-[11px] font-semibold text-[#59601F] transition hover:bg-[#EEE6B6]"
+              >
+                {revealed ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                {revealed ? "Hide" : "Reveal"}
+              </button>
+            </div>
+            {revealed ? (
+              <p className="min-w-0 max-w-prose whitespace-pre-wrap break-words text-[0.95rem] leading-7 text-[#332923] sm:text-base">
+                {moment.text}
+              </p>
+            ) : (
+              <p className="text-sm leading-6 text-[#70664D]">
+                A private memory is folded inside.
+              </p>
+            )}
+          </div>
+        ) : (
+          <p className="min-w-0 max-w-prose whitespace-pre-wrap break-words text-[0.95rem] leading-7 text-[#332923] sm:text-base">
+            {moment.text}
+          </p>
+        )}
+      </div>
     </li>
   );
 }
@@ -270,7 +327,8 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
   // --- view state ----------------------------------------------------------
   const [editMode, setEditMode] = useState(initialEdit);
   const [momentsEditMode, setMomentsEditMode] = useState(false);
-  const [showNsfw, setShowNsfw] = useState(false);
+  const [momentsView, setMomentsView] = useState("single");
+  const [activeMomentIndex, setActiveMomentIndex] = useState(0);
   const [forceShownIds, setForceShownIds] = useState(() => new Set());
   const [forceHiddenIds, setForceHiddenIds] = useState(() => new Set());
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
@@ -279,8 +337,24 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
   const [title, setTitle] = useState(memory.title ?? "");
   const [dateStr, setDateStr] = useState(memory.date ?? "");
   const [entryNumber, setEntryNumber] = useState(memory.entry_number ?? 1);
-  const [colorTag, setColorTag] = useState(memory.color_tag ?? DEFAULT_COLOR_TAG);
-  const [songUrl, setSongUrl] = useState(memory.song_url ?? "");
+  const [colorTag, setColorTag] = useState(memoryColorHex(memory.color_tag));
+  const [song, setSong] = useState({
+    url: memory.song_url ?? "",
+    title: memory.song_title ?? null,
+    artist: memory.song_artist ?? null,
+    coverUrl: memory.song_cover_url ?? null,
+  });
+  const songUrl = song.url;
+  const applySongMetadata = useCallback((data) => {
+    setSong((current) => {
+      if (youtubeVideoId(current.url) !== data.videoId) return current;
+      return {
+        ...current,
+        title: current.title ?? data.title,
+        coverUrl: current.coverUrl || data.coverUrl,
+      };
+    });
+  }, []);
   const [photoUrls, setPhotoUrls] = useState(memory.photo_urls ?? []);
   const [newFiles, setNewFiles] = useState([]);
 
@@ -314,7 +388,9 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
   const carouselRef = useRef(null);
 
   const photoUrlsForCarousel = photoUrls;
-  const embedUrl = playerEmbedUrl(songUrl);
+  const transitionPhotoUrl = (memory.photo_urls ?? []).includes(memory.cover_photo_url)
+    ? memory.cover_photo_url
+    : (memory.photo_urls ?? [])[0];
   const colorConfig = getColorTagConfig(colorTag);
 
   const sensors = useSensors(
@@ -337,8 +413,15 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
     () => [...moments].sort((a, b) => a.position - b.position),
     [moments]
   );
+  const viewingMoments = useMemo(
+    () => orderedMoments.filter((moment) => moment.text.trim() !== ""),
+    [orderedMoments]
+  );
+  const displayedMomentIndex = Math.min(
+    activeMomentIndex,
+    Math.max(0, viewingMoments.length - 1)
+  );
   const hasAnyMoment = moments.some((m) => m.text.trim() !== "");
-  const hasNsfwMoment = moments.some((m) => m.is_nsfw && m.text.trim() !== "");
 
   const isStillEmptyDraft =
     isNewDraft &&
@@ -531,6 +614,10 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
 
   // --- page-level save ------------------------------------------------------
   async function handleSave() {
+    if (songUrl.trim() && !youtubeVideoId(songUrl) && songUrl.trim() !== (memory.song_url || "").trim()) {
+      setError("Please use a valid YouTube video link, or remove the song.");
+      return;
+    }
     setSaving(true);
     setError(null);
     setStatus("");
@@ -572,7 +659,10 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
           date: dateStr,
           entry_number: Number(entryNumber),
           color_tag: colorTag || DEFAULT_COLOR_TAG,
-          song_url: songUrl.trim() || null,
+          song_url: youtubeSongUrl(songUrl) || songUrl.trim() || null,
+          song_title: songUrl.trim() ? song.title?.trim() || null : null,
+          song_artist: songUrl.trim() ? song.artist?.trim() || null : null,
+          song_cover_url: songUrl.trim() ? song.coverUrl || (youtubeVideoId(songUrl) ? youtubeCoverUrls(youtubeVideoId(songUrl))[0] : null) : null,
           photo_urls: finalPhotoUrls.length > 0 ? finalPhotoUrls : null,
           cover_photo_url: finalCoverUrl || null,
           cover_photo_position: {
@@ -587,6 +677,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
       setPhotoUrls(finalPhotoUrls);
       setNewFiles([]);
       setEditMode(false);
+      setSaving(false);
       router.refresh();
     } catch (err) {
       console.error("Failed to save memory:", err);
@@ -628,8 +719,13 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
       setTitle(memory.title ?? "");
       setDateStr(memory.date ?? "");
       setEntryNumber(memory.entry_number ?? 1);
-      setColorTag(memory.color_tag ?? DEFAULT_COLOR_TAG);
-      setSongUrl(memory.song_url ?? "");
+      setColorTag(memoryColorHex(memory.color_tag));
+      setSong({
+        url: memory.song_url ?? "",
+        title: memory.song_title ?? null,
+        artist: memory.song_artist ?? null,
+        coverUrl: memory.song_cover_url ?? null,
+      });
       setPhotoUrls(memory.photo_urls ?? []);
       setNewFiles([]);
       setCover(
@@ -652,7 +748,20 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
     setEditMode(false);
   }
 
-  const visibleMoments = orderedMoments;
+  function momentIsRevealed(moment) {
+    return (
+      !moment.is_nsfw ||
+      (forceShownIds.has(moment.id) && !forceHiddenIds.has(moment.id))
+    );
+  }
+
+  function previousMoment() {
+    setActiveMomentIndex((current) => Math.max(0, current - 1));
+  }
+
+  function nextMoment() {
+    setActiveMomentIndex((current) => Math.min(viewingMoments.length - 1, current + 1));
+  }
 
   return (
     <>
@@ -720,122 +829,84 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
             )}
           </div>
 
-          {/* Title (UI label: "Date Title") */}
-          {editMode ? (
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Date Title"
-              className="mt-3 w-full border-b-2 border-[#5D433C] bg-transparent font-handwriting text-4xl font-bold tracking-tight text-[#FAF7F2] outline-none focus:border-[#C85A32] sm:text-5xl placeholder:text-[#D4C8BA]/40"
-            />
-          ) : (
-            <h1
-              className="mt-3 font-handwriting text-4xl font-bold tracking-tight text-[#FAF7F2] sm:text-5xl leading-tight"
-              style={{
-                textShadow: `0 0 24px ${colorConfig.hex}50, 0 2px 6px rgba(0, 0, 0, 0.5)`,
-              }}
-            >
-              {title || "Untitled"}
-            </h1>
-          )}
-
-          {/* Date # and calendar date */}
-          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 font-handwriting text-xl text-[#D4C8BA]">
-            {editMode ? (
-              <>
-                <label className="inline-flex items-center gap-2 font-sans text-sm text-[#D4C8BA]">
-                  Date #
-                  <input
-                    type="number"
-                    min="1"
-                    step="1"
-                    value={entryNumber}
-                    onChange={(e) => setEntryNumber(e.target.value)}
-                    className="w-20 rounded-xl border border-[#5D433C] bg-[#2D1E1A] px-3 py-1.5 font-semibold text-[#FAF7F2] outline-none focus:border-[#C85A32]"
-                  />
-                </label>
-                <label className="inline-flex items-center gap-2 font-sans text-sm text-[#D4C8BA]">
-                  Date
-                  <input
-                    type="date"
-                    value={dateStr}
-                    onChange={(e) => setDateStr(e.target.value)}
-                    className="rounded-xl border border-[#5D433C] bg-[#2D1E1A] px-3 py-1.5 font-semibold text-[#FAF7F2] outline-none focus:border-[#C85A32]"
-                  />
-                </label>
-              </>
-            ) : (
-              <span>{formatDate(dateStr)}</span>
-            )}
-          </div>
-
-          {/* Color dropdown (only in page edit mode) */}
-          {editMode && (
-            <div className="mt-3 flex items-center gap-2 font-sans text-sm text-[#D4C8BA]">
-              <span className="text-xs font-bold uppercase tracking-wider">Color</span>
-              <select
-                value={colorTag}
-                onChange={(e) => setColorTag(e.target.value)}
-                className="rounded-xl border border-[#5D433C] bg-[#2D1E1A] px-3 py-1.5 text-sm font-semibold text-[#FAF7F2] outline-none focus:border-[#C85A32]"
-              >
-                {MEMORY_COLOR_TAGS.map((c) => (
-                  <option key={c.id} value={c.hex}>
-                    {c.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {/* ---------------------------------------------------------------
-              SONG EMBED — Solid Opaque Panel
-              --------------------------------------------------------------- */}
-          {(embedUrl || editMode) && (
-            <div className="mt-8">
+          <div className="mt-3 flex min-w-0 flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0 flex-1">
+              {/* Title (UI label: "Date Title") */}
               {editMode ? (
-                <div className="rounded-2xl border border-[#5D433C] bg-[#382722] p-4 shadow-xl">
-                  <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#D4C8BA]">
-                    <Music2 size={14} style={{ color: colorConfig.hex }} />
-                    Memory Song (Spotify / YouTube link)
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Date Title"
+                  className="memory-page-heading mt-3 w-full border-b-2 border-[#5D433C] bg-transparent font-handwriting text-4xl font-bold tracking-tight text-[#FAF7F2] outline-none focus:border-[#C85A32] sm:text-5xl placeholder:text-[#D4C8BA]/40"
+                />
+              ) : (
+                <h1
+                  className="memory-page-heading mt-3 break-words font-handwriting text-4xl font-bold tracking-tight text-[#FAF7F2] sm:text-5xl leading-tight"
+                  style={{
+                    textShadow: `0 0 24px ${colorConfig.hex}50, 0 2px 6px rgba(0, 0, 0, 0.5)`,
+                  }}
+                >
+                  {title || "Untitled"}
+                </h1>
+              )}
+
+              {/* Date # and calendar date */}
+              <div className="memory-page-date mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 font-handwriting text-xl text-[#D4C8BA]">
+                {editMode ? (
+                  <>
+                    <label className="inline-flex items-center gap-2 font-sans text-sm text-[#D4C8BA]">
+                      Date #
+                      <input
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={entryNumber}
+                        onChange={(e) => setEntryNumber(e.target.value)}
+                        className="w-20 rounded-xl border border-[#5D433C] bg-[#2D1E1A] px-3 py-1.5 font-semibold text-[#FAF7F2] outline-none focus:border-[#C85A32]"
+                      />
+                    </label>
+                    <label className="inline-flex items-center gap-2 font-sans text-sm text-[#D4C8BA]">
+                      Date
+                      <input
+                        type="date"
+                        value={dateStr}
+                        onChange={(e) => setDateStr(e.target.value)}
+                        className="rounded-xl border border-[#5D433C] bg-[#2D1E1A] px-3 py-1.5 font-semibold text-[#FAF7F2] outline-none focus:border-[#C85A32]"
+                      />
+                    </label>
+                  </>
+                ) : (
+                  <span>{formatDate(dateStr)}</span>
+                )}
+              </div>
+
+              {/* Native color picker uses the existing color_tag field. */}
+              {editMode && (
+                <div className="mt-3 flex items-center gap-2 font-sans text-sm text-[#D4C8BA]">
+                  <label htmlFor="memory-date-color" className="text-xs font-bold uppercase tracking-wider">
+                    Date background
                   </label>
                   <input
-                    type="url"
-                    value={songUrl}
-                    onChange={(e) => setSongUrl(e.target.value)}
-                    placeholder="https://open.spotify.com/track/…"
-                    className="mt-2 w-full rounded-xl border border-[#5D433C] bg-[#2D1E1A] px-3.5 py-2 text-sm text-[#FAF7F2] outline-none placeholder:text-[#D4C8BA]/40 focus:border-[#C85A32]"
+                    id="memory-date-color"
+                    type="color"
+                    value={colorTag}
+                    onChange={(e) => setColorTag(e.target.value)}
+                    className="h-10 w-14 cursor-pointer rounded-lg border border-[#5D433C] bg-[#2D1E1A] p-1"
                   />
-                  {embedUrl && (
-                    <div className="mt-3 flex items-center gap-2">
-                      <iframe
-                        src={embedUrl}
-                        title={`Song preview for ${title}`}
-                        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                        className="h-[84px] w-full rounded-xl border border-[#5D433C]"
-                      />
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <span
-                    className="flex h-16 w-1 shrink-0 rounded-full"
-                    style={{ backgroundColor: colorConfig.hex }}
-                  />
-                  <div className="flex-1 overflow-hidden rounded-2xl border border-[#5D433C] bg-[#382722] shadow-xl">
-                    <iframe
-                      src={embedUrl}
-                      title={`Song for ${title}`}
-                      allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                      loading="lazy"
-                      className="h-[84px] w-full sm:h-[92px]"
-                    />
-                  </div>
+                  <span className="memory-color-value font-mono text-xs uppercase text-[#FAF7F2]">{colorTag}</span>
                 </div>
               )}
+
             </div>
-          )}
+            <MemorySong
+              song={song}
+              editMode={editMode}
+              onChange={setSong}
+              onMetadata={applySongMetadata}
+              accent={colorConfig.hex}
+            />
+          </div>
 
           {/* ---------------------------------------------------------------
               PHOTO CAROUSEL — Solid Opaque Panel
@@ -853,6 +924,11 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                       <div
                         key={url}
                         className="w-max max-w-full shrink-0 snap-center bg-[#FDFBF6] p-3 pb-5 shadow-[0_8px_30px_rgba(0,0,0,0.5),0_1px_3px_rgba(0,0,0,0.2)]"
+                        style={
+                          i === photoUrlsForCarousel.indexOf(transitionPhotoUrl)
+                            ? { viewTransitionName: memoryPhotoTransitionName(memory.id) }
+                            : undefined
+                        }
                       >
                         <div className="px-1.5 pb-2.5 pt-1 text-center font-mono text-sm font-semibold tracking-[0.18em] text-[#786F6A]">
                           <span aria-hidden="true">&nbsp;</span>
@@ -1066,13 +1142,18 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
             )}
           </div>
 
-          {/* ---------------------------------------------------------------
-              MOMENTS LIST — Solid Opaque Panel
-              --------------------------------------------------------------- */}
-          <section className="mt-8 rounded-3xl border border-[#5D433C] bg-[#382722] p-6 sm:p-8 shadow-2xl">
-            <div className="flex items-center justify-between gap-4 border-b border-[#5D433C] pb-4">
+          {/* Paper memories */}
+          <section
+            className="mt-10"
+            onKeyDown={(event) => {
+              if (momentsEditMode || momentsView !== "single" || !hasAnyMoment) return;
+              if (event.key === "ArrowLeft") previousMoment();
+              if (event.key === "ArrowRight") nextMoment();
+            }}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#5D433C] pb-4">
               <h2
-                className="font-handwriting text-3xl font-bold tracking-tight leading-tight text-[#FAF7F2]"
+                className="memory-page-heading font-handwriting text-3xl font-bold tracking-tight leading-tight text-[#FAF7F2]"
                 style={{
                   textShadow: `0 0 24px ${colorConfig.hex}50, 0 2px 6px rgba(0, 0, 0, 0.5)`,
                 }}
@@ -1081,28 +1162,37 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
               </h2>
 
               <div className="flex shrink-0 items-center gap-2">
-                {/* NSFW view toggle — simple fire button */}
-                {hasNsfwMoment && !momentsEditMode && (
-                  <button
-                    type="button"
-                    onClick={() => setShowNsfw((v) => !v)}
-                    aria-pressed={showNsfw}
-                    aria-label={showNsfw ? "Hide NSFW moments" : "Show NSFW moments"}
-                    className="flex h-9 w-9 items-center justify-center rounded-full border transition"
-                    style={{
-                      backgroundColor: showNsfw ? colorConfig.bgLight : "#2D1E1A",
-                      borderColor: showNsfw ? colorConfig.border : "#5D433C",
-                      color: showNsfw ? colorConfig.text : "#D4C8BA",
-                    }}
+                {!momentsEditMode && hasAnyMoment && (
+                  <div
+                    className="mr-1 inline-flex rounded-full border border-[#5D433C] bg-[#2D1E1A] p-1"
+                    aria-label="Memory view"
                   >
-                    <Flame
-                      size={15}
-                      fill={showNsfw ? "currentColor" : "none"}
-                      style={{ color: showNsfw ? colorConfig.hex : "#D4C8BA" }}
-                    />
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => setMomentsView("single")}
+                      aria-pressed={momentsView === "single"}
+                      className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider transition ${
+                        momentsView === "single"
+                          ? "bg-[#F4EFE6] text-[#382722]"
+                          : "text-[#D4C8BA] hover:text-white"
+                      }`}
+                    >
+                      One at a time
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMomentsView("all")}
+                      aria-pressed={momentsView === "all"}
+                      className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider transition ${
+                        momentsView === "all"
+                          ? "bg-[#F4EFE6] text-[#382722]"
+                          : "text-[#D4C8BA] hover:text-white"
+                      }`}
+                    >
+                      All
+                    </button>
+                  </div>
                 )}
-
                 {/* Edit moments toggle — just a pencil */}
                 <button
                   type="button"
@@ -1128,7 +1218,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
 
             {momentsEditMode ? (
               /* ---------------- MOMENTS EDITING ---------------- */
-              <div className="mt-5">
+              <div className="mt-6 bg-[#382722]/70 p-4 shadow-xl sm:p-5">
                 <DndContext
                   sensors={sensors}
                   collisionDetection={closestCenter}
@@ -1197,80 +1287,57 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
               </div>
             ) : (
               /* ---------------- MOMENTS VIEWING ---------------- */
-              hasAnyMoment ? (
-                <ul className="mt-5 space-y-3.5">
-                  {visibleMoments.map((moment) => {
-                    const isNsfw = moment.is_nsfw;
-                    const revealed =
-                      !isNsfw ||
-                      ((showNsfw || forceShownIds.has(moment.id)) &&
-                        !forceHiddenIds.has(moment.id));
-                    return (
-                      <li
-                        key={moment.id}
-                        className={`flex items-start gap-3 text-sm sm:text-base leading-relaxed ${
-                          isNsfw ? "italic" : ""
-                        }`}
-                        style={{
-                          color: isNsfw ? colorConfig.text : "#FAF7F2",
-                        }}
+              hasAnyMoment ? momentsView === "single" ? (
+                <div className="mt-6">
+                  <div className="mx-auto max-w-xl">
+                    <ul aria-live="polite">
+                      <MomentPaper
+                        key={viewingMoments[displayedMomentIndex].id}
+                        moment={viewingMoments[displayedMomentIndex]}
+                        revealed={momentIsRevealed(viewingMoments[displayedMomentIndex])}
+                        onReveal={(reveal) =>
+                          setNsfwReveal(viewingMoments[displayedMomentIndex].id, reveal)
+                        }
+                      />
+                    </ul>
+                  </div>
+
+                  {viewingMoments.length > 1 && (
+                    <div className="mt-3 flex items-center justify-center gap-4">
+                      <button
+                        type="button"
+                        onClick={previousMoment}
+                        disabled={displayedMomentIndex === 0}
+                        aria-label="Previous memory"
+                        className="flex h-9 w-9 items-center justify-center rounded-full border border-[#5D433C] bg-[#2D1E1A] text-[#FAF7F2] transition hover:border-[#C85A32] active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
                       >
-                        {/* Squiggle: always uses the date's assigned color */}
-                        <span
-                          aria-hidden="true"
-                          className="shrink-0 select-none font-handwriting text-2xl font-bold leading-tight"
-                          style={{ color: colorConfig.hex }}
-                        >
-                          ~
-                        </span>
-                        {isNsfw ? (
-                          <span className="flex min-w-0 flex-col items-start gap-1.5 not-italic">
-                            <span className="flex items-center gap-2">
-                              <span
-                                className="shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
-                                style={{
-                                  backgroundColor: WARM_OLIVE_GREEN.bgLight,
-                                  color: WARM_OLIVE_GREEN.text,
-                                  borderColor: WARM_OLIVE_GREEN.border,
-                                }}
-                              >
-                                NSFW
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => setNsfwReveal(moment.id, !revealed)}
-                                aria-label={
-                                  revealed
-                                    ? "Hide this NSFW moment"
-                                    : "Reveal this NSFW moment"
-                                }
-                                className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition hover:bg-[#3E341C]"
-                                style={{
-                                  backgroundColor: WARM_OLIVE_GREEN.bgLight,
-                                  color: WARM_OLIVE_GREEN.text,
-                                  borderColor: WARM_OLIVE_GREEN.border,
-                                }}
-                              >
-                                {revealed ? (
-                                  <ChevronUp size={12} />
-                                ) : (
-                                  <ChevronDown size={12} />
-                                )}
-                              </button>
-                            </span>
-                            {revealed && (
-                              <span className="min-w-0">{moment.text}</span>
-                            )}
-                          </span>
-                        ) : (
-                          <span>{moment.text}</span>
-                        )}
-                      </li>
-                    );
-                  })}
+                        <ChevronLeft size={18} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={nextMoment}
+                        disabled={displayedMomentIndex === viewingMoments.length - 1}
+                        aria-label="Next memory"
+                        className="flex h-9 w-9 items-center justify-center rounded-full border border-[#5D433C] bg-[#2D1E1A] text-[#FAF7F2] transition hover:border-[#C85A32] active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <ChevronRight size={18} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <ul className="moment-paper-list mt-8 space-y-7 px-1 sm:px-4">
+                  {viewingMoments.map((moment) => (
+                    <MomentPaper
+                      key={moment.id}
+                      moment={moment}
+                      revealed={momentIsRevealed(moment)}
+                      onReveal={(reveal) => setNsfwReveal(moment.id, reveal)}
+                    />
+                  ))}
                 </ul>
               ) : (
-                <div className="mt-5 flex flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-[#5D433C] py-10 text-center text-[#D4C8BA]">
+                <div className="mt-6 flex flex-col items-center gap-2 border-2 border-dashed border-[#5D433C] bg-[#382722]/60 py-10 text-center text-[#D4C8BA]">
                   <p className="font-handwriting text-2xl text-[#FAF7F2]">
                     No moments yet
                   </p>

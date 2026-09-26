@@ -1,11 +1,12 @@
-import Link from "next/link";
 import Image from "next/image";
 import { Camera, Sparkles } from "lucide-react";
 import CountupClock from "@/components/CountupClock";
 import AddMemoryButton from "@/components/AddMemoryButton";
 import AnimatedBackground from "@/components/AnimatedBackground";
+import MemoryTransitionLink from "@/components/MemoryTransitionLink";
 import { supabase } from "@/lib/supabase";
 import { getColorTagConfig } from "@/lib/colors";
+import { memoryPhotoTransitionName } from "@/lib/viewTransitions";
 
 // Date formats for the polaroid card. mm/dd/yy on the top band.
 function polaroidTopDate(isoDate) {
@@ -193,8 +194,10 @@ export default async function Home() {
                       Crisp white/cream frame with sharp corners.
                       Solid opaque surface that pops against the vibrant background!
                       ----------------------------------------------------- */}
-                  <Link
+                  <MemoryTransitionLink
                     href={`/memory/${memory.id}`}
+                    targetSelector={`[data-memory-page="${memory.id}"]`}
+                    data-memory-card={memory.id}
                     className="group mx-auto block max-w-sm bg-[#FDFBF6] p-3 pb-5 shadow-[0_8px_30px_rgba(0,0,0,0.5),0_1px_3px_rgba(0,0,0,0.2)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_12px_38px_rgba(0,0,0,0.65)]"
                   >
                     {/* TOP BAND: calendar date, mm/dd/yy */}
@@ -203,7 +206,10 @@ export default async function Home() {
                     </div>
 
                     {/* MIDDLE: square-cropped cover photo */}
-                    <div className="pf-stage relative aspect-square w-full overflow-hidden bg-[#EFE8DC]">
+                    <div
+                      className="pf-stage relative aspect-square w-full overflow-hidden bg-[#EFE8DC]"
+                      style={{ viewTransitionName: memoryPhotoTransitionName(memory.id) }}
+                    >
                       {coverPhoto ? (
                         <>
                           <Image
@@ -236,7 +242,7 @@ export default async function Home() {
                     >
                       {memory.title || "Untitled"}
                     </div>
-                  </Link>
+                  </MemoryTransitionLink>
                 </li>
               );
             })}

@@ -1,38 +1,39 @@
-// Turns a Spotify / YouTube share link into an embeddable iframe URL.
-// Returns null for links we don't recognize.
-
-export function playerEmbedUrl(url) {
-  if (!url) return null;
-  const trimmed = url.trim();
-  if (!/^https?:\/\//i.test(trimmed)) return null;
-
-  // --- Spotify ---
-  if (/spotify\.com\/(intl-[a-z-]+\/)?/i.test(trimmed)) {
-    const match = trimmed.match(
-      /spotify\.com\/(?:intl-[a-z-]+\/)?(track|album|playlist|artist|episode|show)\/([A-Za-z0-9]+)/i
-    );
-    if (match) {
-      // Spotify embeds just switch the host + keep the type + id.
-      return `https://open.spotify.com/embed/${match[1]}/${match[2]}`;
+// Only accept real YouTube hosts and a single, well-formed video ID.
+export function youtubeVideoId(value) {
+  if (!value || typeof value !== "string") return null;
+  try {
+    const url = new URL(value.trim());
+    if (!["https:", "http:"].includes(url.protocol) || url.username || url.password) return null;
+    const host = url.hostname.toLowerCase();
+    let id;
+    if (["youtu.be", "www.youtu.be"].includes(host)) {
+      id = url.pathname.split("/")[1];
+    } else if (["youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com", "youtube-nocookie.com", "www.youtube-nocookie.com"].includes(host)) {
+      const parts = url.pathname.split("/");
+      if (url.pathname === "/watch") id = url.searchParams.get("v");
+      else if (["embed", "shorts", "v", "live"].includes(parts[1])) id = parts[2];
     }
+    return /^[A-Za-z0-9_-]{11}$/.test(id || "") ? id : null;
+  } catch {
     return null;
   }
+}
 
-  // --- YouTube ---
-  // Handles: youtube.com/watch?v=ID, youtu.be/ID, youtube.com/embed/ID, /shorts/ID
-  let videoId = null;
-  const youTube = /(youtube\.com|youtu\.be)/i.test(trimmed);
-  if (youTube) {
-    const watch = trimmed.match(/[?&]v=([A-Za-z0-9_-]{11})/);
-    const short = trimmed.match(/youtu\.be\/([A-Za-z0-9_-]{11})/);
-    const embed = trimmed.match(/youtube\.com\/embed\/([A-Za-z0-9_-]{11})/);
-    const shorts = trimmed.match(/youtube\.com\/shorts\/([A-Za-z0-9_-]{11})/);
-    videoId = watch?.[1] || short?.[1] || embed?.[1] || shorts?.[1];
-    if (videoId) {
-      return `https://www.youtube-nocookie.com/embed/${videoId}`;
-    }
-    return null;
-  }
+export function youtubeSongUrl(value) {
+  const id = youtubeVideoId(value);
+  return id ? `https://www.youtube.com/watch?v=${id}` : null;
+}
 
-  return null;
+export function youtubeCoverUrls(id) {
+  return ["maxresdefault", "sddefault", "hqdefault"].map(
+    (size) => `https://i.ytimg.com/vi/${id}/${size}.jpg`
+  );
+}
+
+// Remove common promotional suffixes; do not guess an artist from channel names.
+export function cleanSongTitle(title) {
+  return (title || "")
+    .replace(/\s*[([]\s*(?:(?:official\s+)?(?:audio|music\s+video|video|lyric\s+video|lyrics)|visuali[sz]er|hd|4k)\s*[)\]]/gi, "")
+    .replace(/\s*[-|]\s*(?:official\s+(?:audio|music\s+video|video)|lyrics)\s*$/i, "")
+    .trim();
 }

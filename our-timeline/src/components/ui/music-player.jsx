@@ -1,0 +1,178 @@
+"use client";
+
+// Adapted from Componentry's MusicPlayer: https://componentry.dev/r/music-player.json
+// Keeps the circular record and swinging tonearm; uses confirmed YouTube events.
+import { useEffect, useRef, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { Loader2, Pause, Play, RotateCcw } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { youtubeVideoId, youtubeCoverUrls } from "@/lib/player";
+import { loadYoutubeApi } from "@/lib/youtube";
+
+export function MusicPlayer({ src, coverArt, title = "song", className, onCoverChange }) {
+  const id = youtubeVideoId(src);
+  const hostRef = useRef(null);
+  const playerRef = useRef(null);
+  const [ready, setReady] = useState(false);
+  const [state, setState] = useState(-1);
+  const [error, setError] = useState("");
+  const [attempt, setAttempt] = useState(0);
+  const [artwork, setArtwork] = useState(null);
+  const reducedMotion = useReducedMotion();
+  const isPlaying = state === 1;
+  const coverUrls = id ? [...new Set([coverArt, ...youtubeCoverUrls(id)].filter(Boolean))] : [];
+  const coverIndex = artwork?.source === coverArt ? artwork.index : 0;
+  const cover = coverUrls[coverIndex];
+
+  useEffect(() => {
+    if (!id) return;
+    let disposed = false;
+    let player;
+    let readyTimeout;
+    const container = hostRef.current;
+    loadYoutubeApi().then((YT) => {
+      if (disposed) return;
+      const mount = document.createElement("div");
+      container.appendChild(mount);
+      readyTimeout = window.setTimeout(() => {
+        if (!disposed) setError("YouTube is taking too long to load. Try again.");
+      }, 20000);
+      player = new YT.Player(mount, {
+        width: 200,
+        height: 200,
+        videoId: id,
+        playerVars: { playsinline: 1, controls: 0, origin: window.location.origin },
+        events: {
+          onReady: (event) => {
+            if (disposed) return;
+            window.clearTimeout(readyTimeout);
+            const iframe = event.target.getIframe();
+            iframe.title = "YouTube song playback";
+            iframe.tabIndex = -1;
+            iframe.setAttribute("aria-hidden", "true");
+            iframe.referrerPolicy = "strict-origin-when-cross-origin";
+            setReady(true);
+          },
+          onStateChange: (event) => {
+            if (disposed) return;
+            setState(event.data);
+            if (event.data === 1) setError("");
+          },
+          onError: (event) => {
+            if (disposed) return;
+            window.clearTimeout(readyTimeout);
+            setState(-1);
+            setError([100, 101, 150].includes(event.data)
+              ? "This video is unavailable or does not allow playback here. Choose another YouTube link."
+              : "YouTube could not play this song. Try again or choose another link.");
+          },
+          onAutoplayBlocked: () => {
+            if (!disposed) {
+              setState(2);
+              setError("Playback was blocked by your browser. Click play again.");
+            }
+          },
+        },
+      });
+      playerRef.current = player;
+    }).catch((err) => {
+      if (!disposed) setError(err.message);
+    });
+    return () => {
+      disposed = true;
+      window.clearTimeout(readyTimeout);
+      playerRef.current = null;
+      player?.destroy();
+      container.replaceChildren();
+    };
+  }, [id, attempt]);
+
+  function togglePlay() {
+    const player = playerRef.current;
+    if (!ready || !player) return;
+    if (isPlaying || state === 3) player.pauseVideo();
+    else {
+      if (state === 0) player.seekTo(0, true);
+      player.unMute();
+      player.playVideo();
+    }
+  }
+
+  function restart() {
+    const player = playerRef.current;
+    if (!ready || !player) return;
+    player.seekTo(0, true);
+    player.unMute();
+    player.playVideo();
+  }
+
+  return (
+    <div className={cn("relative w-28 shrink-0 sm:w-32", className)}>
+      <div ref={hostRef} className="pointer-events-none absolute h-px w-px overflow-hidden opacity-0" aria-hidden="true" />
+      <button
+        type="button"
+        onClick={togglePlay}
+        disabled={!ready || !id}
+        aria-label={`${isPlaying || state === 3 ? "Pause" : "Play"} ${title}`}
+        aria-pressed={isPlaying}
+        className="group relative block aspect-square w-full rounded-full outline-none focus-visible:ring-2 focus-visible:ring-[#C85A32] focus-visible:ring-offset-4 focus-visible:ring-offset-black disabled:cursor-wait"
+      >
+        <div
+          className="relative h-full w-full animate-spin overflow-hidden rounded-full border-[5px] border-[#2D1E1A] bg-[#382722] shadow-[0_4px_18px_rgba(0,0,0,0.5)]"
+          style={{ animationDuration: "4s", animationPlayState: isPlaying && !reducedMotion ? "running" : "paused" }}
+        >
+          {cover && (
+            // Raw image allows thumbnail resolution fallback without introducing image-host config.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={cover}
+              src={cover}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover opacity-85"
+              onLoad={(event) => {
+                // Missing max-resolution thumbnails can return a 120px placeholder with HTTP 200.
+                if (event.currentTarget.naturalWidth <= 120 && coverIndex < coverUrls.length - 1) {
+                  setArtwork({ source: coverArt, index: coverIndex + 1 });
+                } else onCoverChange?.(cover);
+              }}
+              onError={() => setArtwork({ source: coverArt, index: coverIndex + 1 })}
+            />
+          )}
+          <div className="absolute inset-0 rounded-full" style={{ background: "repeating-radial-gradient(circle,transparent 0 8%,rgba(0,0,0,.35) 9%,transparent 10%)" }} />
+          <div className="absolute inset-0" style={{ background: "linear-gradient(135deg,rgba(255,255,255,.25),transparent 40%,transparent 60%,rgba(255,255,255,.15))" }} />
+          <div className="absolute left-1/2 top-1/2 flex h-1/4 w-1/4 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-[#74544B] bg-[#2D1E1A]">
+            <span className="h-2 w-2 rounded-full bg-[#D4C8BA]" />
+          </div>
+        </div>
+        <motion.div
+          aria-hidden="true"
+          className="pointer-events-none absolute right-0 top-0 z-10 h-3 w-[58%] origin-right"
+          initial={false}
+          animate={{ rotate: isPlaying ? -24 : -5 }}
+          transition={{ duration: reducedMotion ? 0 : 0.45 }}
+        >
+          <div className="absolute right-0 top-0 h-4 w-4 rounded-full border-2 border-[#D4C8BA] bg-[#74544B] shadow-md" />
+          <div className="absolute right-2 top-1 h-1.5 w-[90%] origin-right -rotate-12 rounded-full bg-[#D4C8BA] shadow-md">
+            <span className="absolute -left-1 -top-0.5 h-2.5 w-3 rounded-sm bg-[#C85A32]" />
+          </div>
+        </motion.div>
+        <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/15 transition group-hover:bg-black/30">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[#D4C8BA]/40 bg-[#2D1E1A]/90 text-[#FAF7F2]">
+            {!ready && !error || state === 3 ? <Loader2 size={14} className="animate-spin" /> : isPlaying ? <Pause size={14} /> : <Play size={14} className="ml-0.5" />}
+          </span>
+        </span>
+      </button>
+      <div className="mt-1 flex min-h-5 justify-center">
+        <button type="button" onClick={restart} disabled={!ready} aria-label={`Restart ${title}`} className="rounded-full p-1 text-[#D4C8BA]/70 transition hover:text-[#FAF7F2] disabled:opacity-30">
+          <RotateCcw size={12} />
+        </button>
+      </div>
+      {error && (
+        <div className="mt-1 text-xs text-[#F8B79D]" role="status">
+          {error}
+          <button type="button" className="mt-1 block underline" onClick={() => { setReady(false); setState(-1); setError(""); setAttempt((n) => n + 1); }}>Try again</button>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -93,11 +93,36 @@ export const MEMORY_COLOR_TAGS = [
 
 export const DEFAULT_COLOR_TAG = MEMORY_COLOR_TAGS[0].hex; // "#C85A32"
 
-// Helper to find configuration matching a given hex value or fallback to default
+// Native color inputs return six-digit hex values. Keep older palette choices
+// intact while letting a newly picked color use the existing color_tag field.
+export function memoryColorHex(colorHex) {
+  return typeof colorHex === "string" && /^#[0-9a-f]{6}$/i.test(colorHex)
+    ? colorHex
+    : DEFAULT_COLOR_TAG;
+}
+
+export function memoryColorIsLight(colorHex) {
+  const hex = memoryColorHex(colorHex);
+  const channels = [1, 3, 5].map((index) => {
+    const channel = parseInt(hex.slice(index, index + 2), 16) / 255;
+    return channel <= 0.04045
+      ? channel / 12.92
+      : ((channel + 0.055) / 1.055) ** 2.4;
+  });
+  return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722 > 0.38;
+}
+
 export function getColorTagConfig(colorHex) {
-  if (!colorHex) return MEMORY_COLOR_TAGS[0];
+  const hex = memoryColorHex(colorHex);
   const found = MEMORY_COLOR_TAGS.find(
-    (c) => c.hex.toLowerCase() === colorHex.toLowerCase()
+    (c) => c.hex.toLowerCase() === hex.toLowerCase()
   );
-  return found || MEMORY_COLOR_TAGS[0];
+  return found || {
+    id: "custom",
+    label: "Custom color",
+    hex,
+    bgLight: `color-mix(in srgb, ${hex} 22%, #261A16)`,
+    border: hex,
+    text: `color-mix(in srgb, ${hex} 38%, white)`,
+  };
 }
