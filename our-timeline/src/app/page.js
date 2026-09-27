@@ -4,7 +4,8 @@ import CountupClock from "@/components/CountupClock";
 import AddMemoryButton from "@/components/AddMemoryButton";
 import AnimatedBackground from "@/components/AnimatedBackground";
 import MemoryTransitionLink from "@/components/MemoryTransitionLink";
-import { supabase } from "@/lib/supabase";
+import { readMemories } from "@/lib/memories";
+import { photoSrc } from "@/lib/photoUrl";
 import { getColorTagConfig } from "@/lib/colors";
 import { memoryPhotoTransitionName } from "@/lib/viewTransitions";
 
@@ -96,17 +97,8 @@ const RELATIONSHIP_START_DATE = new Date("2025-04-05T00:00:00-07:00");
 export const dynamic = "force-dynamic";
 
 async function getMemories() {
-  const { data, error } = await supabase
-    .from("memories")
-    .select("*")
-    .order("entry_number", { ascending: false }) // newest entry first
-    .limit(500);
-
-  if (error) {
-    console.error("Failed to load memories:", error?.message);
-    return [];
-  }
-  return data ?? [];
+  const { memories } = await readMemories();
+  return memories.sort((a, b) => b.entry_number - a.entry_number).slice(0, 500);
 }
 
 export default async function Home() {
@@ -213,7 +205,7 @@ export default async function Home() {
                       {coverPhoto ? (
                         <>
                           <Image
-                            src={coverPhoto}
+                            src={photoSrc(coverPhoto)}
                             alt={memory.title}
                             fill
                             sizes="(max-width: 640px) 80vw, 400px"

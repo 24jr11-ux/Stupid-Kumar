@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CirclePlus, Loader2 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
-import { DEFAULT_COLOR_TAG } from "@/lib/colors";
+import { memoryRequest } from "@/lib/memoryApi";
 
 function extractErrorMessage(err) {
   if (!err) return "Something went wrong.";
@@ -16,26 +15,12 @@ function extractErrorMessage(err) {
 
 /**
  * "+ Add Memory" button.
- * Immediately creates a fresh draft row in Supabase and redirects to its detail page.
+ * Immediately creates a fresh draft memory and redirects to its detail page.
  */
 export default function AddMemoryButton() {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState(null);
-
-  async function nextEntryNumber() {
-    const { data, error } = await supabase
-      .from("memories")
-      .select("entry_number")
-      .order("entry_number", { ascending: false })
-      .limit(1);
-
-    if (error) {
-      console.error("Failed to read next entry number:", error?.message);
-      return 1;
-    }
-    return (data?.[0]?.entry_number ?? 0) + 1;
-  }
 
   async function handleClick() {
     if (pending) return;
@@ -43,8 +28,6 @@ export default function AddMemoryButton() {
     setError(null);
 
     try {
-      const entryNumber = await nextEntryNumber();
-
       const today = new Date();
       const todayIso = [
         today.getFullYear(),
@@ -52,23 +35,11 @@ export default function AddMemoryButton() {
         String(today.getDate()).padStart(2, "0"),
       ].join("-");
 
-      const { data, error } = await supabase
-        .from("memories")
-        .insert({
-          entry_number: entryNumber,
-          title: "New Date",
-          date: todayIso,
-          moments: [],
-          song_url: null,
-          photo_urls: [],
-          color_tag: DEFAULT_COLOR_TAG,
-        })
-        .select("id")
-        .single();
-
-      if (error) throw error;
-
-      router.push(`/memory/${data.id}?edit=1&new=1`);
+      const memory = await memoryRequest("/api/memories", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: todayIso }),
+      });
+      router.push(`/memory/${memory.id}?edit=1&new=1`);
       router.refresh();
     } catch (err) {
       const message = extractErrorMessage(err);

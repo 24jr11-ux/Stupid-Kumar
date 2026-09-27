@@ -2,23 +2,14 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import MemoryDetail from "@/components/MemoryDetail";
 import MemoryTransitionLink from "@/components/MemoryTransitionLink";
-import { supabase } from "@/lib/supabase";
+import { readMemories } from "@/lib/memories";
 import { memoryColorHex, memoryColorIsLight } from "@/lib/colors";
 
 export const dynamic = "force-dynamic";
 
 async function getMemory(id) {
-  const { data, error } = await supabase
-    .from("memories")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
-
-  if (error) {
-    console.error("Failed to load memory:", error?.message);
-    return null;
-  }
-  return data;
+  const { memories } = await readMemories();
+  return memories.find((memory) => memory.id === id) ?? null;
 }
 
 export default async function MemoryPage({ params, searchParams }) {

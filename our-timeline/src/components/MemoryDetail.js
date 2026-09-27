@@ -44,7 +44,8 @@ import {
   DEFAULT_COLOR_TAG,
   WARM_OLIVE_GREEN,
 } from "@/lib/colors";
-import { supabase, uploadPhoto, deleteMemoryPhotos } from "@/lib/supabase";
+import { memoryRequest } from "@/lib/memoryApi";
+import { photoSrc } from "@/lib/photoUrl";
 import { compressImage } from "@/lib/imageCompression";
 import { memoryPhotoTransitionName } from "@/lib/viewTransitions";
 
@@ -547,21 +548,11 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
           position: i,
         }));
 
-      const { error: dbError } = await supabase
-        .from("memories")
-        .update({ moments: clean })
-        .eq("id", memory.id);
-
-      if (dbError) throw dbError;
-
-      const { data, error: fetchErr } = await supabase
-        .from("memories")
-        .select("moments")
-        .eq("id", memory.id)
-        .single();
-      if (fetchErr) throw fetchErr;
-
-      setMoments(normalizeMoments(data?.moments ?? []));
+      const data = await memoryRequest(`/api/memories/${memory.id}`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ moments: clean }),
+      });
+      setMoments(normalizeMoments(data.moments ?? []));
       setMomentsEditMode(false);
       router.refresh();
     } catch (err) {
@@ -599,7 +590,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
   }
   function coverSrcFor(target) {
     if (!target) return null;
-    if (target.kind === "existing") return target.id;
+    if (target.kind === "existing") return photoSrc(target.id);
     const entry = newFiles.find((n) => n.id === target.id);
     return entry ? entry.objectUrl ?? null : null;
   }
@@ -632,7 +623,12 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
         }
         setStatus("Uploading photos…");
         for (const file of compressed) {
-          uploadedUrls.push(await uploadPhoto(file, String(entryNumber)));
+          const form = new FormData();
+          form.append("file", file);
+          const uploaded = await memoryRequest(`/api/memories/${memory.id}/photos`, {
+            method: "POST", body: form,
+          });
+          uploadedUrls.push(uploaded.url);
         }
       }
 
@@ -652,9 +648,9 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
       }
 
       setStatus("Saving memory…");
-      const { error: dbError } = await supabase
-        .from("memories")
-        .update({
+      await memoryRequest(`/api/memories/${memory.id}`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           title: title.trim() || "New Date",
           date: dateStr,
           entry_number: Number(entryNumber),
@@ -669,10 +665,8 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
             x: Math.round(coverPos.x),
             y: Math.round(coverPos.y),
           },
-        })
-        .eq("id", memory.id);
-
-      if (dbError) throw dbError;
+        }),
+      });
 
       setPhotoUrls(finalPhotoUrls);
       setNewFiles([]);
@@ -692,14 +686,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
     setDeleting(true);
     setError(null);
     try {
-      if (photoUrls.length > 0) {
-        await deleteMemoryPhotos(photoUrls);
-      }
-      const { error: dbError } = await supabase
-        .from("memories")
-        .delete()
-        .eq("id", memory.id);
-      if (dbError) throw dbError;
+      await memoryRequest(`/api/memories/${memory.id}`, { method: "DELETE" });
       router.push("/");
       router.refresh();
     } catch (err) {
@@ -936,7 +923,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                         <div className="bg-[#EFE8DC]">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
-                            src={url}
+                            src={photoSrc(url)}
                             alt={`${title} — photo ${i + 1}`}
                             draggable={false}
                             loading={i === 0 ? "eager" : "lazy"}
@@ -1036,7 +1023,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                         >
                           <div className="relative aspect-square">
                             <Image
-                              src={url}
+                              src={photoSrc(url)}
                               alt={`Photo ${i + 1}`}
                               fill
                               sizes="25vw"
