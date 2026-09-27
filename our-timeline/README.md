@@ -24,4 +24,4 @@ npm run dev
 
 Open `http://localhost:3000`, answer the gate, and use the timeline. `npm run build` uses webpack for next-pwa compatibility. Set the relationship start date in `src/app/page.js`.
 
-The single JSON Blob is suitable for this small private app. Concurrent edits use conditional writes with retries. Every write rewrites the whole JSON file, so a substantially larger timeline would need a database.
+The single JSON Blob is suitable for this small private app. Writes are serialized within each server instance and merge changes into the latest Blob contents. Every write rewrites the whole JSON file, so a substantially larger timeline or frequent edits across multiple instances would need a database.
