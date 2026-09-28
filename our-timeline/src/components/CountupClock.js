@@ -21,15 +21,8 @@ const PLACEHOLDER = {
   seconds: 0,
 };
 
-// Snapshots of time in years / months / days / hours / minutes / seconds.
-const UNITS = [
-  ["years", "YRS"],
-  ["months", "MOS"],
-  ["days", "DAYS"],
-  ["hours", "HRS"],
-  ["minutes", "MIN"],
-  ["seconds", "SEC"],
-];
+const MAIN_UNITS = [["years", "years"], ["months", "months"], ["days", "days"]];
+const SMALL_UNITS = [["hours", "hours"], ["minutes", "minutes"], ["seconds", "seconds"]];
 
 // Calendar-aware breakdown from `start` up to `now`.
 function breakDown(start, now) {
@@ -80,7 +73,6 @@ function breakDown(start, now) {
 }
 
 // Live count-up clock.
-// Solid opaque rich espresso cards with crisp glowing borders in accent orange.
 export default function CountupClock({ startDateIso }) {
   const start = useMemo(() => new Date(startDateIso), [startDateIso]);
   const [now, setNow] = useState(null);
@@ -98,24 +90,23 @@ export default function CountupClock({ startDateIso }) {
   }, []);
 
   return (
-    <div className="mt-8">
-      <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-6 sm:gap-3">
-        {UNITS.map(([key, label]) => (
-          <div
-            key={key}
-            className="group relative rounded-2xl border border-[#C85A32]/45 bg-[#382722] px-2.5 py-3.5 text-center shadow-[0_6px_24px_rgba(0,0,0,0.45),0_0_14px_rgba(200,90,50,0.22)] transition-all duration-300 hover:border-[#C85A32] hover:shadow-[0_8px_30px_rgba(0,0,0,0.55),0_0_22px_rgba(200,90,50,0.4)] hover:-translate-y-0.5"
-          >
-            <div className="font-mono text-2xl font-bold tabular-nums text-[#FAF7F2] drop-shadow-xs sm:text-3xl">
-              {String(parts[key]).padStart(2, "0")}
-            </div>
-            <div className="mt-1 text-[11px] font-semibold tracking-wider text-[#D4C8BA]">
-              {label}
-            </div>
+    <div className="mt-9 text-center" role="timer" aria-label="Time together">
+      <p className="font-handwriting text-2xl text-[#FAF7F2] sm:text-3xl">Every day with you</p>
+      <div className="mx-auto mt-3 flex max-w-md items-baseline justify-center gap-3 sm:gap-6">
+        {MAIN_UNITS.map(([key, label]) => (
+          <div key={key} className="min-w-0 flex-1">
+            <span className="block font-handwriting text-[clamp(2.8rem,13vw,5rem)] leading-none tabular-nums text-[#FAF7F2]">{parts[key]}</span>
+            <span className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#F4EFE6] sm:text-xs">{label}</span>
           </div>
         ))}
       </div>
-      <p className="mt-3.5 text-center text-xs font-medium tracking-wide text-[#D4C8BA]">
-        …since April 5th, 2025
+      <div className="mt-5 flex items-baseline justify-center gap-5 text-[#F4EFE6] sm:gap-8">
+        {SMALL_UNITS.map(([key, label]) => (
+          <span key={key} className="whitespace-nowrap text-xs sm:text-sm"><span className="font-mono text-base tabular-nums text-[#FAF7F2] sm:text-lg">{String(parts[key]).padStart(2, "0")}</span> {label}</span>
+        ))}
+      </div>
+      <p className="mt-3 text-xs font-medium tracking-wide text-[#F4EFE6]">
+        since April 5th, 2025
       </p>
     </div>
   );

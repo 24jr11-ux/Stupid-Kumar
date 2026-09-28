@@ -3,10 +3,13 @@
 import { useEffect, useState } from "react";
 import { Plus, Pencil, X } from "lucide-react";
 import { MusicPlayer } from "@/components/ui/music-player";
+import ImageFramingEditor from "@/components/ImageFramingEditor";
+import { cropPosition, cropZoom } from "@/lib/imageCrop";
 import { youtubeVideoId, youtubeSongUrl, youtubeCoverUrls } from "@/lib/player";
 
 export default function MemorySong({ song, editMode, onChange, onMetadata, accent }) {
   const [inputOpen, setInputOpen] = useState(false);
+  const [artOpen, setArtOpen] = useState(false);
   const [metadata, setMetadata] = useState(null);
   const id = youtubeVideoId(song.url);
   const resolved = metadata?.videoId === id ? metadata : null;
@@ -35,7 +38,7 @@ export default function MemorySong({ song, editMode, onChange, onMetadata, accen
     const nextId = youtubeVideoId(value);
     onChange((previous) => nextId && nextId === youtubeVideoId(previous.url)
       ? { ...previous, url: value }
-      : { url: value, title: null, artist: null, coverUrl: null });
+      : { url: value, title: null, artist: null, coverUrl: null, coverPosition: { x: 50, y: 50 }, coverZoom: 1 });
   }
 
   if (!id && !editMode) return null;
@@ -71,11 +74,23 @@ export default function MemorySong({ song, editMode, onChange, onMetadata, accen
                 {editMode && (
                   <div className="mt-2 flex flex-wrap gap-3 text-[10px] text-[#D4C8BA]">
                     <button type="button" onClick={() => setInputOpen((v) => !v)} className="inline-flex items-center gap-1 hover:text-white"><Pencil size={10} /> Change song</button>
-                    <button type="button" onClick={() => { onChange({ url: "", title: null, artist: null, coverUrl: null }); setInputOpen(false); }} className="inline-flex items-center gap-1 hover:text-[#F8B79D]"><X size={10} /> Remove song</button>
+                    <button type="button" onClick={() => { onChange({ url: "", title: null, artist: null, coverUrl: null, coverPosition: { x: 50, y: 50 }, coverZoom: 1 }); setInputOpen(false); setArtOpen(false); }} className="inline-flex items-center gap-1 hover:text-[#F8B79D]"><X size={10} /> Remove song</button>
                   </div>
                 )}
               </div>
-              <MusicPlayer key={id} src={youtubeSongUrl(song.url)} coverArt={cover} title={title || "song"} onCoverChange={(url) => onChange((current) => youtubeVideoId(current.url) === id && current.coverUrl !== url ? { ...current, coverUrl: url } : current)} />
+              <MusicPlayer key={id} src={youtubeSongUrl(song.url)} coverArt={cover} coverPosition={song.coverPosition} coverZoom={song.coverZoom} title={title || "song"} onCoverChange={(url) => onChange((current) => youtubeVideoId(current.url) === id && current.coverUrl !== url ? { ...current, coverUrl: url } : current)} />
+            </div>
+          )}
+          {id && editMode && cover && (
+            <div className="mt-2">
+              <button type="button" onClick={() => setArtOpen((open) => !open)} aria-expanded={artOpen} className="inline-flex min-h-11 items-center gap-2 text-xs font-semibold text-[#FAF7F2] underline underline-offset-4"><Pencil size={14} /> Frame vinyl artwork</button>
+              {artOpen && (
+                <div className="mt-2 rounded-2xl border border-[#5D433C] bg-[#2D1E1A] p-3">
+                  <ImageFramingEditor src={cover} alt={`${title || "Song"} cover artwork preview`} position={song.coverPosition} zoom={song.coverZoom} label="Artwork"
+                    onChange={({ position, zoom }) => onChange((current) => ({ ...current, coverPosition: cropPosition(position), coverZoom: cropZoom(zoom) }))} />
+                  <p className="mt-2 text-xs text-[#D4C8BA]">The record above shows this framing. Save the memory to keep it.</p>
+                </div>
+              )}
             </div>
           )}
           {editMode && (!id || inputOpen) && (
@@ -83,7 +98,7 @@ export default function MemorySong({ song, editMode, onChange, onMetadata, accen
               <label className="sr-only" htmlFor="song-url">YouTube song link</label>
               <input id="song-url" type="url" autoFocus={inputOpen} value={song.url} onChange={(e) => changeUrl(e.target.value)} placeholder="Paste YouTube song link…" className={fieldClass} />
               {song.url && !id && <p className="mt-1 text-xs text-[#F8B79D]" role="status">Use a YouTube video link. Older links can be replaced or removed.</p>}
-              {!id && <button type="button" className="mt-2 text-xs text-[#D4C8BA]" onClick={() => { onChange({ url: "", title: null, artist: null, coverUrl: null }); setInputOpen(false); }}>Cancel / remove song</button>}
+              {!id && <button type="button" className="mt-2 text-xs text-[#D4C8BA]" onClick={() => { onChange({ url: "", title: null, artist: null, coverUrl: null, coverPosition: { x: 50, y: 50 }, coverZoom: 1 }); setInputOpen(false); }}>Cancel / remove song</button>}
             </div>
           )}
           {id && editMode && !title && <p className="mt-1 text-[10px] text-[#D4C8BA]">{resolved ? "Add a title and artist if needed." : "Looking up the song title… You can also enter it."}</p>}

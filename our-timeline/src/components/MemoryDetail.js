@@ -47,7 +47,8 @@ import {
 import { memoryRequest } from "@/lib/memoryApi";
 import { photoSrc } from "@/lib/photoUrl";
 import { compressImage } from "@/lib/imageCompression";
-import { memoryPhotoTransitionName } from "@/lib/viewTransitions";
+import { cropPosition, cropZoom } from "@/lib/imageCrop";
+import ImageFramingEditor from "@/components/ImageFramingEditor";
 
 // ---------------------------------------------------------------------------
 // Moments data structure
@@ -220,99 +221,45 @@ function MomentPaper({
 }
 
 // ---------------------------------------------------------------------------
-// Cover photo crop modal — Solid Opaque Dialog
+// Cover photo crop modal
 // ---------------------------------------------------------------------------
-function CoverCropModal({ src, title, initialPos, onConfirm, onCancel }) {
-  const [dragStart, setDragStart] = useState(null);
-  const [lastPos, setLastPos] = useState(initialPos);
-
-  function handlePointerDown(e) {
-    const rect = e.currentTarget.getBoundingClientRect();
-    setDragStart({
-      px: e.clientX,
-      py: e.clientY,
-      x: lastPos.x,
-      y: lastPos.y,
-      w: rect.width,
-      h: rect.height,
-    });
-    e.currentTarget.setPointerCapture?.(e.pointerId);
-  }
-  function handlePointerMove(e) {
-    if (!dragStart) return;
-    const dx = ((e.clientX - dragStart.px) / dragStart.w) * 100;
-    const dy = ((e.clientY - dragStart.py) / dragStart.h) * 100;
-    const nextX = Math.max(0, Math.min(100, dragStart.x + dx));
-    const nextY = Math.max(0, Math.min(100, dragStart.y + dy));
-    setLastPos({ x: nextX, y: nextY });
-  }
-  function handlePointerUp() {
-    setDragStart(null);
-  }
+function CoverCropModal({ src, title, initialPos, initialZoom, onConfirm, onCancel }) {
+  const [framing, setFraming] = useState({ position: cropPosition(initialPos), zoom: cropZoom(initialZoom) });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4">
-      <div className="w-full max-w-md rounded-3xl border border-[#5D433C] bg-[#352520] p-6 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/85 p-4" role="dialog" aria-modal="true" aria-label="Frame timeline cover">
+      <div className="my-auto w-full max-w-md rounded-3xl border border-[#5D433C] bg-[#352520] p-4 shadow-2xl sm:p-6">
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-base font-bold text-[#FAF7F2]">Set as cover photo</h3>
           <button
             type="button"
             onClick={onCancel}
             aria-label="Close"
-            className="rounded-full p-1.5 text-[#D4C8BA] transition hover:bg-[#261A16] hover:text-white"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-[#D4C8BA] transition hover:bg-[#261A16] hover:text-white"
           >
             <X size={18} />
           </button>
         </div>
 
         <p className="mt-1 text-xs text-[#D4C8BA]">
-          Drag the photo to frame it precisely for the home timeline polaroid.
+          Preview the square photo as it will appear on the timeline.
         </p>
-
-        {/* Square framing preview window */}
-        <div
-          className="relative mt-4 aspect-square w-full select-none touch-none overflow-hidden rounded-2xl bg-[#261A16] border border-[#5D433C]"
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerCancel={handlePointerUp}
-          style={{ cursor: dragStart ? "grabbing" : "grab" }}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={src}
-            alt={title || "Cover photo"}
-            draggable={false}
-            className="h-full w-full select-none"
-            style={{
-              objectFit: "cover",
-              objectPosition: `${lastPos.x}% ${lastPos.y}%`,
-            }}
-          />
-          {/* 5x5 subtle grid overlay */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0"
-            style={{
-              backgroundImage:
-                "linear-gradient(rgba(255,255,255,0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.2) 1px, transparent 1px)",
-              backgroundSize: "20% 20%",
-            }}
-          />
+        <div className="mt-4">
+          <ImageFramingEditor src={src} alt={title || "Cover photo"} position={framing.position} zoom={framing.zoom} onChange={setFraming} label="Cover" />
         </div>
 
         <div className="mt-5 flex items-center justify-end gap-3">
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-full px-4 py-2 text-sm font-semibold text-[#D4C8BA] transition hover:text-[#FAF7F2]"
+            className="min-h-11 rounded-full px-4 py-2 text-sm font-semibold text-[#D4C8BA] transition hover:text-[#FAF7F2]"
           >
             Cancel
           </button>
           <button
             type="button"
-            onClick={() => onConfirm(lastPos)}
-            className="inline-flex items-center gap-2 rounded-full bg-[#C85A32] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_4px_16px_rgba(200,90,50,0.4)] transition hover:bg-[#B34B24]"
+            onClick={() => onConfirm(framing)}
+            className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#C85A32] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_4px_16px_rgba(200,90,50,0.4)] transition hover:bg-[#B34B24]"
           >
             <Check size={15} /> Use as cover
           </button>
@@ -344,6 +291,8 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
     title: memory.song_title ?? null,
     artist: memory.song_artist ?? null,
     coverUrl: memory.song_cover_url ?? null,
+    coverPosition: cropPosition(memory.song_cover_position),
+    coverZoom: cropZoom(memory.song_cover_zoom),
   });
   const songUrl = song.url;
   const applySongMetadata = useCallback((data) => {
@@ -364,14 +313,8 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
       ? { kind: "existing", id: memory.cover_photo_url }
       : null
   );
-  const [coverPos, setCoverPos] = useState(
-    memory.cover_photo_position && typeof memory.cover_photo_position === "object"
-      ? {
-          x: memory.cover_photo_position.x ?? 50,
-          y: memory.cover_photo_position.y ?? 50,
-        }
-      : { x: 50, y: 50 }
-  );
+  const [coverPos, setCoverPos] = useState(cropPosition(memory.cover_photo_position));
+  const [coverZoom, setCoverZoom] = useState(cropZoom(memory.cover_photo_zoom));
   const [coverCrop, setCoverCrop] = useState(null);
 
   // --- moments edit state ---------------------------------------------------
@@ -389,9 +332,6 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
   const carouselRef = useRef(null);
 
   const photoUrlsForCarousel = photoUrls;
-  const transitionPhotoUrl = (memory.photo_urls ?? []).includes(memory.cover_photo_url)
-    ? memory.cover_photo_url
-    : (memory.photo_urls ?? [])[0];
   const colorConfig = getColorTagConfig(colorTag);
 
   const sensors = useSensors(
@@ -439,28 +379,13 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
     const container = carouselRef.current;
     if (!container || container.children.length === 0) return;
     const clamped = Math.max(0, Math.min(index, container.children.length - 1));
-    const child = container.children[clamped];
-    const target =
-      child.offsetLeft + child.offsetWidth / 2 - container.clientWidth / 2;
-    container.scrollTo({ left: target, behavior });
+    container.scrollTo({ left: clamped * container.clientWidth, behavior });
     setActivePhotoIndex(clamped);
   }
   function carouselCenterIndex() {
     const container = carouselRef.current;
     if (!container || container.children.length === 0) return 0;
-    const mid = container.clientWidth / 2;
-    let best = 0;
-    let bestDist = Infinity;
-    Array.from(container.children).forEach((child, i) => {
-      const dist = Math.abs(
-        child.offsetLeft + child.offsetWidth / 2 - container.scrollLeft - mid
-      );
-      if (dist < bestDist) {
-        bestDist = dist;
-        best = i;
-      }
-    });
-    return best;
+    return Math.min(container.children.length - 1, Math.round(container.scrollLeft / container.clientWidth));
   }
   function handleCarouselScroll() {
     const container = carouselRef.current;
@@ -480,14 +405,12 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
     carouselGoTo((current + 1) % container.children.length);
   }
 
-  // Center the first polaroid once layout is known (mount / photo list change).
+  // Reset to the first photo when the photo list changes.
   useEffect(() => {
     const container = carouselRef.current;
     if (!container || container.children.length === 0) return;
     setActivePhotoIndex(0);
-    const child = container.children[0];
-    container.scrollLeft =
-      child.offsetLeft + child.offsetWidth / 2 - container.clientWidth / 2;
+    container.scrollLeft = 0;
   }, [photoUrlsForCarousel.length]);
 
   // --- moments helpers ------------------------------------------------------
@@ -597,9 +520,10 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
   function openCoverCrop(target) {
     setCoverCrop(target);
   }
-  function confirmCover(pos) {
+  function confirmCover({ position, zoom }) {
     if (coverCrop) setCover(coverCrop);
-    setCoverPos(pos);
+    setCoverPos(position);
+    setCoverZoom(zoom);
     setCoverCrop(null);
   }
 
@@ -659,12 +583,15 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
           song_title: songUrl.trim() ? song.title?.trim() || null : null,
           song_artist: songUrl.trim() ? song.artist?.trim() || null : null,
           song_cover_url: songUrl.trim() ? song.coverUrl || (youtubeVideoId(songUrl) ? youtubeCoverUrls(youtubeVideoId(songUrl))[0] : null) : null,
+          song_cover_position: cropPosition(song.coverPosition),
+          song_cover_zoom: cropZoom(song.coverZoom),
           photo_urls: finalPhotoUrls.length > 0 ? finalPhotoUrls : null,
           cover_photo_url: finalCoverUrl || null,
           cover_photo_position: {
             x: Math.round(coverPos.x),
             y: Math.round(coverPos.y),
           },
+          cover_photo_zoom: cropZoom(coverZoom),
         }),
       });
 
@@ -712,6 +639,8 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
         title: memory.song_title ?? null,
         artist: memory.song_artist ?? null,
         coverUrl: memory.song_cover_url ?? null,
+        coverPosition: cropPosition(memory.song_cover_position),
+        coverZoom: cropZoom(memory.song_cover_zoom),
       });
       setPhotoUrls(memory.photo_urls ?? []);
       setNewFiles([]);
@@ -720,14 +649,8 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
           ? { kind: "existing", id: memory.cover_photo_url }
           : null
       );
-      setCoverPos(
-        memory.cover_photo_position && typeof memory.cover_photo_position === "object"
-          ? {
-              x: memory.cover_photo_position.x ?? 50,
-              y: memory.cover_photo_position.y ?? 50,
-            }
-          : { x: 50, y: 50 }
-      );
+      setCoverPos(cropPosition(memory.cover_photo_position));
+      setCoverZoom(cropZoom(memory.cover_photo_zoom));
       setMoments(normalizeMoments(memory.moments ?? []));
       setMomentsEditMode(false);
       setError(null);
@@ -895,110 +818,32 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
             />
           </div>
 
-          {/* ---------------------------------------------------------------
-              PHOTO CAROUSEL — Solid Opaque Panel
-              --------------------------------------------------------------- */}
-          <div className="mt-8 rounded-3xl border border-[#5D433C] bg-[#382722] p-4 sm:p-6 shadow-2xl">
+          {/* Photos retain their original aspect ratio; the strip supports touch swipes. */}
+          <div className="mt-8 min-w-0">
             {photoUrlsForCarousel.length > 0 ? (
-              <div className="relative">
-                <div className="relative">
-                  <div
-                    ref={carouselRef}
-                    onScroll={handleCarouselScroll}
-                    className="relative flex snap-x snap-mandatory items-center gap-4 overflow-x-auto scroll-smooth py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-                  >
-                    {photoUrlsForCarousel.map((url, i) => (
-                      <div
-                        key={url}
-                        className="w-max max-w-full shrink-0 snap-center bg-[#FDFBF6] p-3 pb-5 shadow-[0_8px_30px_rgba(0,0,0,0.5),0_1px_3px_rgba(0,0,0,0.2)]"
-                        style={
-                          i === photoUrlsForCarousel.indexOf(transitionPhotoUrl)
-                            ? { viewTransitionName: memoryPhotoTransitionName(memory.id) }
-                            : undefined
-                        }
-                      >
-                        <div className="px-1.5 pb-2.5 pt-1 text-center font-mono text-sm font-semibold tracking-[0.18em] text-[#786F6A]">
-                          <span aria-hidden="true">&nbsp;</span>
-                        </div>
-                        <div className="bg-[#EFE8DC]">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={photoSrc(url)}
-                            alt={`${title} — photo ${i + 1}`}
-                            draggable={false}
-                            loading={i === 0 ? "eager" : "lazy"}
-                            onLoad={() => {
-                              if (carouselCenterIndex() === i) carouselGoTo(i, "auto");
-                            }}
-                            className="block h-auto w-auto max-w-full select-none"
-                            style={{ maxHeight: "calc(70vh - 8rem)" }}
-                          />
-                        </div>
-                        <div
-                          className="px-1.5 pt-3.5 text-center font-handwriting text-2xl font-bold leading-tight text-[#2C2523]"
-                          style={{ fontFamily: "var(--font-handwriting)" }}
-                        >
-                          <span aria-hidden="true">&nbsp;</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {photoUrlsForCarousel.length > 1 && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={prevPhoto}
-                        aria-label="Previous photo"
-                        className="absolute -left-5 top-1/2 -translate-y-1/2 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-[#261A16] text-white transition hover:bg-black active:scale-95 shadow-md border border-[#5D433C]"
-                      >
-                        <ChevronLeft size={22} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={nextPhoto}
-                        aria-label="Next photo"
-                        className="absolute -right-5 top-1/2 -translate-y-1/2 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-[#261A16] text-white transition hover:bg-black active:scale-95 shadow-md border border-[#5D433C]"
-                      >
-                        <ChevronRight size={22} />
-                      </button>
-                    </>
-                  )}
-                </div>
-
-                {photoUrlsForCarousel.length > 1 && (
-                  <div className="mt-4 flex items-center justify-between px-1">
-                    <span className="text-xs font-semibold text-[#D4C8BA]">
-                      Photo {activePhotoIndex + 1} of {photoUrlsForCarousel.length}
-                    </span>
-                    <div className="flex items-center gap-1.5">
-                      {photoUrlsForCarousel.map((_, i) => (
-                        <button
-                          key={i}
-                          type="button"
-                          onClick={() => carouselGoTo(i)}
-                          aria-label={`Go to photo ${i + 1}`}
-                          className={`h-2 rounded-full transition-all ${
-                            i === activePhotoIndex ? "w-6" : "w-2 bg-white/25 hover:bg-white/40"
-                          }`}
-                          style={{
-                            backgroundColor: i === activePhotoIndex ? colorConfig.hex : undefined,
-                          }}
-                        />
-                      ))}
+              <div>
+                <div ref={carouselRef} onScroll={handleCarouselScroll} aria-label="Memory photos" className="flex min-w-0 snap-x snap-mandatory overflow-x-auto overscroll-x-contain scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {photoUrlsForCarousel.map((url, i) => (
+                    <div key={url} className="flex w-full min-w-0 shrink-0 snap-center items-center justify-center">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={photoSrc(url)} alt={`${title} — photo ${i + 1}`} draggable={false} loading={i === 0 ? "eager" : "lazy"} className="block h-auto max-h-[70svh] w-auto max-w-full select-none object-contain" />
                     </div>
+                  ))}
+                </div>
+                {photoUrlsForCarousel.length > 1 && (
+                  <div className="mt-3 flex items-center justify-center gap-5">
+                    <button type="button" onClick={prevPhoto} aria-label="Previous photo" className="flex h-11 w-11 items-center justify-center rounded-full bg-[#261A16]/85 text-[#FAF7F2] focus-visible:outline-2 focus-visible:outline-[#FAF7F2]"><ChevronLeft size={21} /></button>
+                    <span className="min-w-10 text-center font-mono text-xs tabular-nums text-[#F4EFE6]" aria-live="polite">{activePhotoIndex + 1} / {photoUrlsForCarousel.length}</span>
+                    <button type="button" onClick={nextPhoto} aria-label="Next photo" className="flex h-11 w-11 items-center justify-center rounded-full bg-[#261A16]/85 text-[#FAF7F2] focus-visible:outline-2 focus-visible:outline-[#FAF7F2]"><ChevronRight size={21} /></button>
                   </div>
                 )}
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#5D433C] py-14 text-center text-[#D4C8BA]">
                 <ImageOff size={28} className="text-[#D4C8BA]/60" />
-                <p className="font-handwriting text-2xl text-[#FAF7F2]">
-                  No photos added yet
-                </p>
+                <p className="font-handwriting text-2xl text-[#FAF7F2]">No photos added yet</p>
               </div>
             )}
-
             {/* Photo management in edit mode */}
             {editMode && (
               <div className="mt-4 border-t border-[#5D433C] pt-4">
@@ -1047,7 +892,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                           <button
                             type="button"
                             onClick={() => openCoverCrop(target)}
-                            className={`w-full border-t px-2 py-2 text-center text-[11px] font-semibold transition ${
+                            className={`min-h-11 w-full border-t px-2 py-2 text-center text-[11px] font-semibold transition ${
                               current
                                 ? "border-[#C85A32]/50 bg-[#C85A32]/20 text-[#F8B79D]"
                                 : "border-[#5D433C] bg-[#2D1E1A] text-[#D4C8BA] hover:bg-[#382722] hover:text-white"
@@ -1100,7 +945,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                           <button
                             type="button"
                             onClick={() => openCoverCrop(target)}
-                            className={`w-full border-t px-2 py-2 text-center text-[11px] font-semibold transition ${
+                            className={`min-h-11 w-full border-t px-2 py-2 text-center text-[11px] font-semibold transition ${
                               current
                                 ? "border-[#C85A32]/50 bg-[#C85A32]/20 text-[#F8B79D]"
                                 : "border-[#5D433C] bg-[#2D1E1A] text-[#D4C8BA] hover:bg-[#382722] hover:text-white"
@@ -1180,7 +1025,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                     </button>
                   </div>
                 )}
-                {/* Edit moments toggle — just a pencil */}
+                {/* Edit moments toggle */}
                 <button
                   type="button"
                   onClick={() => {
@@ -1347,7 +1192,8 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
         <CoverCropModal
           src={coverSrcFor(coverCrop)}
           title={title}
-          initialPos={coverPos}
+          initialPos={isCover(coverCrop) ? coverPos : { x: 50, y: 50 }}
+          initialZoom={isCover(coverCrop) ? coverZoom : 1}
           onConfirm={confirmCover}
           onCancel={() => setCoverCrop(null)}
         />

@@ -8,8 +8,9 @@ import { Loader2, Pause, Play, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { youtubeVideoId, youtubeCoverUrls } from "@/lib/player";
 import { loadYoutubeApi } from "@/lib/youtube";
+import { cropImageStyle } from "@/lib/imageCrop";
 
-export function MusicPlayer({ src, coverArt, title = "song", className, onCoverChange }) {
+export function MusicPlayer({ src, coverArt, coverPosition, coverZoom, title = "song", className, onCoverChange }) {
   const id = youtubeVideoId(src);
   const hostRef = useRef(null);
   const playerRef = useRef(null);
@@ -129,6 +130,7 @@ export function MusicPlayer({ src, coverArt, title = "song", className, onCoverC
               src={cover}
               alt=""
               className="absolute inset-0 h-full w-full object-cover opacity-85"
+              style={cropImageStyle(coverPosition, coverZoom)}
               onLoad={(event) => {
                 // Missing max-resolution thumbnails can return a 120px placeholder with HTTP 200.
                 if (event.currentTarget.naturalWidth <= 120 && coverIndex < coverUrls.length - 1) {

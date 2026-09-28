@@ -45,7 +45,8 @@ export async function createMemory(date) {
       id: randomUUID(), entry_number: Math.max(0, ...memories.map((m) => Number(m.entry_number) || 0)) + 1,
       title: "New Date", date, moments: [], song_url: null, song_title: null,
       song_artist: null, song_cover_url: null, photo_urls: [],
-      cover_photo_url: null, cover_photo_position: { x: 50, y: 50 },
+      cover_photo_url: null, cover_photo_position: { x: 50, y: 50 }, cover_photo_zoom: 1,
+      song_cover_position: { x: 50, y: 50 }, song_cover_zoom: 1,
       color_tag: DEFAULT_COLOR_TAG, created_at: new Date().toISOString(),
     };
     memories.push(memory);
@@ -54,7 +55,7 @@ export async function createMemory(date) {
 }
 
 export async function updateMemory(id, patch) {
-  const allowed = ["title", "date", "entry_number", "color_tag", "moments", "song_url", "song_title", "song_artist", "song_cover_url", "photo_urls", "cover_photo_url", "cover_photo_position"];
+  const allowed = ["title", "date", "entry_number", "color_tag", "moments", "song_url", "song_title", "song_artist", "song_cover_url", "song_cover_position", "song_cover_zoom", "photo_urls", "cover_photo_url", "cover_photo_position", "cover_photo_zoom"];
   const result = await changeMemories((memories) => {
     const memory = memories.find((m) => m.id === id);
     if (!memory) throw new Error("Memory not found.");
