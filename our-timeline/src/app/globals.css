@@ -111,8 +111,21 @@ body {
 }
 
 .moment-paper--nsfw {
-  background-color: #f4edcf;
-  border-left: 4px solid #8f9648;
+  background-color: #f8ebdd;
+  border-left: 2px solid #b67654;
+  font-style: italic;
+}
+
+.memory-photo-frame {
+  max-width: calc(100% - 2rem);
+  padding: clamp(0.55rem, 2vw, 1rem);
+  background: #f4ead7;
+  border: 1px solid #d6bea0;
+  box-shadow: 0 16px 32px rgba(20, 11, 8, 0.38), 0 3px 8px rgba(20, 11, 8, 0.2), inset 0 0 0 2px #fbf6e9;
+}
+
+.memory-photo-frame img {
+  box-shadow: 0 0 0 1px rgba(78, 52, 40, 0.22);
 }
 
 .moment-paper--taped::before {

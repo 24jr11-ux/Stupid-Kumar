@@ -42,7 +42,6 @@ import {
   getColorTagConfig,
   memoryColorHex,
   DEFAULT_COLOR_TAG,
-  WARM_OLIVE_GREEN,
 } from "@/lib/colors";
 import { memoryRequest } from "@/lib/memoryApi";
 import { photoSrc } from "@/lib/photoUrl";
@@ -77,7 +76,7 @@ function normalizeMoments(moments = []) {
 }
 
 // Auto-growing multi-line textarea so moment text wraps while editing.
-function MomentTextarea({ value, onChange, placeholder, isNsfw }) {
+function MomentTextarea({ value, onChange, onPasteParagraphs, placeholder, isNsfw }) {
   const ref = useRef(null);
 
   useEffect(() => {
@@ -98,15 +97,21 @@ function MomentTextarea({ value, onChange, placeholder, isNsfw }) {
         el.style.height = `${el.scrollHeight + 2}px`;
         onChange(el.value);
       }}
+      onPaste={(e) => {
+        const paragraphs = e.clipboardData.getData("text").trim().split(/\r?\n\s*\r?\n/).map((part) => part.trim()).filter(Boolean);
+        if (paragraphs.length < 2) return;
+        e.preventDefault();
+        onPasteParagraphs(paragraphs, e.currentTarget.selectionStart, e.currentTarget.selectionEnd);
+      }}
       placeholder={placeholder}
       className={`w-full resize-none overflow-hidden bg-transparent text-sm leading-6 outline-none ${
-        isNsfw ? "font-medium text-[#52591D]" : "text-[#332923]"
+        isNsfw ? "italic text-[#664838]" : "text-[#332923]"
       } placeholder:text-[#806F5B]/55`}
     />
   );
 }
 
-function SortableMomentRow({ moment, onChange, onRemove }) {
+function SortableMomentRow({ moment, onChange, onRemove, onPasteParagraphs }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: moment.id });
 
@@ -121,7 +126,7 @@ function SortableMomentRow({ moment, onChange, onRemove }) {
       style={style}
       className={`flex items-start gap-2.5 border p-3.5 text-[#332923] shadow-[0_8px_20px_rgba(0,0,0,0.22)] transition ${
         moment.is_nsfw
-          ? "border-[#8F9648]/70 bg-[#F4EDCF]"
+          ? "border-[#C8A88F] bg-[#F8EBDD] italic"
           : "border-[#B7A98D] bg-[#FBF3DF]"
       } ${isDragging ? "z-20 opacity-95 shadow-2xl scale-[1.01]" : ""}`}
     >
@@ -136,21 +141,28 @@ function SortableMomentRow({ moment, onChange, onRemove }) {
         <GripVertical size={16} />
       </button>
 
-      <MomentTextarea
-        value={moment.text}
-        onChange={(text) => onChange(moment.id, { text })}
-        placeholder={moment.is_nsfw ? "Write an NSFW moment…" : "Write a moment…"}
-        isNsfw={moment.is_nsfw}
-      />
-
-      {moment.is_nsfw && (
-        <span
-          className="mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide border border-[#8F9648]"
-          style={{ backgroundColor: WARM_OLIVE_GREEN.bgLight, color: WARM_OLIVE_GREEN.text }}
+      <div className="min-w-0 flex-1">
+        <MomentTextarea
+          value={moment.text}
+          onChange={(text) => onChange(moment.id, { text })}
+          onPasteParagraphs={(paragraphs, start, end) => onPasteParagraphs(moment.id, paragraphs, start, end)}
+          placeholder="Write a moment…"
+          isNsfw={moment.is_nsfw}
+        />
+        <button
+          type="button"
+          onClick={() => onChange(moment.id, { is_nsfw: !moment.is_nsfw })}
+          aria-pressed={moment.is_nsfw}
+          aria-label={moment.is_nsfw ? "Remove NSFW tag from this moment" : "Mark this moment NSFW"}
+          className={`mt-2 inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide transition ${
+            moment.is_nsfw
+              ? "bg-[#E8C9B3] text-[#794631] hover:bg-[#DFC0A9]"
+              : "text-[#806F5B] hover:bg-[#EDE2CB] hover:text-[#794631]"
+          }`}
         >
-          NSFW
-        </span>
-      )}
+          <Flame size={12} /> NSFW
+        </button>
+      </div>
 
       <button
         type="button"
@@ -176,39 +188,25 @@ function MomentPaper({
     <li
       className={`moment-paper moment-paper--taped ${isNsfw ? "moment-paper--nsfw" : ""} ${className}`}
     >
-      <div className="flex min-h-[9rem] items-center justify-center px-6 py-7 text-center sm:min-h-[10rem] sm:px-9 sm:py-8">
+      <div className={`flex items-center justify-center px-6 text-center sm:px-9 ${isNsfw && !revealed ? "min-h-[5rem] py-4" : "min-h-[9rem] py-7 sm:min-h-[10rem] sm:py-8"}`}>
         {isNsfw ? (
-          <div className="flex min-w-0 w-full flex-col items-center gap-3">
-            <div className="flex flex-col items-center gap-2">
-              <span
-                className="shrink-0 border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em]"
-                style={{
-                  backgroundColor: "#E8E9C5",
-                  color: "#414A16",
-                  borderColor: WARM_OLIVE_GREEN.border,
-                }}
-              >
-                NSFW
-              </span>
+          <div className="flex min-w-0 w-full flex-col items-center gap-4 italic">
+            <div className="flex items-center gap-1.5 text-[#8D533E]">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em]">NSFW</span>
               <button
                 type="button"
                 onClick={() => onReveal(!revealed)}
                 aria-label={revealed ? "Hide this NSFW moment" : "Reveal this NSFW moment"}
-                className="inline-flex h-7 items-center gap-1.5 border border-[#A4A85E] bg-[#F8F2CF] px-2.5 text-[11px] font-semibold text-[#59601F] transition hover:bg-[#EEE6B6]"
+                className="inline-flex h-7 w-7 items-center justify-center rounded-full transition hover:bg-[#C85A32]/10 focus-visible:outline-2 focus-visible:outline-[#8D533E]"
               >
-                {revealed ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                {revealed ? "Hide" : "Reveal"}
+                {revealed ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
               </button>
             </div>
             {revealed ? (
               <p className="min-w-0 max-w-prose whitespace-pre-wrap break-words text-[0.95rem] leading-7 text-[#332923] sm:text-base">
                 {moment.text}
               </p>
-            ) : (
-              <p className="text-sm leading-6 text-[#70664D]">
-                A private memory is folded inside.
-              </p>
-            )}
+            ) : null}
           </div>
         ) : (
           <p className="min-w-0 max-w-prose whitespace-pre-wrap break-words text-[0.95rem] leading-7 text-[#332923] sm:text-base">
@@ -307,6 +305,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
   }, []);
   const [photoUrls, setPhotoUrls] = useState(memory.photo_urls ?? []);
   const [newFiles, setNewFiles] = useState([]);
+  const [photoOrder, setPhotoOrder] = useState(() => (memory.photo_urls ?? []).map((id) => ({ kind: "existing", id })));
 
   const [cover, setCover] = useState(
     memory.cover_photo_url && (memory.photo_urls ?? []).includes(memory.cover_photo_url)
@@ -331,17 +330,15 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
   // --- photo carousel -------------------------------------------------------
   const carouselRef = useRef(null);
 
-  const photoUrlsForCarousel = photoUrls;
+  const photoUrlsForCarousel = editMode
+    ? photoOrder.filter((item) => item.kind === "existing").map((item) => item.id)
+    : photoUrls;
   const colorConfig = getColorTagConfig(colorTag);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
   );
 
-  const newFileUrls = useMemo(
-    () => newFiles.map((entry) => entry.objectUrl),
-    [newFiles]
-  );
   const pastObjectUrls = useRef([]);
   useEffect(() => {
     const urls = pastObjectUrls.current;
@@ -417,6 +414,22 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
   function updateMoment(id, patch) {
     setMoments((prev) => prev.map((m) => (m.id === id ? { ...m, ...patch } : m)));
   }
+  function pasteMomentParagraphs(id, paragraphs, start, end) {
+    setMoments((prev) => {
+      const index = prev.findIndex((moment) => moment.id === id);
+      if (index < 0) return prev;
+      const source = prev[index];
+      const first = `${source.text.slice(0, start)}${paragraphs[0]}`;
+      const last = `${paragraphs.at(-1)}${source.text.slice(end)}`;
+      const inserted = [
+        { ...source, text: first },
+        ...paragraphs.slice(1, -1).map((text) => ({ id: newMomentId(), text, is_nsfw: source.is_nsfw })),
+        { id: newMomentId(), text: last, is_nsfw: source.is_nsfw },
+      ];
+      return [...prev.slice(0, index), ...inserted, ...prev.slice(index + 1)]
+        .map((moment, position) => ({ ...moment, position }));
+    });
+  }
   function removeMoment(id) {
     setMoments((prev) => prev.filter((m) => m.id !== id));
   }
@@ -435,11 +448,11 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
       return next;
     });
   }
-  function addMoment(isNsfw) {
+  function addMoment() {
     const newMoment = {
       id: newMomentId(),
       text: "",
-      is_nsfw: isNsfw,
+      is_nsfw: false,
       position: moments.length,
     };
     setMoments((prev) => [...prev, newMoment]);
@@ -489,23 +502,37 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
   // --- photo helpers --------------------------------------------------------
   function onFilesPicked(e) {
     const files = Array.from(e.target.files ?? []);
+    const picked = files.map((file) => {
+      const objectUrl = URL.createObjectURL(file);
+      pastObjectUrls.current.push(objectUrl);
+      return { id: newMomentId(), file, objectUrl };
+    });
+    setPhotoOrder((prev) => [...prev, ...picked.map(({ id }) => ({ kind: "new", id }))]);
     setNewFiles((prev) => [
       ...prev,
-      ...files.map((file) => {
-        const objectUrl = URL.createObjectURL(file);
-        pastObjectUrls.current.push(objectUrl);
-        return { id: newMomentId(), file, objectUrl };
-      }),
+      ...picked,
     ]);
     e.target.value = "";
   }
   function removeNewFile(id) {
+    setPhotoOrder((prev) => prev.filter((item) => !(item.kind === "new" && item.id === id)));
     setNewFiles((prev) => {
       const removed = prev.find((entry) => entry.id === id);
       if (removed?.objectUrl) URL.revokeObjectURL(removed.objectUrl);
       return prev.filter((entry) => entry.id !== id);
     });
     setCover((prev) => (prev && prev.kind === "new" && prev.id === id ? null : prev));
+  }
+  function removeStoredPhoto(url) {
+    setPhotoUrls((prev) => prev.filter((item) => item !== url));
+    setPhotoOrder((prev) => prev.filter((item) => !(item.kind === "existing" && item.id === url)));
+    setCover((prev) => (prev?.kind === "existing" && prev.id === url ? null : prev));
+  }
+  function movePhoto(index, direction) {
+    setPhotoOrder((prev) => {
+      const destination = index + direction;
+      return destination < 0 || destination >= prev.length ? prev : arrayMove(prev, index, destination);
+    });
   }
 
   function isCover(target) {
@@ -556,7 +583,8 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
         }
       }
 
-      const finalPhotoUrls = [...photoUrls, ...uploadedUrls];
+      const uploadedById = new Map(newFiles.map((entry, index) => [entry.id, uploadedUrls[index]]));
+      const finalPhotoUrls = photoOrder.map((item) => item.kind === "existing" ? item.id : uploadedById.get(item.id)).filter(Boolean);
 
       let finalCoverUrl = null;
       if (cover) {
@@ -596,6 +624,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
       });
 
       setPhotoUrls(finalPhotoUrls);
+      setPhotoOrder(finalPhotoUrls.map((id) => ({ kind: "existing", id })));
       setNewFiles([]);
       setEditMode(false);
       setSaving(false);
@@ -643,6 +672,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
         coverZoom: cropZoom(memory.song_cover_zoom),
       });
       setPhotoUrls(memory.photo_urls ?? []);
+      setPhotoOrder((memory.photo_urls ?? []).map((id) => ({ kind: "existing", id })));
       setNewFiles([]);
       setCover(
         memory.cover_photo_url && (memory.photo_urls ?? []).includes(memory.cover_photo_url)
@@ -821,12 +851,14 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
           {/* Photos retain their original aspect ratio; the strip supports touch swipes. */}
           <div className="mt-8 min-w-0">
             {photoUrlsForCarousel.length > 0 ? (
-              <div>
+              <div className="mx-auto max-w-3xl">
                 <div ref={carouselRef} onScroll={handleCarouselScroll} aria-label="Memory photos" className="flex min-w-0 snap-x snap-mandatory overflow-x-auto overscroll-x-contain scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                   {photoUrlsForCarousel.map((url, i) => (
                     <div key={url} className="flex w-full min-w-0 shrink-0 snap-center items-center justify-center">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={photoSrc(url)} alt={`${title} — photo ${i + 1}`} draggable={false} loading={i === 0 ? "eager" : "lazy"} className="block h-auto max-h-[70svh] w-auto max-w-full select-none object-contain" />
+                      <div className="memory-photo-frame">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={photoSrc(url)} alt={`${title} — photo ${i + 1}`} draggable={false} loading={i === 0 ? "eager" : "lazy"} className="block h-auto max-h-[65svh] w-auto max-w-full select-none object-contain" />
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -851,15 +883,14 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                   Photos
                 </p>
 
-                {/* Stored photos grid */}
-                {photoUrls.length > 0 && (
+                {photoOrder.length > 0 && (
                   <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-4">
-                    {photoUrls.map((url, i) => {
-                      const target = { kind: "existing", id: url };
+                    {photoOrder.map((target, i) => {
                       const current = isCover(target);
+                      const entry = target.kind === "new" ? newFiles.find((file) => file.id === target.id) : null;
                       return (
                         <div
-                          key={url}
+                          key={`${target.kind}:${target.id}`}
                           className={`group relative rounded-2xl overflow-hidden bg-[#261A16] border transition ${
                             current
                               ? "border-2 border-[#C85A32]"
@@ -868,7 +899,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                         >
                           <div className="relative aspect-square">
                             <Image
-                              src={photoSrc(url)}
+                              src={target.kind === "existing" ? photoSrc(target.id) : entry.objectUrl}
                               alt={`Photo ${i + 1}`}
                               fill
                               sizes="25vw"
@@ -882,65 +913,17 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                             )}
                             <button
                               type="button"
-                              onClick={() => setPhotoUrls((prev) => prev.filter((u) => u !== url))}
+                              onClick={() => target.kind === "existing" ? removeStoredPhoto(target.id) : removeNewFile(target.id)}
                               aria-label="Remove photo"
                               className="absolute right-2 top-2 rounded-full bg-[#261A16]/90 p-1.5 text-white transition hover:bg-[#C85A32]"
                             >
                               <X size={13} />
                             </button>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => openCoverCrop(target)}
-                            className={`min-h-11 w-full border-t px-2 py-2 text-center text-[11px] font-semibold transition ${
-                              current
-                                ? "border-[#C85A32]/50 bg-[#C85A32]/20 text-[#F8B79D]"
-                                : "border-[#5D433C] bg-[#2D1E1A] text-[#D4C8BA] hover:bg-[#382722] hover:text-white"
-                            }`}
-                          >
-                            {current ? "Edit cover position" : "Set as cover photo"}
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {/* Newly picked files grid */}
-                {newFiles.length > 0 && (
-                  <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-4">
-                    {newFiles.map((entry, i) => {
-                      const target = { kind: "new", id: entry.id };
-                      const current = isCover(target);
-                      return (
-                        <div
-                          key={entry.id}
-                          className={`group relative rounded-2xl overflow-hidden bg-[#261A16] border transition ${
-                            current
-                              ? "border-2 border-[#C85A32]"
-                              : "border-[#5D433C]"
-                          }`}
-                        >
-                          <div className="relative aspect-square">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={newFileUrls[i]}
-                              alt={`New photo ${i + 1}`}
-                              className="h-full w-full object-cover"
-                            />
-                            {current && (
-                              <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-[#C85A32] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">
-                                <ImageIcon size={10} /> Cover
-                              </span>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => removeNewFile(entry.id)}
-                              aria-label="Remove photo"
-                              className="absolute right-2 top-2 rounded-full bg-[#261A16]/90 p-1.5 text-white transition hover:bg-[#C85A32]"
-                            >
-                              <X size={13} />
-                            </button>
+                          <div className="flex items-center justify-center gap-1 border-t border-[#5D433C] bg-[#2D1E1A] py-1 text-[#D4C8BA]">
+                            <button type="button" onClick={() => movePhoto(i, -1)} disabled={i === 0} aria-label={`Move photo ${i + 1} earlier`} className="rounded p-1.5 hover:text-white disabled:opacity-30"><ChevronLeft size={17} /></button>
+                            <span className="min-w-5 text-center text-[11px] tabular-nums">{i + 1}</span>
+                            <button type="button" onClick={() => movePhoto(i, 1)} disabled={i === photoOrder.length - 1} aria-label={`Move photo ${i + 1} later`} className="rounded p-1.5 hover:text-white disabled:opacity-30"><ChevronRight size={17} /></button>
                           </div>
                           <button
                             type="button"
@@ -1051,6 +1034,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
             {momentsEditMode ? (
               /* ---------------- MOMENTS EDITING ---------------- */
               <div className="mt-6 bg-[#382722]/70 p-4 shadow-xl sm:p-5">
+                <p className="mb-4 text-xs text-[#D4C8BA]">Paste a write-up with blank lines between paragraphs to make a card for each paragraph.</p>
                 <DndContext
                   sensors={sensors}
                   collisionDetection={closestCenter}
@@ -1072,6 +1056,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                             moment={moment}
                             onChange={updateMoment}
                             onRemove={removeMoment}
+                            onPasteParagraphs={pasteMomentParagraphs}
                           />
                         ))}
                       </ul>
@@ -1082,23 +1067,11 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                 <div className="mt-4 flex flex-wrap items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => addMoment(false)}
+                    onClick={addMoment}
                     className="inline-flex items-center gap-1.5 rounded-full bg-[#2D1E1A] border border-[#5D433C] px-4 py-2 text-xs font-semibold text-[#FAF7F2] transition hover:border-[#C85A32]"
                   >
                     <Plus size={14} /> Add Moment
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => addMoment(true)}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-[#8F9648] px-4 py-2 text-xs font-semibold transition hover:bg-[#3E341C]"
-                    style={{
-                      backgroundColor: WARM_OLIVE_GREEN.bgLight,
-                      color: WARM_OLIVE_GREEN.text,
-                    }}
-                  >
-                    <Flame size={14} style={{ color: WARM_OLIVE_GREEN.hex }} /> Add NSFW Moment
-                  </button>
-
                   <button
                     type="button"
                     onClick={saveMoments}

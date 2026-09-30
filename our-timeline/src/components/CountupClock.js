@@ -90,9 +90,8 @@ export default function CountupClock({ startDateIso }) {
   }, []);
 
   return (
-    <div className="mt-9 text-center" role="timer" aria-label="Time together">
-      <p className="font-handwriting text-2xl text-[#FAF7F2] sm:text-3xl">Every day with you</p>
-      <div className="mx-auto mt-3 flex max-w-md items-baseline justify-center gap-3 sm:gap-6">
+    <div className="mt-7 text-center" role="timer" aria-label="Time together">
+      <div className="mx-auto flex max-w-md items-baseline justify-center gap-3 sm:gap-6">
         {MAIN_UNITS.map(([key, label]) => (
           <div key={key} className="min-w-0 flex-1">
             <span className="block font-handwriting text-[clamp(2.8rem,13vw,5rem)] leading-none tabular-nums text-[#FAF7F2]">{parts[key]}</span>
