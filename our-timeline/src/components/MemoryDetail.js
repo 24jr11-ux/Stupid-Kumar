@@ -111,7 +111,7 @@ function MomentTextarea({ value, onChange, onPasteParagraphs, placeholder, isNsf
   );
 }
 
-function SortableMomentRow({ moment, onChange, onRemove, onPasteParagraphs }) {
+function SortableMomentRow({ moment, onChange, onRemove, onPasteParagraphs, accent }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: moment.id });
 
@@ -141,37 +141,36 @@ function SortableMomentRow({ moment, onChange, onRemove, onPasteParagraphs }) {
         <GripVertical size={16} />
       </button>
 
-      <div className="min-w-0 flex-1">
-        <MomentTextarea
-          value={moment.text}
-          onChange={(text) => onChange(moment.id, { text })}
-          onPasteParagraphs={(paragraphs, start, end) => onPasteParagraphs(moment.id, paragraphs, start, end)}
-          placeholder="Write a moment…"
-          isNsfw={moment.is_nsfw}
-        />
+      <MomentTextarea
+        value={moment.text}
+        onChange={(text) => onChange(moment.id, { text })}
+        onPasteParagraphs={(paragraphs, start, end) => onPasteParagraphs(moment.id, paragraphs, start, end)}
+        placeholder="Write a moment…"
+        isNsfw={moment.is_nsfw}
+      />
+
+      <div className="flex shrink-0 flex-col items-center gap-1">
+        <button
+          type="button"
+          onClick={() => onRemove(moment.id)}
+          aria-label="Remove moment"
+          className="rounded-lg p-1.5 text-[#806F5B] transition hover:bg-black/5 hover:text-[#A44228]"
+        >
+          <Trash2 size={15} />
+        </button>
         <button
           type="button"
           onClick={() => onChange(moment.id, { is_nsfw: !moment.is_nsfw })}
           aria-pressed={moment.is_nsfw}
           aria-label={moment.is_nsfw ? "Remove NSFW tag from this moment" : "Mark this moment NSFW"}
-          className={`mt-2 inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide transition ${
-            moment.is_nsfw
-              ? "bg-[#E8C9B3] text-[#794631] hover:bg-[#DFC0A9]"
-              : "text-[#806F5B] hover:bg-[#EDE2CB] hover:text-[#794631]"
+          className={`flex h-8 w-8 items-center justify-center rounded-lg transition hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-[#8D533E] ${
+            moment.is_nsfw ? "" : "opacity-40"
           }`}
+          style={{ color: accent }}
         >
-          <Flame size={12} /> NSFW
+          <Flame size={19} fill={moment.is_nsfw ? "currentColor" : "none"} aria-hidden="true" />
         </button>
       </div>
-
-      <button
-        type="button"
-        onClick={() => onRemove(moment.id)}
-        aria-label="Remove moment"
-        className="shrink-0 rounded-lg p-1.5 text-[#806F5B] transition hover:bg-black/5 hover:text-[#A44228]"
-      >
-        <Trash2 size={15} />
-      </button>
     </li>
   );
 }
@@ -1057,6 +1056,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                             onChange={updateMoment}
                             onRemove={removeMoment}
                             onPasteParagraphs={pasteMomentParagraphs}
+                            accent={colorConfig.hex}
                           />
                         ))}
                       </ul>
