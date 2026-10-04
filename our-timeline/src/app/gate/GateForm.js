@@ -17,7 +17,7 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="mt-6 w-full rounded-full bg-[#C85A32] px-6 py-3.5 text-sm font-semibold text-white shadow-[0_4px_20px_rgba(200,90,50,0.4)] transition-all duration-200 hover:bg-[#B34B24] hover:shadow-[0_6px_24px_rgba(200,90,50,0.55)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+      className="mt-6 w-full rounded-full bg-[#76513E] px-6 py-3.5 text-sm font-semibold text-white shadow-[0_4px_20px_rgba(118,81,62,0.4)] transition-all duration-200 hover:bg-[#60402F] hover:shadow-[0_6px_24px_rgba(118,81,62,0.55)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
     >
       {pending ? "Checking…" : "Unlock"}
     </button>
@@ -74,7 +74,7 @@ export default function GateForm({ next, question, questionId }) {
         }`}
       >
         {/* Icon badge */}
-        <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#C85A32]/20 text-[#F8B79D] border border-[#C85A32]/40 shadow-inner">
+        <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#76513E]/20 text-[#EBCDB5] border border-[#76513E]/40 shadow-inner">
           <Lock size={24} />
         </div>
 
@@ -105,14 +105,14 @@ export default function GateForm({ next, question, questionId }) {
             required
             autoFocus
             placeholder=""
-            className="mt-2.5 w-full rounded-2xl border border-[#5D433C] bg-[#2D1E1A]/90 px-4 py-3.5 text-sm text-[#FAF7F2] outline-none transition placeholder:text-[#D4C8BA]/40 focus:border-[#C85A32] focus:bg-[#352520] focus:ring-2 focus:ring-[#C85A32]/30"
+            className="mt-2.5 w-full rounded-2xl border border-[#5D433C] bg-[#2D1E1A]/90 px-4 py-3.5 text-sm text-[#FAF7F2] outline-none transition placeholder:text-[#D4C8BA]/40 focus:border-[#76513E] focus:bg-[#352520] focus:ring-2 focus:ring-[#76513E]/30"
           />
         </div>
 
         {state?.error && (
           <p
             role="alert"
-            className="mt-4 rounded-xl border border-[#C85A32] bg-[#2D1E1A]/90 p-3 text-sm font-medium text-[#F8B79D]"
+            className="mt-4 rounded-xl border border-[#76513E] bg-[#2D1E1A]/90 p-3 text-sm font-medium text-[#EBCDB5]"
           >
             {state.error}
           </p>

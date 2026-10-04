@@ -32,14 +32,14 @@ export default async function MemoryPage({ params, searchParams }) {
         memoryColorIsLight(memory.color_tag) ? "memory-detail-page--light" : ""
       }`}
       data-memory-page={memory.id}
-      style={{ backgroundColor: memoryColorHex(memory.color_tag) }}
+      style={{ "--date-color": memoryColorHex(memory.color_tag) }}
     >
       <main className="relative z-10 w-full max-w-2xl pt-8 sm:pt-10">
         <nav className="text-sm">
           <MemoryTransitionLink
             href="/"
             targetSelector={`[data-memory-card="${memory.id}"]`}
-            className="inline-flex items-center gap-2 rounded-full border border-[#5D433C] bg-[#382722] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#D4C8BA] shadow-md transition hover:border-[#C85A32] hover:text-[#FAF7F2]"
+            className="inline-flex items-center gap-2 rounded-full border border-[#5D433C] bg-[#382722] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#D4C8BA] shadow-md transition hover:border-[#76513E] hover:text-[#FAF7F2]"
           >
             <ArrowLeft size={15} />
             Timeline

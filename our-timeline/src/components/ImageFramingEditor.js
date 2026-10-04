@@ -57,7 +57,7 @@ export default function ImageFramingEditor({ src, alt, position, zoom, onChange,
         <span className="shrink-0">{label} zoom</span>
         <input type="range" min="1" max="3" step="0.05" value={scale}
           onChange={(event) => onChange({ position: point, zoom: Number(event.target.value) })}
-          className="h-11 min-w-0 flex-1 accent-[#C85A32]" aria-label={`${label} zoom`} />
+          className="h-11 min-w-0 flex-1 accent-[#76513E]" aria-label={`${label} zoom`} />
         <span className="w-10 text-right font-mono text-xs tabular-nums">{scale.toFixed(2)}×</span>
       </label>
       <p className="mt-2 text-xs text-[#D4C8BA]">Drag the image to position it in the square.</p>

@@ -74,7 +74,7 @@ export default async function Home() {
         {/* Vertical timeline */}
         {memories.length === 0 ? (
           <div className="mt-10 rounded-3xl border border-[#5D433C] bg-[#382722] p-12 text-center shadow-xl">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#C85A32]/20 text-[#F8B79D] border border-[#C85A32]/40">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#76513E]/20 text-[#EBCDB5] border border-[#76513E]/40">
               <Sparkles size={24} />
             </div>
             <h3 className="mt-4 text-lg font-semibold text-[#FAF7F2]">
@@ -149,7 +149,7 @@ export default async function Home() {
 
                     {/* BOTTOM BAND: handwritten caption — the Date Title */}
                     <div
-                      className="px-1.5 pt-3.5 text-center font-handwriting text-2xl font-bold leading-tight text-[#2C2523] transition-colors group-hover:text-[#C85A32]"
+                      className="px-1.5 pt-3.5 text-center font-handwriting text-2xl font-bold leading-tight text-[#2C2523] transition-colors group-hover:text-[#76513E]"
                       style={{ fontFamily: "var(--font-handwriting)" }}
                     >
                       {memory.title || "Untitled"}

@@ -26,6 +26,14 @@ export const WARM_OLIVE_GREEN = {
 
 export const MEMORY_COLOR_TAGS = [
   {
+    id: "dark-cocoa",
+    label: "Dark Cocoa",
+    hex: "#614537",
+    bgLight: "#352820",
+    border: "#614537",
+    text: "#EBCDB5",
+  },
+  {
     id: "terracotta",
     label: "Burnt Terracotta",
     hex: "#C85A32",
@@ -91,11 +99,13 @@ export const MEMORY_COLOR_TAGS = [
   },
 ];
 
-export const DEFAULT_COLOR_TAG = MEMORY_COLOR_TAGS[0].hex; // "#C85A32"
+export const DEFAULT_COLOR_TAG = MEMORY_COLOR_TAGS[0].hex; // "#614537"
 
 // Native color inputs return six-digit hex values. Keep older palette choices
 // intact while letting a newly picked color use the existing color_tag field.
 export function memoryColorHex(colorHex) {
+  // Fold the short-lived rosewood default into the new cocoa default.
+  if (typeof colorHex === "string" && colorHex.toLowerCase() === "#7f5262") return DEFAULT_COLOR_TAG;
   return typeof colorHex === "string" && /^#[0-9a-f]{6}$/i.test(colorHex)
     ? colorHex
     : DEFAULT_COLOR_TAG;

@@ -196,7 +196,7 @@ function MomentPaper({
                 type="button"
                 onClick={() => onReveal(!revealed)}
                 aria-label={revealed ? "Hide this NSFW moment" : "Reveal this NSFW moment"}
-                className="inline-flex h-7 w-7 items-center justify-center rounded-full transition hover:bg-[#C85A32]/10 focus-visible:outline-2 focus-visible:outline-[#8D533E]"
+                className="inline-flex h-7 w-7 items-center justify-center rounded-full transition hover:bg-[#76513E]/10 focus-visible:outline-2 focus-visible:outline-[#8D533E]"
               >
                 {revealed ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
               </button>
@@ -256,7 +256,7 @@ function CoverCropModal({ src, title, initialPos, initialZoom, onConfirm, onCanc
           <button
             type="button"
             onClick={() => onConfirm(framing)}
-            className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#C85A32] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_4px_16px_rgba(200,90,50,0.4)] transition hover:bg-[#B34B24]"
+            className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#76513E] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_4px_16px_rgba(118,81,62,0.4)] transition hover:bg-[#60402F]"
           >
             <Check size={15} /> Use as cover
           </button>
@@ -725,7 +725,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                   type="button"
                   onClick={handleSave}
                   disabled={saving}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-[#C85A32] px-5 py-2 text-xs font-bold uppercase tracking-wider text-white shadow-[0_4px_16px_rgba(200,90,50,0.4)] transition hover:bg-[#B34B24] disabled:opacity-60"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#76513E] px-5 py-2 text-xs font-bold uppercase tracking-wider text-white shadow-[0_4px_16px_rgba(118,81,62,0.4)] transition hover:bg-[#60402F] disabled:opacity-60"
                 >
                   {saving ? (
                     <>
@@ -751,7 +751,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                 <button
                   type="button"
                   onClick={() => setShowDeleteModal(true)}
-                  className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold text-[#F8B79D] transition hover:bg-[#382722] hover:text-white"
+                  className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold text-[#EBCDB5] transition hover:bg-[#382722] hover:text-white"
                 >
                   <Trash2 size={13} /> Delete memory
                 </button>
@@ -760,7 +760,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
               <button
                 type="button"
                 onClick={() => setEditMode(true)}
-                className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-[#5D433C] bg-[#382722] px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider text-[#D4C8BA] shadow-md transition hover:border-[#C85A32] hover:text-[#FAF7F2]"
+                className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-[#5D433C] bg-[#382722] px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider text-[#D4C8BA] shadow-md transition hover:border-[#76513E] hover:text-[#FAF7F2]"
               >
                 <Pencil size={13} />
                 Edit
@@ -777,7 +777,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Date Title"
-                  className="memory-page-heading mt-3 w-full border-b-2 border-[#5D433C] bg-transparent font-handwriting text-4xl font-bold tracking-tight text-[#FAF7F2] outline-none focus:border-[#C85A32] sm:text-5xl placeholder:text-[#D4C8BA]/40"
+                  className="memory-page-heading mt-3 w-full border-b-2 border-[#5D433C] bg-transparent font-handwriting text-4xl font-bold tracking-tight text-[#FAF7F2] outline-none focus:border-[#76513E] sm:text-5xl placeholder:text-[#D4C8BA]/40"
                 />
               ) : (
                 <h1
@@ -802,7 +802,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                         step="1"
                         value={entryNumber}
                         onChange={(e) => setEntryNumber(e.target.value)}
-                        className="w-20 rounded-xl border border-[#5D433C] bg-[#2D1E1A] px-3 py-1.5 font-semibold text-[#FAF7F2] outline-none focus:border-[#C85A32]"
+                        className="w-20 rounded-xl border border-[#5D433C] bg-[#2D1E1A] px-3 py-1.5 font-semibold text-[#FAF7F2] outline-none focus:border-[#76513E]"
                       />
                     </label>
                     <label className="inline-flex items-center gap-2 font-sans text-sm text-[#D4C8BA]">
@@ -811,7 +811,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                         type="date"
                         value={dateStr}
                         onChange={(e) => setDateStr(e.target.value)}
-                        className="rounded-xl border border-[#5D433C] bg-[#2D1E1A] px-3 py-1.5 font-semibold text-[#FAF7F2] outline-none focus:border-[#C85A32]"
+                        className="rounded-xl border border-[#5D433C] bg-[#2D1E1A] px-3 py-1.5 font-semibold text-[#FAF7F2] outline-none focus:border-[#76513E]"
                       />
                     </label>
                   </>
@@ -843,7 +843,6 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
               editMode={editMode}
               onChange={setSong}
               onMetadata={applySongMetadata}
-              accent={colorConfig.hex}
             />
           </div>
 
@@ -892,7 +891,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                           key={`${target.kind}:${target.id}`}
                           className={`group relative rounded-2xl overflow-hidden bg-[#261A16] border transition ${
                             current
-                              ? "border-2 border-[#C85A32]"
+                              ? "border-2 border-[#76513E]"
                               : "border-[#5D433C]"
                           }`}
                         >
@@ -906,7 +905,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                               unoptimized
                             />
                             {current && (
-                              <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-[#C85A32] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">
+                              <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-[#76513E] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">
                                 <ImageIcon size={10} /> Cover
                               </span>
                             )}
@@ -914,7 +913,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                               type="button"
                               onClick={() => target.kind === "existing" ? removeStoredPhoto(target.id) : removeNewFile(target.id)}
                               aria-label="Remove photo"
-                              className="absolute right-2 top-2 rounded-full bg-[#261A16]/90 p-1.5 text-white transition hover:bg-[#C85A32]"
+                              className="absolute right-2 top-2 rounded-full bg-[#261A16]/90 p-1.5 text-white transition hover:bg-[#76513E]"
                             >
                               <X size={13} />
                             </button>
@@ -929,7 +928,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                             onClick={() => openCoverCrop(target)}
                             className={`min-h-11 w-full border-t px-2 py-2 text-center text-[11px] font-semibold transition ${
                               current
-                                ? "border-[#C85A32]/50 bg-[#C85A32]/20 text-[#F8B79D]"
+                                ? "border-[#76513E]/50 bg-[#76513E]/20 text-[#EBCDB5]"
                                 : "border-[#5D433C] bg-[#2D1E1A] text-[#D4C8BA] hover:bg-[#382722] hover:text-white"
                             }`}
                           >
@@ -941,7 +940,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                   </div>
                 )}
 
-                <label className="mt-4 inline-flex cursor-pointer items-center gap-2 rounded-xl border-2 border-dashed border-[#5D433C] bg-[#2D1E1A] px-4 py-2.5 text-xs font-semibold text-[#D4C8BA] transition hover:border-[#C85A32] hover:text-[#FAF7F2]">
+                <label className="mt-4 inline-flex cursor-pointer items-center gap-2 rounded-xl border-2 border-dashed border-[#5D433C] bg-[#2D1E1A] px-4 py-2.5 text-xs font-semibold text-[#D4C8BA] transition hover:border-[#76513E] hover:text-[#FAF7F2]">
                   <Upload size={15} />
                   Add photos
                   <input
@@ -1056,8 +1055,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                             onChange={updateMoment}
                             onRemove={removeMoment}
                             onPasteParagraphs={pasteMomentParagraphs}
-                            accent={colorConfig.hex}
-                          />
+                                        />
                         ))}
                       </ul>
                     )}
@@ -1068,7 +1066,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                   <button
                     type="button"
                     onClick={addMoment}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-[#2D1E1A] border border-[#5D433C] px-4 py-2 text-xs font-semibold text-[#FAF7F2] transition hover:border-[#C85A32]"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-[#2D1E1A] border border-[#5D433C] px-4 py-2 text-xs font-semibold text-[#FAF7F2] transition hover:border-[#76513E]"
                   >
                     <Plus size={14} /> Add Moment
                   </button>
@@ -1076,7 +1074,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                     type="button"
                     onClick={saveMoments}
                     disabled={savingMoments}
-                    className="ml-auto inline-flex items-center gap-2 rounded-full bg-[#C85A32] px-5 py-2.5 text-xs font-semibold text-white shadow-[0_4px_16px_rgba(200,90,50,0.4)] transition hover:bg-[#B34B24] disabled:opacity-60"
+                    className="ml-auto inline-flex items-center gap-2 rounded-full bg-[#76513E] px-5 py-2.5 text-xs font-semibold text-white shadow-[0_4px_16px_rgba(118,81,62,0.4)] transition hover:bg-[#60402F] disabled:opacity-60"
                   >
                     {savingMoments ? (
                       <>
@@ -1114,7 +1112,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                         onClick={previousMoment}
                         disabled={displayedMomentIndex === 0}
                         aria-label="Previous memory"
-                        className="flex h-9 w-9 items-center justify-center rounded-full border border-[#5D433C] bg-[#2D1E1A] text-[#FAF7F2] transition hover:border-[#C85A32] active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+                        className="flex h-9 w-9 items-center justify-center rounded-full border border-[#5D433C] bg-[#2D1E1A] text-[#FAF7F2] transition hover:border-[#76513E] active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         <ChevronLeft size={18} />
                       </button>
@@ -1123,7 +1121,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                         onClick={nextMoment}
                         disabled={displayedMomentIndex === viewingMoments.length - 1}
                         aria-label="Next memory"
-                        className="flex h-9 w-9 items-center justify-center rounded-full border border-[#5D433C] bg-[#2D1E1A] text-[#FAF7F2] transition hover:border-[#C85A32] active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+                        className="flex h-9 w-9 items-center justify-center rounded-full border border-[#5D433C] bg-[#2D1E1A] text-[#FAF7F2] transition hover:border-[#76513E] active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         <ChevronRight size={18} />
                       </button>
@@ -1153,7 +1151,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
           </section>
 
           {error && (
-            <p role="alert" className="mt-4 rounded-2xl border border-[#C85A32] bg-[#2D1E1A] p-4 text-sm font-medium text-[#F8B79D]">
+            <p role="alert" className="mt-4 rounded-2xl border border-[#76513E] bg-[#2D1E1A] p-4 text-sm font-medium text-[#EBCDB5]">
               {error}
             </p>
           )}
@@ -1176,7 +1174,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4">
           <div className="w-full max-w-md rounded-3xl border border-[#5D433C] bg-[#352520] p-6 shadow-2xl sm:p-8">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#C85A32]/20 text-[#F8B79D] border border-[#C85A32]/40">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#76513E]/20 text-[#EBCDB5] border border-[#76513E]/40">
               <AlertTriangle size={24} />
             </div>
 
@@ -1203,7 +1201,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                 type="button"
                 onClick={deleteMemoryRow}
                 disabled={deleting}
-                className="inline-flex items-center gap-2 rounded-full bg-[#C85A32] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_4px_16px_rgba(200,90,50,0.4)] transition hover:bg-[#B34B24] disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-full bg-[#76513E] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_4px_16px_rgba(118,81,62,0.4)] transition hover:bg-[#60402F] disabled:opacity-60"
               >
                 {deleting ? (
                   <>

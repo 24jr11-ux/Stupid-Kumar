@@ -13,7 +13,7 @@ import { VIVID_ORANGE, VIVID_WARM_GREEN } from "@/lib/colors";
  *
  * COLORS
  *   Two vivid colors reused from the app's established palette (colors.js):
- *     - VIVID_ORANGE      #C85A32  (the "Add Memory" orange)
+ *     - VIVID_ORANGE      #C85A32  (the original flowing orange)
  *     - VIVID_WARM_GREEN  #96B82D  (the warm golden-green)
  *   Where the two overlap in the shader they glow rather than muddy, matching
  *   the app's existing lighten-blend golden-amber language.

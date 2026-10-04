@@ -55,7 +55,7 @@ export default function AddMemoryButton() {
         type="button"
         onClick={handleClick}
         disabled={pending}
-        className="inline-flex items-center gap-2 rounded-full bg-[#C85A32] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_4px_16px_rgba(200,90,50,0.35)] transition-all duration-200 hover:bg-[#B34B24] hover:shadow-[0_6px_22px_rgba(200,90,50,0.5)] hover:scale-[1.02] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+        className="inline-flex items-center gap-2 rounded-full bg-[#76513E] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_4px_16px_rgba(118,81,62,0.35)] transition-all duration-200 hover:bg-[#60402F] hover:shadow-[0_6px_22px_rgba(118,81,62,0.5)] hover:scale-[1.02] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
       >
         {pending ? <Loader2 size={17} className="animate-spin" /> : <CirclePlus size={17} />}
         <span>{pending ? "Creating…" : "Add Memory"}</span>
@@ -63,7 +63,7 @@ export default function AddMemoryButton() {
       {error && (
         <p
           role="alert"
-          className="max-w-xs rounded-xl bg-[#2D1E1A] px-3 py-2 text-right text-xs font-medium text-[#F8B79D] border border-[#C85A32]"
+          className="max-w-xs rounded-xl bg-[#2D1E1A] px-3 py-2 text-right text-xs font-medium text-[#EBCDB5] border border-[#76513E]"
         >
           {error}
         </p>

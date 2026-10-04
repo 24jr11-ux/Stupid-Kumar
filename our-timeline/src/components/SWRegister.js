@@ -8,6 +8,21 @@ export default function SWRegister() {
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
 
+    // A production worker can keep serving old CSS while running the local dev server.
+    if (process.env.NODE_ENV !== "production") {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        const appRegistrations = registrations.filter(
+          (registration) => registration.scope === `${window.location.origin}/`
+        );
+        if (appRegistrations.length === 0) return;
+        Promise.all(appRegistrations.map((registration) => registration.unregister()))
+          .then(() => {
+            if (navigator.serviceWorker.controller) window.location.reload();
+          });
+      });
+      return;
+    }
+
     navigator.serviceWorker
       .register("/sw.js", { scope: "/" })
       .then((registration) => {

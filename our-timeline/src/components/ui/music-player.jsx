@@ -116,7 +116,7 @@ export function MusicPlayer({ src, coverArt, coverPosition, coverZoom, title = "
         disabled={!ready || !id}
         aria-label={`${isPlaying || state === 3 ? "Pause" : "Play"} ${title}`}
         aria-pressed={isPlaying}
-        className="group relative block aspect-square w-full rounded-full outline-none focus-visible:ring-2 focus-visible:ring-[#C85A32] focus-visible:ring-offset-4 focus-visible:ring-offset-black disabled:cursor-wait"
+        className="group relative block aspect-square w-full rounded-full outline-none focus-visible:ring-2 focus-visible:ring-[#76513E] focus-visible:ring-offset-4 focus-visible:ring-offset-black disabled:cursor-wait"
       >
         <div
           className="relative h-full w-full animate-spin overflow-hidden rounded-full border-[5px] border-[#2D1E1A] bg-[#382722] shadow-[0_4px_18px_rgba(0,0,0,0.5)]"
@@ -155,7 +155,7 @@ export function MusicPlayer({ src, coverArt, coverPosition, coverZoom, title = "
         >
           <div className="absolute right-0 top-0 h-4 w-4 rounded-full border-2 border-[#D4C8BA] bg-[#74544B] shadow-md" />
           <div className="absolute right-2 top-1 h-1.5 w-[90%] origin-right -rotate-12 rounded-full bg-[#D4C8BA] shadow-md">
-            <span className="absolute -left-1 -top-0.5 h-2.5 w-3 rounded-sm bg-[#C85A32]" />
+            <span className="absolute -left-1 -top-0.5 h-2.5 w-3 rounded-sm bg-[#76513E]" />
           </div>
         </motion.div>
         <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/15 transition group-hover:bg-black/30">
@@ -170,7 +170,7 @@ export function MusicPlayer({ src, coverArt, coverPosition, coverZoom, title = "
         </button>
       </div>
       {error && (
-        <div className="mt-1 text-xs text-[#F8B79D]" role="status">
+        <div className="mt-1 text-xs text-[#EBCDB5]" role="status">
           {error}
           <button type="button" className="mt-1 block underline" onClick={() => { setReady(false); setState(-1); setError(""); setAttempt((n) => n + 1); }}>Try again</button>
         </div>
