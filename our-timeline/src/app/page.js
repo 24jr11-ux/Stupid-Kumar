@@ -6,7 +6,6 @@ import AnimatedBackground from "@/components/AnimatedBackground";
 import MemoryTransitionLink from "@/components/MemoryTransitionLink";
 import { readMemories } from "@/lib/memories";
 import { photoSrc } from "@/lib/photoUrl";
-import { getColorTagConfig } from "@/lib/colors";
 import { cropImageStyle } from "@/lib/imageCrop";
 
 // Date formats for the polaroid card. mm/dd/yy on the top band.
@@ -82,26 +81,15 @@ export default async function Home() {
             </p>
           </div>
         ) : (
-          <ol className="relative mt-10 space-y-12 border-l-2 border-[#5D433C] pl-6 sm:pl-8">
+          <ol className="mt-10 space-y-12">
             {memories.map((memory) => {
               const photos = memory.photo_urls ?? [];
               const pickedCover = memory.cover_photo_url;
               const coverPhoto =
                 photos.includes(pickedCover) ? pickedCover : photos[0];
-              const colorConfig = getColorTagConfig(memory.color_tag);
 
               return (
                 <li key={memory.id} className="relative">
-                  {/* Glowing dot on the timeline */}
-                  <span
-                    aria-hidden="true"
-                    className="absolute -left-[31px] sm:-left-[39px] top-10 h-4 w-4 rounded-full border-2 border-[#4A352F]"
-                    style={{
-                      backgroundColor: colorConfig.hex,
-                      boxShadow: `0 0 14px ${colorConfig.hex}90`,
-                    }}
-                  />
-
                   {/* -----------------------------------------------------
                       POLAROID CARD
                       Crisp white/cream frame with sharp corners.
