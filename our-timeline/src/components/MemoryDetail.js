@@ -282,7 +282,6 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
   // --- page-level edit fields -----------------------------------------------
   const [title, setTitle] = useState(memory.title ?? "");
   const [dateStr, setDateStr] = useState(memory.date ?? "");
-  const [entryNumber, setEntryNumber] = useState(memory.entry_number ?? 1);
   const [colorTag, setColorTag] = useState(memoryColorHex(memory.color_tag));
   const [song, setSong] = useState({
     url: memory.song_url ?? "",
@@ -565,7 +564,6 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
         body: JSON.stringify({
           title: title.trim() || "New Date",
           date: dateStr,
-          entry_number: Number(entryNumber),
           color_tag: colorTag || DEFAULT_COLOR_TAG,
           song_url: youtubeSongUrl(songUrl) || songUrl.trim() || null,
           song_title: songUrl.trim() ? song.title?.trim() || null : null,
@@ -621,7 +619,6 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
     if (discard) {
       setTitle(memory.title ?? "");
       setDateStr(memory.date ?? "");
-      setEntryNumber(memory.entry_number ?? 1);
       setColorTag(memoryColorHex(memory.color_tag));
       setSong({
         url: memory.song_url ?? "",
@@ -668,18 +665,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
       <article className="relative mt-4">
         <div className="relative z-10">
           {/* Header metadata + Edit controls (top right) */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            <span
-              className="rounded-full px-3 py-1 font-mono text-xs font-bold shadow-xs border"
-              style={{
-                backgroundColor: colorConfig.bgLight,
-                color: colorConfig.text,
-                borderColor: colorConfig.border,
-              }}
-            >
-              Date #{entryNumber}
-            </span>
-
+          <div className="flex items-center justify-end gap-2.5">
             {editMode ? (
               <div className="ml-auto flex flex-col items-end gap-1.5">
                 <button
@@ -721,10 +707,11 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
               <button
                 type="button"
                 onClick={() => setEditMode(true)}
-                className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-[#5D433C] bg-[#382722] px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider text-[#D4C8BA] shadow-md transition hover:border-[#76513E] hover:text-[#FAF7F2]"
+                aria-label="Edit memory"
+                title="Edit memory"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#5D433C] bg-[#382722] text-[#D4C8BA] shadow-md transition hover:border-[#76513E] hover:text-[#FAF7F2]"
               >
                 <Pencil size={13} />
-                Edit
               </button>
             )}
           </div>
@@ -738,32 +725,20 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Date Title"
-                  className="memory-page-heading mt-3 w-full border-b-2 border-[#5D433C] bg-transparent font-handwriting text-4xl font-bold tracking-tight text-[#FAF7F2] outline-none focus:border-[#76513E] sm:text-5xl placeholder:text-[#D4C8BA]/40"
+                  className="memory-page-heading w-full border-b-2 border-[#5D433C] bg-transparent font-handwriting text-4xl font-bold tracking-tight text-[#FAF7F2] outline-none focus:border-[#76513E] sm:text-5xl placeholder:text-[#D4C8BA]/40"
                 />
               ) : (
                 <h1
-                  className="scrapbook-label memory-title-label mt-3 break-words font-handwriting text-4xl font-bold tracking-tight text-[#FAF7F2] sm:text-5xl leading-tight"
+                  className="scrapbook-label memory-title-label break-words font-handwriting text-4xl font-bold tracking-tight text-[#FAF7F2] sm:text-5xl leading-tight"
                 >
                   {title || "Untitled"}
                 </h1>
               )}
 
-              {/* Date # and calendar date */}
+              {/* Calendar date */}
               <div className="memory-page-date mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 font-handwriting text-xl text-[#D4C8BA]">
                 {editMode ? (
-                  <>
-                    <label className="inline-flex items-center gap-2 font-sans text-sm text-[#D4C8BA]">
-                      Date #
-                      <input
-                        type="number"
-                        min="1"
-                        step="1"
-                        value={entryNumber}
-                        onChange={(e) => setEntryNumber(e.target.value)}
-                        className="w-20 rounded-xl border border-[#5D433C] bg-[#2D1E1A] px-3 py-1.5 font-semibold text-[#FAF7F2] outline-none focus:border-[#76513E]"
-                      />
-                    </label>
-                    <label className="inline-flex items-center gap-2 font-sans text-sm text-[#D4C8BA]">
+                  <label className="inline-flex items-center gap-2 font-sans text-sm text-[#D4C8BA]">
                       Date
                       <input
                         type="date"
@@ -771,8 +746,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                         onChange={(e) => setDateStr(e.target.value)}
                         className="rounded-xl border border-[#5D433C] bg-[#2D1E1A] px-3 py-1.5 font-semibold text-[#FAF7F2] outline-none focus:border-[#76513E]"
                       />
-                    </label>
-                  </>
+                  </label>
                 ) : (
                   <span className="scrapbook-text">{formatDate(dateStr)}</span>
                 )}
