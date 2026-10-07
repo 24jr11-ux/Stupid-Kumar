@@ -77,7 +77,7 @@ export default async function Home() {
               No memories yet
             </h3>
             <p className="mt-1 text-sm text-[#D4C8BA]">
-              Tap &ldquo;Add Memory&rdquo; above to record your very first date together!
+              Tap the plus button above to record your very first date together!
             </p>
           </div>
         ) : (
@@ -99,7 +99,7 @@ export default async function Home() {
                     href={`/memory/${memory.id}`}
                     targetSelector={`[data-memory-page="${memory.id}"]`}
                     data-memory-card={memory.id}
-                    className="timeline-photo group mx-auto block max-w-sm bg-[#FDFBF6] p-3 pb-5 transition-all duration-200 hover:-translate-y-1"
+                    className="timeline-photo group mx-auto block w-[min(76vw,20rem)] bg-[#FDFBF6] p-3 pb-5 transition-all duration-200 hover:-translate-y-1 sm:w-full sm:max-w-sm"
                   >
                     {/* TOP BAND: calendar date, mm/dd/yy */}
                     <div className="px-1.5 pb-2.5 pt-1 text-center font-mono text-sm font-semibold tracking-[0.18em] text-[#786F6A]">

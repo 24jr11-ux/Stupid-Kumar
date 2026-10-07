@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CirclePlus, Loader2 } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import { memoryRequest } from "@/lib/memoryApi";
 
 function extractErrorMessage(err) {
@@ -14,7 +14,7 @@ function extractErrorMessage(err) {
 }
 
 /**
- * "+ Add Memory" button.
+ * Add memory button.
  * Immediately creates a fresh draft memory and redirects to its detail page.
  */
 export default function AddMemoryButton() {
@@ -55,10 +55,10 @@ export default function AddMemoryButton() {
         type="button"
         onClick={handleClick}
         disabled={pending}
-        className="inline-flex items-center gap-2 rounded-full bg-[#76513E] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_4px_16px_rgba(118,81,62,0.35)] transition-all duration-200 hover:bg-[#60402F] hover:shadow-[0_6px_22px_rgba(118,81,62,0.5)] hover:scale-[1.02] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+        aria-label={pending ? "Creating memory" : "Add memory"}
+        className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[#76513E] text-white shadow-[0_4px_16px_rgba(118,81,62,0.35)] transition-all duration-200 hover:bg-[#60402F] hover:shadow-[0_6px_22px_rgba(118,81,62,0.5)] hover:scale-[1.02] active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FAF7F2] disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {pending ? <Loader2 size={17} className="animate-spin" /> : <CirclePlus size={17} />}
-        <span>{pending ? "Creating…" : "Add Memory"}</span>
+        {pending ? <Loader2 size={20} className="animate-spin" aria-hidden="true" /> : <Plus size={20} aria-hidden="true" />}
       </button>
       {error && (
         <p

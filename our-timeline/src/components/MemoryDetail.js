@@ -241,10 +241,10 @@ function CoverCropModal({ src, title, initialPos, initialZoom, onConfirm, onCanc
         </div>
 
         <p className="mt-1 text-xs text-[#D4C8BA]">
-          Preview the square photo as it will appear on the timeline.
+          Drag to center the photo within the grid. Pinch to zoom on your phone.
         </p>
         <div className="mt-4">
-          <ImageFramingEditor src={src} alt={title || "Cover photo"} position={framing.position} zoom={framing.zoom} onChange={setFraming} label="Cover" />
+          <ImageFramingEditor src={src} alt={title || "Cover photo"} position={framing.position} zoom={framing.zoom} onChange={setFraming} label="Cover" showGrid />
         </div>
 
         <div className="mt-5 flex items-center justify-end gap-3">
@@ -778,7 +778,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
             />
           </div>
 
-          {/* A large photo and a narrow strip of prints; originals remain uncropped. */}
+          {/* One uncropped photo at a time. */}
           <div className="mt-8 min-w-0">
             {photoUrlsForCarousel.length > 0 ? (
               <MemoryPhotoStack photos={photoUrlsForCarousel} title={title} />
