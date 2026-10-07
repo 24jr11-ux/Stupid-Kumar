@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { photoSrc } from "@/lib/photoUrl";
+import CarouselPagination from "@/components/CarouselPagination";
 
 export default function MemoryPhotoStack({ photos, title }) {
   const [selected, setSelected] = useState(0);
@@ -56,17 +57,7 @@ export default function MemoryPhotoStack({ photos, title }) {
           </motion.div>
         </AnimatePresence>
       </div>
-      {photos.length > 1 && (
-        <div className="photo-stack-dots" aria-label="Choose a photo">
-          {photos.map((url, index) => (
-            <button key={`${url}-${index}`} type="button" className="photo-stack-dot"
-              aria-label={`Show photo ${index + 1}`} aria-current={index === active ? "true" : undefined}
-              onClick={() => select(index)}>
-              <span />
-            </button>
-          ))}
-        </div>
-      )}
+      <CarouselPagination count={photos.length} active={active} onSelect={select} itemLabel="photo" />
     </section>
   );
 }

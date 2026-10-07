@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { AUTH_COOKIE, authCookieValue } from "@/lib/auth";
+import { AUTH_COOKIE, isValidAuthCookie } from "@/lib/auth";
 
 // Next.js 16 renamed `middleware` to `proxy`. This file runs before a request
 // reaches any page and enforces the passphrase gate:
@@ -9,7 +9,7 @@ import { AUTH_COOKIE, authCookieValue } from "@/lib/auth";
 // Paths that must stay public for the app to function (gate page, service
 // worker, manifest, icons, etc.) are allowed through below.
 
-const PUBLIC_PATHS = ["/gate"];
+const PUBLIC_PATHS = ["/gate", "/api/gate/question", "/api/session"];
 
 // Catch-all matcher minus Next.js internals; the public-path allowlist below
 // does the rest.
@@ -30,7 +30,7 @@ export function proxy(request) {
 
   // If the visitor has a valid auth cookie, let them in.
   const cookie = request.cookies.get(AUTH_COOKIE)?.value;
-  if (cookie && authCookieValue() && cookie === authCookieValue()) {
+  if (isValidAuthCookie(cookie)) {
     return NextResponse.next();
   }
 

@@ -1,22 +1,23 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import { MeshGradient } from "@paper-design/shaders-react";
 import { Lock } from "lucide-react";
 import { unlock } from "./actions";
+import { LAST_ACTIVE_KEY } from "@/lib/session";
 import { VIVID_ORANGE, VIVID_WARM_GREEN } from "@/lib/colors";
 
 const initialState = { error: null };
 const NAVIGATE_DELAY_MS = 1400; // let the lava flow out, then open the timeline
 
-function SubmitButton() {
+function SubmitButton({ ready }) {
   const { pending } = useFormStatus();
   return (
     <button
       type="submit"
-      disabled={pending}
+      disabled={pending || !ready}
       className="mt-6 w-full rounded-full bg-[#76513E] px-6 py-3.5 text-sm font-semibold text-white shadow-[0_4px_20px_rgba(118,81,62,0.4)] transition-all duration-200 hover:bg-[#60402F] hover:shadow-[0_6px_24px_rgba(118,81,62,0.55)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
     >
       {pending ? "Checking…" : "Unlock"}
@@ -24,16 +25,29 @@ function SubmitButton() {
   );
 }
 
-export default function GateForm({ next, question, questionId }) {
+export default function GateForm({ next }) {
+  const [challenge, setChallenge] = useState(null);
+  const [questionError, setQuestionError] = useState(false);
+  const [questionAttempt, setQuestionAttempt] = useState(0);
   const [state, formAction] = useActionState(unlock, initialState);
   const router = useRouter();
   // Derived from the server action's answer, so no extra state to sync.
   const expanded = Boolean(state?.success);
 
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/gate/question", { cache: "no-store", signal: controller.signal })
+      .then(response => { if (!response.ok) throw new Error("Question unavailable"); return response.json(); })
+      .then(value => { if (!controller.signal.aborted) { setChallenge(value); setQuestionError(false); } })
+      .catch(() => { if (!controller.signal.aborted) setQuestionError(true); });
+    return () => controller.abort();
+  }, [questionAttempt]);
+
   // After a correct answer the lava has ~1.4s to cover the screen, then we
   // hand off to the timeline (which paints the same full-page lava).
   useEffect(() => {
     if (!state?.success) return;
+    try { localStorage.setItem(LAST_ACTIVE_KEY, String(Date.now())); } catch { /* Cookie expiry still applies. */ }
     const go = setTimeout(
       () => router.replace(state?.next || "/"),
       NAVIGATE_DELAY_MS
@@ -88,14 +102,14 @@ export default function GateForm({ next, question, questionId }) {
         </h1>
 
         <input type="hidden" name="next" value={next} />
-        <input type="hidden" name="questionId" value={questionId} />
+        <input type="hidden" name="questionId" value={challenge?.id ?? ""} />
 
         <div className="mt-8 text-left">
           <label
             htmlFor="answer"
             className="block text-sm font-semibold text-[#FAF7F2]"
           >
-            {question}
+            {challenge?.question || (questionError ? "Unable to load a question." : "Choosing a question…")}
           </label>
 
           <input
@@ -104,6 +118,7 @@ export default function GateForm({ next, question, questionId }) {
             name="answer"
             required
             autoFocus
+            disabled={!challenge}
             placeholder=""
             className="mt-2.5 w-full rounded-2xl border border-[#5D433C] bg-[#2D1E1A]/90 px-4 py-3.5 text-sm text-[#FAF7F2] outline-none transition placeholder:text-[#D4C8BA]/40 focus:border-[#76513E] focus:bg-[#352520] focus:ring-2 focus:ring-[#76513E]/30"
           />
@@ -118,7 +133,9 @@ export default function GateForm({ next, question, questionId }) {
           </p>
         )}
 
-        <SubmitButton />
+        {questionError && <button type="button" className="mt-4 text-sm underline"
+          onClick={() => { setQuestionError(false); setQuestionAttempt(attempt => attempt + 1); }}>Try loading again</button>}
+        <SubmitButton ready={Boolean(challenge) && !expanded} />
       </form>
     </div>
   );

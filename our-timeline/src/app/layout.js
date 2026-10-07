@@ -1,5 +1,6 @@
 import "./globals.css";
 import SWRegister from "@/components/SWRegister";
+import SessionGuard from "@/components/SessionGuard";
 
 export const metadata = {
   title: {
@@ -33,7 +34,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className="h-full antialiased">
       <body className="min-h-full flex flex-col text-[#FAF7F2]" suppressHydrationWarning>
-        {children}
+        <SessionGuard>{children}</SessionGuard>
         {/* Registers the service worker that makes the app installable / offline-aware. */}
         <SWRegister />
       </body>

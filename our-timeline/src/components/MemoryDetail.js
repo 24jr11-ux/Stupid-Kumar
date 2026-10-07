@@ -39,6 +39,7 @@ import { formatDate } from "@/lib/dates";
 import { youtubeVideoId, youtubeSongUrl, youtubeCoverUrls } from "@/lib/player";
 import MemorySong from "@/components/MemorySong";
 import MemoryPhotoStack from "@/components/MemoryPhotoStack";
+import CarouselPagination from "@/components/CarouselPagination";
 import {
   getColorTagConfig,
   memoryColorHex,
@@ -730,7 +731,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                 />
               ) : (
                 <h1
-                  className="scrapbook-label memory-title-label break-words font-handwriting text-4xl font-bold tracking-tight text-[#FAF7F2] sm:text-5xl leading-tight"
+                  className="scrapbook-text memory-page-heading memory-title-label break-words font-handwriting text-4xl font-bold tracking-tight text-[#FAF7F2] sm:text-5xl leading-tight"
                 >
                   {title || "Untitled"}
                 </h1>
@@ -1037,18 +1038,8 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                     </ul>
                   </div>
 
-                  {viewingMoments.length > 1 && (
-                    <div className="photo-stack-dots" aria-label="Choose a memory card">
-                      {viewingMoments.map((moment, index) => (
-                        <button key={moment.id} type="button" className="photo-stack-dot"
-                          aria-label={`Show memory card ${index + 1}`}
-                          aria-current={index === displayedMomentIndex ? "true" : undefined}
-                          onClick={() => setActiveMomentIndex(index)}>
-                          <span />
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                  <CarouselPagination count={viewingMoments.length} active={displayedMomentIndex}
+                    onSelect={setActiveMomentIndex} itemLabel="memory card" />
                 </div>
               ) : (
                 <ul className="moment-paper-list mt-8 space-y-7 px-1 sm:px-4">

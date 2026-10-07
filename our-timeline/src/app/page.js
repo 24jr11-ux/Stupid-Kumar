@@ -44,7 +44,7 @@ export default async function Home() {
         {/* Header Hero */}
         <div className="text-center">
           <h1
-            className="scrapbook-label home-title-label font-handwriting text-5xl font-bold tracking-tight text-[#FAF7F2] sm:text-7xl transition-all"
+            className="scrapbook-text home-title-label font-handwriting text-5xl font-bold tracking-tight text-[#FAF7F2] sm:text-7xl transition-all"
           >
             Stupid &amp; Kumar
           </h1>

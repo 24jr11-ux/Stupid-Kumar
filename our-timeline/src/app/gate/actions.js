@@ -1,7 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { AUTH_COOKIE, authCookieValue, sanitizeNextPath } from "@/lib/auth";
+import { AUTH_COOKIE, AUTH_COOKIE_OPTIONS, authCookieValue, sanitizeNextPath } from "@/lib/auth";
 import { verifyAnswer, getQuestionById } from "@/lib/questions";
 
 // Server action behind the /gate form. Verifies the submitted answer against
@@ -24,13 +24,7 @@ export async function unlock(prevState, formData) {
 
   // Persist auth in a cookie (never the raw answer).
   const store = await cookies();
-  store.set(AUTH_COOKIE, authCookieValue(), {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 30, // 30 days
-  });
+  store.set(AUTH_COOKIE, authCookieValue(), AUTH_COOKIE_OPTIONS);
 
   const destination = sanitizeNextPath(String(formData.get("next") || ""));
   return { success: true, next: destination };

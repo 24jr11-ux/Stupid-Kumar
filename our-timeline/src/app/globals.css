@@ -208,7 +208,7 @@ body {
   pointer-events: none;
 }
 
-/* Paper surfaces belong to whole units (title banners, clock, photos, buttons).
+/* Paper surfaces belong to whole units (clock, photos, buttons).
    Standalone labels and captions use .scrapbook-text, without their own card. */
 .scrapbook-label {
   color: #332923;
@@ -216,7 +216,7 @@ body {
   border: 1px solid rgba(107, 78, 49, 0.2);
   box-shadow: var(--shadow-paper), inset 0 1px rgba(255,255,255,0.55);
 }
-.home-title-label { display: inline-block; padding: 0.18em 0.4em 0.24em; }
+.home-title-label { display: inline-block; padding: 0; }
 .scrapbook-text {
   color: #faf7f2;
   text-shadow: 0 1px 3px rgba(18, 12, 12, 0.65);
@@ -225,7 +225,7 @@ body {
   color: #2c2523;
   text-shadow: none;
 }
-.memory-title-label { display: inline-block; padding: 0.16em 0.3em 0.22em; }
+.memory-title-label { display: inline-block; padding: 0; }
 .timeline-photo { box-shadow: var(--shadow-photo); }
 .timeline-photo:hover { box-shadow: var(--shadow-photo), 0 28px 40px -18px rgba(30,19,13,0.28); }
 
@@ -236,7 +236,10 @@ body {
   min-width: 0;
 }
 .photo-stack-image { display: block; width: 100%; height: auto; max-height: 70svh; object-fit: contain; user-select: none; }
-.photo-stack-dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.1rem; margin-top: 0.5rem; }
+.photo-stack-dots { display: flex; align-items: center; justify-content: center; gap: 0.1rem; margin-top: 0.5rem; }
+.photo-stack-arrow { display: grid; width: 44px; height: 44px; place-items: center; color: #f4ead7; cursor: pointer; }
+.photo-stack-arrow:disabled { opacity: 0.2; cursor: default; }
+.photo-stack-arrow:focus-visible { outline: 2px solid #f4ead7; outline-offset: 2px; }
 .photo-stack-dot { display: grid; width: 44px; height: 44px; place-items: center; cursor: pointer; }
 .photo-stack-dot span { width: 7px; height: 7px; border-radius: 50%; background: #9e8b7d; transition: background 150ms, transform 150ms; }
 .photo-stack-dot[aria-current="true"] span { background: #f4ead7; transform: scale(1.35); }

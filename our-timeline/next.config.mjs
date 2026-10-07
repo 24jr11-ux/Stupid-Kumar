@@ -1,4 +1,5 @@
 import withPWA from "next-pwa";
+import defaultCache from "next-pwa/cache.js";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -10,6 +11,15 @@ const nextConfig = {
 // friendly) in src/components/SWRegister.js.
 export default withPWA({
   dest: "public",
+  cacheStartUrl: false,
+  dynamicStartUrl: false,
+  runtimeCaching: [
+    // Private HTML, RSC responses, and gate/session APIs must never bypass expiry via a cache.
+    { urlPattern: ({ url }) => url.origin === self.location.origin &&
+      (url.pathname === "/" || url.pathname === "/gate" || url.pathname.startsWith("/memory/") || url.pathname.startsWith("/api/")),
+      handler: "NetworkOnly" },
+    ...defaultCache,
+  ],
   register: false,
   skipWaiting: true,
   clientsClaim: true,
