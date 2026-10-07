@@ -6,9 +6,12 @@ import { photoSrc } from "@/lib/photoUrl";
 
 export default function MemoryPhotoStack({ photos, title }) {
   const [selected, setSelected] = useState(0);
+  const [aspectRatios, setAspectRatios] = useState({});
   const touchStart = useRef(null);
   const reducedMotion = useReducedMotion();
   const active = Math.min(selected, photos.length - 1);
+  const activePhoto = photos[active];
+  const aspect = aspectRatios[activePhoto];
   const select = (index) => setSelected((index + photos.length) % photos.length);
 
   return (
@@ -37,14 +40,19 @@ export default function MemoryPhotoStack({ photos, title }) {
         }}
         onTouchCancel={() => { touchStart.current = null; }}>
         <AnimatePresence mode="wait" initial={false}>
-          <motion.div key={photos[active]} className="memory-photo-frame photo-stack-active"
+          <motion.div key={activePhoto} className="memory-photo-frame photo-stack-active"
+            style={{ width: aspect ? `min(100%, ${aspect * 70}svh)` : "100%" }}
             initial={{ opacity: reducedMotion ? 1 : 0, scale: reducedMotion ? 1 : 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: reducedMotion ? 1 : 0, scale: reducedMotion ? 1 : 0.96 }}
             transition={{ duration: reducedMotion ? 0 : 0.12, ease: "easeOut" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={photoSrc(photos[active])} alt={`${title || "Memory"} — photo ${active + 1}`}
-              draggable={false} className="photo-stack-image" />
+            <img src={photoSrc(activePhoto)} alt={`${title || "Memory"} — photo ${active + 1}`}
+              draggable={false} className="photo-stack-image"
+              onLoad={(event) => {
+                const { naturalWidth, naturalHeight } = event.currentTarget;
+                if (naturalHeight) setAspectRatios((current) => ({ ...current, [activePhoto]: naturalWidth / naturalHeight }));
+              }} />
           </motion.div>
         </AnimatePresence>
       </div>

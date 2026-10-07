@@ -276,6 +276,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
   const [momentsEditMode, setMomentsEditMode] = useState(false);
   const [momentsView, setMomentsView] = useState("single");
   const [activeMomentIndex, setActiveMomentIndex] = useState(0);
+  const momentTouchStart = useRef(null);
   const [forceShownIds, setForceShownIds] = useState(() => new Set());
   const [forceHiddenIds, setForceHiddenIds] = useState(() => new Set());
 
@@ -1006,7 +1007,23 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
               /* ---------------- MOMENTS VIEWING ---------------- */
               hasAnyMoment ? momentsView === "single" ? (
                 <div className="mt-6">
-                  <div className="mx-auto max-w-xl">
+                  <div className="mx-auto max-w-xl touch-pan-y"
+                    onTouchStart={(event) => {
+                      if (event.touches.length === 1) {
+                        momentTouchStart.current = { x: event.touches[0].clientX, y: event.touches[0].clientY };
+                      } else momentTouchStart.current = null;
+                    }}
+                    onTouchEnd={(event) => {
+                      if (!momentTouchStart.current || viewingMoments.length < 2) return;
+                      const dx = momentTouchStart.current.x - event.changedTouches[0].clientX;
+                      const dy = momentTouchStart.current.y - event.changedTouches[0].clientY;
+                      if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+                        if (dx > 0) nextMoment();
+                        else previousMoment();
+                      }
+                      momentTouchStart.current = null;
+                    }}
+                    onTouchCancel={() => { momentTouchStart.current = null; }}>
                     <ul aria-live="polite">
                       <MomentPaper
                         key={viewingMoments[displayedMomentIndex].id}
@@ -1021,25 +1038,15 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                   </div>
 
                   {viewingMoments.length > 1 && (
-                    <div className="mt-3 flex items-center justify-center gap-4">
-                      <button
-                        type="button"
-                        onClick={previousMoment}
-                        disabled={displayedMomentIndex === 0}
-                        aria-label="Previous memory"
-                        className="flex h-9 w-9 items-center justify-center rounded-full border border-[#5D433C] bg-[#2D1E1A] text-[#FAF7F2] transition hover:border-[#76513E] active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
-                      >
-                        <ChevronLeft size={18} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={nextMoment}
-                        disabled={displayedMomentIndex === viewingMoments.length - 1}
-                        aria-label="Next memory"
-                        className="flex h-9 w-9 items-center justify-center rounded-full border border-[#5D433C] bg-[#2D1E1A] text-[#FAF7F2] transition hover:border-[#76513E] active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
-                      >
-                        <ChevronRight size={18} />
-                      </button>
+                    <div className="photo-stack-dots" aria-label="Choose a memory card">
+                      {viewingMoments.map((moment, index) => (
+                        <button key={moment.id} type="button" className="photo-stack-dot"
+                          aria-label={`Show memory card ${index + 1}`}
+                          aria-current={index === displayedMomentIndex ? "true" : undefined}
+                          onClick={() => setActiveMomentIndex(index)}>
+                          <span />
+                        </button>
+                      ))}
                     </div>
                   )}
                 </div>
