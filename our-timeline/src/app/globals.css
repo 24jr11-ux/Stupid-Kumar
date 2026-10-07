@@ -2,9 +2,8 @@
 @import "tailwindcss";
 
 :root {
-  /* Pure flat black page base. No tinted/color background — the app now runs
-     on a clean solid black backdrop. */
-  --background: #000000;
+  /* Keep the document transparent so page backgrounds can extend edge to edge. */
+  --background: transparent;
   --shadow-paper: 0 2px 3px rgba(30, 19, 13, 0.16), 0 7px 14px rgba(30, 19, 13, 0.18), 0 18px 30px -12px rgba(30, 19, 13, 0.22);
   --shadow-photo: 0 2px 4px rgba(30, 19, 13, 0.2), 0 9px 18px rgba(30, 19, 13, 0.24), 0 24px 38px -14px rgba(30, 19, 13, 0.3);
   /* Cream body text for high-contrast WCAG AA readability */
@@ -51,6 +50,15 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
+}
+
+/* Installed iOS PWAs draw into the status-bar area with viewport-fit=cover.
+   Keep page content below the clock and notch while the fixed page background
+   continues behind them. Browser and desktop layouts remain unchanged. */
+@media (display-mode: standalone) {
+  body {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
 }
 
 .font-handwriting {
