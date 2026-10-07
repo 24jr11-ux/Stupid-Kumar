@@ -11,9 +11,8 @@ export const MUTED_CREAM = "#D4C8BA";
 // Primary Orange (exact color from the "Add Memory" button)
 export const VIVID_ORANGE = "#C85A32";
 
-// Vivid, lush warm golden-green (dried sage crossed with intense golden-hour light).
-// When screen-blended with Burnt Orange (#C85A32), overlaps brighten into luminous glowing amber.
-export const VIVID_WARM_GREEN = "#96B82D";
+// Lush, clear green paired with the primary orange in animated backgrounds.
+export const VIVID_WARM_GREEN = "#4FAF63";
 
 // Universal NSFW moments indicator styling (stable across all detail pages)
 export const WARM_OLIVE_GREEN = {

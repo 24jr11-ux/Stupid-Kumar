@@ -2,8 +2,8 @@
 @import "tailwindcss";
 
 :root {
-  /* Keep the document transparent so page backgrounds can extend edge to edge. */
-  --background: transparent;
+  /* Dark fallback while page backgrounds initialize or an expired session locks. */
+  --background: #261A16;
   --shadow-paper: 0 2px 3px rgba(30, 19, 13, 0.16), 0 7px 14px rgba(30, 19, 13, 0.18), 0 18px 30px -12px rgba(30, 19, 13, 0.22);
   --shadow-photo: 0 2px 4px rgba(30, 19, 13, 0.2), 0 9px 18px rgba(30, 19, 13, 0.24), 0 24px 38px -14px rgba(30, 19, 13, 0.3);
   /* Cream body text for high-contrast WCAG AA readability */
