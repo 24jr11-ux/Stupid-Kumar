@@ -190,6 +190,8 @@ body {
   pointer-events: none;
 }
 
+/* Paper surfaces belong to whole units (title banners, clock, photos, buttons).
+   Standalone labels and captions use .scrapbook-text, without their own card. */
 .scrapbook-label {
   color: #332923;
   background: linear-gradient(110deg, rgba(255,255,255,0.32), transparent 65%), #f4ead7;
@@ -197,13 +199,15 @@ body {
   box-shadow: var(--shadow-paper), inset 0 1px rgba(255,255,255,0.55);
 }
 .home-title-label { display: inline-block; padding: 0.18em 0.4em 0.24em; }
-.countup-unit { padding: 0.35rem 0.65rem; }
-.countup-small { padding: 0.4rem 0.55rem; }
-.countup-small span { color: #332923; }
-.countup-since { padding: 0.4rem 0.75rem; }
+.scrapbook-text {
+  color: #faf7f2;
+  text-shadow: 0 1px 3px rgba(18, 12, 12, 0.65);
+}
+.memory-detail-page--light .scrapbook-text {
+  color: #2c2523;
+  text-shadow: none;
+}
 .memory-title-label { display: inline-block; padding: 0.16em 0.3em 0.22em; }
-.memory-date-label { padding: 0.15rem 0.65rem; }
-.song-label { padding: 0.65rem 0.75rem; }
 .timeline-photo { box-shadow: var(--shadow-photo); }
 .timeline-photo:hover { box-shadow: var(--shadow-photo), 0 28px 40px -18px rgba(30,19,13,0.28); }
 
@@ -249,7 +253,6 @@ body {
 .photo-stack-thumbnail:hover { transform: translateY(-2px); }
 .photo-stack-thumbnail:focus-visible, .photo-stack-controls button:focus-visible { outline: 2px solid #f4ead7; outline-offset: 3px; }
 .photo-stack-controls { display: flex; justify-content: center; align-items: center; gap: 1rem; margin-top: 1rem; }
-.photo-stack-controls .scrapbook-label { padding: 0.35rem 0.6rem; }
 .photo-stack-controls button {
   display: flex;
   justify-content: center;

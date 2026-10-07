@@ -58,7 +58,7 @@ export default function MemoryPhotoStack({ photos, title }) {
       {photos.length > 1 && (
         <div className="photo-stack-controls">
           <button type="button" onClick={() => select(active - 1)} aria-label="Previous photo"><ChevronLeft size={20} /></button>
-          <span className="scrapbook-label font-mono text-xs tabular-nums" aria-live="polite">{active + 1} / {photos.length}</span>
+          <span className="scrapbook-text font-mono text-xs tabular-nums" aria-live="polite">{active + 1} / {photos.length}</span>
           <button type="button" onClick={() => select(active + 1)} aria-label="Next photo"><ChevronRight size={20} /></button>
         </div>
       )}

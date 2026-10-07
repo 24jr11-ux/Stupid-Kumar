@@ -90,21 +90,24 @@ export default function CountupClock({ startDateIso }) {
   }, []);
 
   return (
-    <div className="mt-7 text-center" role="timer" aria-label="Time together">
-      <div className="mx-auto flex max-w-md items-baseline justify-center gap-3 sm:gap-6">
+    <div className="scrapbook-label countup-card mx-auto mt-7 max-w-md px-4 py-5 text-center sm:px-8 sm:py-6" role="timer" aria-label="Time together">
+      <div className="grid grid-cols-3 items-baseline gap-3 sm:gap-6">
         {MAIN_UNITS.map(([key, label]) => (
           <div key={key} className="min-w-0 flex-1">
-            <span className="block font-handwriting text-[clamp(2.8rem,13vw,5rem)] leading-none tabular-nums text-[#FAF7F2]">{parts[key]}</span>
-            <span className="scrapbook-label countup-unit mt-1 inline-block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#F4EFE6] sm:text-xs">{label}</span>
+            <span className="block font-handwriting text-[clamp(2.8rem,13vw,5rem)] leading-none tabular-nums">{parts[key]}</span>
+            <span className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.14em] sm:text-xs">{label}</span>
           </div>
         ))}
       </div>
-      <div className="mt-5 flex items-baseline justify-center gap-5 text-[#F4EFE6] sm:gap-8">
+      <div className="mt-4 grid grid-cols-3 gap-3 border-t border-[#6B4E31]/20 pt-4 sm:gap-6">
         {SMALL_UNITS.map(([key, label]) => (
-          <span key={key} className="scrapbook-label countup-small whitespace-nowrap text-xs sm:text-sm"><span className="font-mono text-base tabular-nums text-[#FAF7F2] sm:text-lg">{String(parts[key]).padStart(2, "0")}</span> {label}</span>
+          <div key={key} className="min-w-0">
+            <span className="block font-mono text-xl tabular-nums sm:text-2xl">{String(parts[key]).padStart(2, "0")}</span>
+            <span className="mt-1 block text-[10px] font-medium uppercase tracking-[0.1em] sm:text-xs">{label}</span>
+          </div>
         ))}
       </div>
-      <p className="scrapbook-label countup-since mt-3 inline-block text-xs font-medium tracking-wide text-[#F4EFE6]">
+      <p className="mt-4 text-xs font-medium tracking-wide">
         since April 5th, 2025
       </p>
     </div>

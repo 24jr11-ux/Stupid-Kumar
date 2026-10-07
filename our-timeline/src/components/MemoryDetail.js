@@ -774,7 +774,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                     </label>
                   </>
                 ) : (
-                  <span className="scrapbook-label memory-date-label">{formatDate(dateStr)}</span>
+                  <span className="scrapbook-text">{formatDate(dateStr)}</span>
                 )}
               </div>
 
