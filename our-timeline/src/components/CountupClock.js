@@ -21,8 +21,8 @@ const PLACEHOLDER = {
   seconds: 0,
 };
 
-const MAIN_UNITS = [["years", "years"], ["months", "months"], ["days", "days"]];
-const SMALL_UNITS = [["hours", "hours"], ["minutes", "minutes"], ["seconds", "seconds"]];
+const MAIN_UNITS = [["years", "Years"], ["months", "Months"], ["days", "Days"]];
+const SMALL_UNITS = [["hours", "h"], ["minutes", "m"], ["seconds", "s"]];
 
 // Calendar-aware breakdown from `start` up to `now`.
 function breakDown(start, now) {
@@ -90,21 +90,20 @@ export default function CountupClock({ startDateIso }) {
   }, []);
 
   return (
-    <div className="scrapbook-label countup-card mx-auto mt-7 max-w-md px-4 py-5 text-center sm:px-8 sm:py-6" role="timer" aria-label="Time together">
+    <div className="scrapbook-text mx-auto mt-7 max-w-md px-4 py-3 text-center sm:px-8" role="timer" aria-label="Time together">
       <div className="grid grid-cols-3 items-baseline gap-3 sm:gap-6">
         {MAIN_UNITS.map(([key, label]) => (
           <div key={key} className="min-w-0 flex-1">
             <span className="block font-handwriting text-[clamp(2.8rem,13vw,5rem)] leading-none tabular-nums">{parts[key]}</span>
-            <span className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.14em] sm:text-xs">{label}</span>
+            <span className="mt-1 block text-xs font-semibold tracking-wide sm:text-sm">{label}</span>
           </div>
         ))}
       </div>
-      <div className="mt-4 grid grid-cols-3 gap-3 border-t border-[#6B4E31]/20 pt-4 sm:gap-6">
+      <div className="mt-4 flex items-baseline justify-center gap-4 border-t border-white/30 pt-3 sm:gap-6">
         {SMALL_UNITS.map(([key, label]) => (
-          <div key={key} className="min-w-0">
-            <span className="block font-mono text-xl tabular-nums sm:text-2xl">{String(parts[key]).padStart(2, "0")}</span>
-            <span className="mt-1 block text-[10px] font-medium uppercase tracking-[0.1em] sm:text-xs">{label}</span>
-          </div>
+          <span key={key} className="inline-flex items-baseline gap-0.5 font-mono text-base tabular-nums sm:text-lg">
+            {String(parts[key]).padStart(2, "0")}{label}
+          </span>
         ))}
       </div>
       <p className="mt-4 text-xs font-medium tracking-wide">
