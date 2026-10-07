@@ -45,10 +45,7 @@ export default async function Home() {
         {/* Header Hero */}
         <div className="text-center">
           <h1
-            className="font-handwriting text-5xl font-bold tracking-tight text-[#FAF7F2] sm:text-7xl transition-all"
-            style={{
-              textShadow: "0 0 32px rgba(200, 90, 50, 0.4), 0 2px 8px rgba(0, 0, 0, 0.5)",
-            }}
+            className="scrapbook-label home-title-label font-handwriting text-5xl font-bold tracking-tight text-[#FAF7F2] sm:text-7xl transition-all"
           >
             Stupid &amp; Kumar
           </h1>
@@ -114,7 +111,7 @@ export default async function Home() {
                     href={`/memory/${memory.id}`}
                     targetSelector={`[data-memory-page="${memory.id}"]`}
                     data-memory-card={memory.id}
-                    className="group mx-auto block max-w-sm bg-[#FDFBF6] p-3 pb-5 shadow-[0_8px_30px_rgba(0,0,0,0.5),0_1px_3px_rgba(0,0,0,0.2)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_12px_38px_rgba(0,0,0,0.65)]"
+                    className="timeline-photo group mx-auto block max-w-sm bg-[#FDFBF6] p-3 pb-5 transition-all duration-200 hover:-translate-y-1"
                   >
                     {/* TOP BAND: calendar date, mm/dd/yy */}
                     <div className="px-1.5 pb-2.5 pt-1 text-center font-mono text-sm font-semibold tracking-[0.18em] text-[#786F6A]">

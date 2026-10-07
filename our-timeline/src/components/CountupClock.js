@@ -95,16 +95,16 @@ export default function CountupClock({ startDateIso }) {
         {MAIN_UNITS.map(([key, label]) => (
           <div key={key} className="min-w-0 flex-1">
             <span className="block font-handwriting text-[clamp(2.8rem,13vw,5rem)] leading-none tabular-nums text-[#FAF7F2]">{parts[key]}</span>
-            <span className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#F4EFE6] sm:text-xs">{label}</span>
+            <span className="scrapbook-label countup-unit mt-1 inline-block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#F4EFE6] sm:text-xs">{label}</span>
           </div>
         ))}
       </div>
       <div className="mt-5 flex items-baseline justify-center gap-5 text-[#F4EFE6] sm:gap-8">
         {SMALL_UNITS.map(([key, label]) => (
-          <span key={key} className="whitespace-nowrap text-xs sm:text-sm"><span className="font-mono text-base tabular-nums text-[#FAF7F2] sm:text-lg">{String(parts[key]).padStart(2, "0")}</span> {label}</span>
+          <span key={key} className="scrapbook-label countup-small whitespace-nowrap text-xs sm:text-sm"><span className="font-mono text-base tabular-nums text-[#FAF7F2] sm:text-lg">{String(parts[key]).padStart(2, "0")}</span> {label}</span>
         ))}
       </div>
-      <p className="mt-3 text-xs font-medium tracking-wide text-[#F4EFE6]">
+      <p className="scrapbook-label countup-since mt-3 inline-block text-xs font-medium tracking-wide text-[#F4EFE6]">
         since April 5th, 2025
       </p>
     </div>

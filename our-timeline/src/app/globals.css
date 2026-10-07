@@ -5,6 +5,8 @@
   /* Pure flat black page base. No tinted/color background — the app now runs
      on a clean solid black backdrop. */
   --background: #000000;
+  --shadow-paper: 0 2px 3px rgba(30, 19, 13, 0.16), 0 7px 14px rgba(30, 19, 13, 0.18), 0 18px 30px -12px rgba(30, 19, 13, 0.22);
+  --shadow-photo: 0 2px 4px rgba(30, 19, 13, 0.2), 0 9px 18px rgba(30, 19, 13, 0.24), 0 24px 38px -14px rgba(30, 19, 13, 0.3);
   /* Cream body text for high-contrast WCAG AA readability */
   --foreground: #FAF7F2;
   /* Swap either custom variable to a local WOFF2 later. Caveat remains the
@@ -94,6 +96,7 @@ body {
     radial-gradient(ellipse 112% 92% at 50% 48%, transparent 58%, rgba(18, 12, 12, 0.16) 100%);
   background-size: 160px 160px, 180px 180px, auto, auto;
   background-repeat: repeat, repeat, no-repeat, no-repeat;
+  background-blend-mode: soft-light, normal, normal, normal;
 }
 
 /* Physical paper system for individual memory moments. */
@@ -118,10 +121,7 @@ body {
     radial-gradient(circle at 18% 12%, rgba(117, 83, 51, 0.045) 0 0.7px, transparent 0.9px);
   background-size: auto, 7px 7px;
   border: 1px solid rgba(104, 75, 49, 0.2);
-  box-shadow:
-    0 18px 34px rgba(0, 0, 0, 0.34),
-    0 3px 8px rgba(0, 0, 0, 0.2),
-    inset 0 1px rgba(255, 255, 255, 0.7);
+  box-shadow: var(--shadow-paper), inset 0 1px rgba(255, 255, 255, 0.7);
 }
 
 .moment-paper--nsfw {
@@ -131,11 +131,10 @@ body {
 }
 
 .memory-photo-frame {
-  max-width: calc(100% - 2rem);
   padding: clamp(0.55rem, 2vw, 1rem);
   background: #f4ead7;
   border: 1px solid #d6bea0;
-  box-shadow: 0 16px 32px rgba(20, 11, 8, 0.38), 0 3px 8px rgba(20, 11, 8, 0.2), inset 0 0 0 2px #fbf6e9;
+  box-shadow: var(--shadow-photo), inset 0 0 0 2px #fbf6e9;
 }
 
 .memory-photo-frame img {
@@ -156,6 +155,112 @@ body {
   border-right: 1px solid rgba(120, 90, 54, 0.12);
   box-shadow: 0 2px 3px rgba(67, 46, 28, 0.08);
   pointer-events: none;
+}
+
+/* Closely related stationery, with one quiet detail per sheet. */
+.moment-paper--ruled {
+  background-color: #f7f1e4;
+  background-image: repeating-linear-gradient(to bottom, transparent 0 27px, rgba(114, 137, 148, 0.14) 27px 28px);
+  background-position: 0 4px;
+}
+
+.moment-paper--ruled::before {
+  content: "";
+  position: absolute;
+  top: -10px;
+  right: 22px;
+  width: 10px;
+  height: 32px;
+  border: 2px solid #9c9585;
+  border-radius: 7px;
+  box-shadow: 1px 2px 2px rgba(30, 19, 13, 0.15), inset 1px 0 #fff9ed;
+  pointer-events: none;
+}
+
+.moment-paper--folded { background-color: #f3e7d7; }
+.moment-paper--folded::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  right: -1px;
+  width: 21px;
+  height: 21px;
+  background: linear-gradient(135deg, #d7c6ae 49%, #fff5e6 50%);
+  box-shadow: -2px -2px 3px rgba(85, 60, 37, 0.08);
+  pointer-events: none;
+}
+
+.scrapbook-label {
+  color: #332923;
+  background: linear-gradient(110deg, rgba(255,255,255,0.32), transparent 65%), #f4ead7;
+  border: 1px solid rgba(107, 78, 49, 0.2);
+  box-shadow: var(--shadow-paper), inset 0 1px rgba(255,255,255,0.55);
+}
+.home-title-label { display: inline-block; padding: 0.18em 0.4em 0.24em; }
+.countup-unit { padding: 0.35rem 0.65rem; }
+.countup-small { padding: 0.4rem 0.55rem; }
+.countup-small span { color: #332923; }
+.countup-since { padding: 0.4rem 0.75rem; }
+.memory-title-label { display: inline-block; padding: 0.16em 0.3em 0.22em; }
+.memory-date-label { padding: 0.15rem 0.65rem; }
+.song-label { padding: 0.65rem 0.75rem; }
+.timeline-photo { box-shadow: var(--shadow-photo); }
+.timeline-photo:hover { box-shadow: var(--shadow-photo), 0 28px 40px -18px rgba(30,19,13,0.28); }
+
+.photo-stack-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 4fr) minmax(0, 1fr);
+  gap: clamp(0.65rem, 2.5vw, 1.1rem);
+  align-items: start;
+}
+.photo-stack-layout--single { grid-template-columns: minmax(0, 1fr); }
+.photo-stack-stage { position: relative; aspect-ratio: 4 / 3; min-width: 0; }
+.photo-stack-active {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: clamp(1rem, 3vw, 1.5rem);
+}
+.photo-stack-image { width: 100%; height: 100%; object-fit: contain; user-select: none; }
+.photo-stack-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  max-height: clamp(10rem, 62vw, 25rem);
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  padding: 5px 5px 12px;
+  scrollbar-width: thin;
+  scrollbar-color: #bda68b transparent;
+}
+.photo-stack-thumbnail {
+  flex-shrink: 0;
+  padding: 5px 5px 9px;
+  background: #f4ead7;
+  border: 1px solid #d6bea0;
+  box-shadow: var(--shadow-paper);
+  cursor: pointer;
+  transition: transform 150ms ease, border-color 150ms ease;
+}
+.photo-stack-thumbnail img { width: 100%; aspect-ratio: 1; object-fit: cover; }
+.photo-stack-thumbnail[aria-pressed="true"] { border-color: #614537; outline: 2px solid #f4ead7; outline-offset: 2px; }
+.photo-stack-thumbnail:hover { transform: translateY(-2px); }
+.photo-stack-thumbnail:focus-visible, .photo-stack-controls button:focus-visible { outline: 2px solid #f4ead7; outline-offset: 3px; }
+.photo-stack-controls { display: flex; justify-content: center; align-items: center; gap: 1rem; margin-top: 1rem; }
+.photo-stack-controls .scrapbook-label { padding: 0.35rem 0.6rem; }
+.photo-stack-controls button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #352520;
+  color: #faf7f2;
+  box-shadow: var(--shadow-paper);
+  cursor: pointer;
 }
 
 @media (prefers-reduced-motion: no-preference) {

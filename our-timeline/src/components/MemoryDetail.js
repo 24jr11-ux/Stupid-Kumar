@@ -38,6 +38,7 @@ import {
 import { formatDate } from "@/lib/dates";
 import { youtubeVideoId, youtubeSongUrl, youtubeCoverUrls } from "@/lib/player";
 import MemorySong from "@/components/MemorySong";
+import MemoryPhotoStack from "@/components/MemoryPhotoStack";
 import {
   getColorTagConfig,
   memoryColorHex,
@@ -180,12 +181,13 @@ function MomentPaper({
   revealed,
   onReveal,
   className = "",
+  variant = 0,
 }) {
   const isNsfw = moment.is_nsfw;
 
   return (
     <li
-      className={`moment-paper moment-paper--taped ${isNsfw ? "moment-paper--nsfw" : ""} ${className}`}
+      className={`moment-paper moment-paper--${["taped", "ruled", "folded"][variant % 3]} ${isNsfw ? "moment-paper--nsfw" : ""} ${className}`}
     >
       <div className={`flex items-center justify-center px-6 text-center sm:px-9 ${isNsfw && !revealed ? "min-h-[5rem] py-4" : "min-h-[9rem] py-7 sm:min-h-[10rem] sm:py-8"}`}>
         {isNsfw ? (
@@ -276,7 +278,6 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
   const [activeMomentIndex, setActiveMomentIndex] = useState(0);
   const [forceShownIds, setForceShownIds] = useState(() => new Set());
   const [forceHiddenIds, setForceHiddenIds] = useState(() => new Set());
-  const [activePhotoIndex, setActivePhotoIndex] = useState(0);
 
   // --- page-level edit fields -----------------------------------------------
   const [title, setTitle] = useState(memory.title ?? "");
@@ -327,7 +328,6 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
   const [deleting, setDeleting] = useState(false);
 
   // --- photo carousel -------------------------------------------------------
-  const carouselRef = useRef(null);
 
   const photoUrlsForCarousel = editMode
     ? photoOrder.filter((item) => item.kind === "existing").map((item) => item.id)
@@ -369,45 +369,6 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
     newFiles.length === 0 &&
     !cover &&
     (songUrl || "").trim() === (memory.song_url || "").trim();
-
-  // --- photo carousel -------------------------------------------------------
-  function carouselGoTo(index, behavior = "smooth") {
-    const container = carouselRef.current;
-    if (!container || container.children.length === 0) return;
-    const clamped = Math.max(0, Math.min(index, container.children.length - 1));
-    container.scrollTo({ left: clamped * container.clientWidth, behavior });
-    setActivePhotoIndex(clamped);
-  }
-  function carouselCenterIndex() {
-    const container = carouselRef.current;
-    if (!container || container.children.length === 0) return 0;
-    return Math.min(container.children.length - 1, Math.round(container.scrollLeft / container.clientWidth));
-  }
-  function handleCarouselScroll() {
-    const container = carouselRef.current;
-    if (!container) return;
-    setActivePhotoIndex(carouselCenterIndex());
-  }
-  function prevPhoto() {
-    const container = carouselRef.current;
-    if (!container || container.children.length === 0) return;
-    const current = carouselCenterIndex();
-    carouselGoTo((current + container.children.length - 1) % container.children.length);
-  }
-  function nextPhoto() {
-    const container = carouselRef.current;
-    if (!container || container.children.length === 0) return;
-    const current = carouselCenterIndex();
-    carouselGoTo((current + 1) % container.children.length);
-  }
-
-  // Reset to the first photo when the photo list changes.
-  useEffect(() => {
-    const container = carouselRef.current;
-    if (!container || container.children.length === 0) return;
-    setActivePhotoIndex(0);
-    container.scrollLeft = 0;
-  }, [photoUrlsForCarousel.length]);
 
   // --- moments helpers ------------------------------------------------------
   function updateMoment(id, patch) {
@@ -781,10 +742,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                 />
               ) : (
                 <h1
-                  className="memory-page-heading mt-3 break-words font-handwriting text-4xl font-bold tracking-tight text-[#FAF7F2] sm:text-5xl leading-tight"
-                  style={{
-                    textShadow: `0 0 24px ${colorConfig.hex}50, 0 2px 6px rgba(0, 0, 0, 0.5)`,
-                  }}
+                  className="scrapbook-label memory-title-label mt-3 break-words font-handwriting text-4xl font-bold tracking-tight text-[#FAF7F2] sm:text-5xl leading-tight"
                 >
                   {title || "Untitled"}
                 </h1>
@@ -816,7 +774,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                     </label>
                   </>
                 ) : (
-                  <span>{formatDate(dateStr)}</span>
+                  <span className="scrapbook-label memory-date-label">{formatDate(dateStr)}</span>
                 )}
               </div>
 
@@ -846,28 +804,10 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
             />
           </div>
 
-          {/* Photos retain their original aspect ratio; the strip supports touch swipes. */}
+          {/* A large photo and a narrow strip of prints; originals remain uncropped. */}
           <div className="mt-8 min-w-0">
             {photoUrlsForCarousel.length > 0 ? (
-              <div className="mx-auto max-w-3xl">
-                <div ref={carouselRef} onScroll={handleCarouselScroll} aria-label="Memory photos" className="flex min-w-0 snap-x snap-mandatory overflow-x-auto overscroll-x-contain scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  {photoUrlsForCarousel.map((url, i) => (
-                    <div key={url} className="flex w-full min-w-0 shrink-0 snap-center items-center justify-center">
-                      <div className="memory-photo-frame">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={photoSrc(url)} alt={`${title} — photo ${i + 1}`} draggable={false} loading={i === 0 ? "eager" : "lazy"} className="block h-auto max-h-[65svh] w-auto max-w-full select-none object-contain" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                {photoUrlsForCarousel.length > 1 && (
-                  <div className="mt-3 flex items-center justify-center gap-5">
-                    <button type="button" onClick={prevPhoto} aria-label="Previous photo" className="flex h-11 w-11 items-center justify-center rounded-full bg-[#261A16]/85 text-[#FAF7F2] focus-visible:outline-2 focus-visible:outline-[#FAF7F2]"><ChevronLeft size={21} /></button>
-                    <span className="min-w-10 text-center font-mono text-xs tabular-nums text-[#F4EFE6]" aria-live="polite">{activePhotoIndex + 1} / {photoUrlsForCarousel.length}</span>
-                    <button type="button" onClick={nextPhoto} aria-label="Next photo" className="flex h-11 w-11 items-center justify-center rounded-full bg-[#261A16]/85 text-[#FAF7F2] focus-visible:outline-2 focus-visible:outline-[#FAF7F2]"><ChevronRight size={21} /></button>
-                  </div>
-                )}
-              </div>
+              <MemoryPhotoStack photos={photoUrlsForCarousel} title={title} />
             ) : (
               <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#5D433C] py-14 text-center text-[#D4C8BA]">
                 <ImageOff size={28} className="text-[#D4C8BA]/60" />
@@ -1096,6 +1036,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                     <ul aria-live="polite">
                       <MomentPaper
                         key={viewingMoments[displayedMomentIndex].id}
+                        variant={displayedMomentIndex}
                         moment={viewingMoments[displayedMomentIndex]}
                         revealed={momentIsRevealed(viewingMoments[displayedMomentIndex])}
                         onReveal={(reveal) =>
@@ -1130,9 +1071,10 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                 </div>
               ) : (
                 <ul className="moment-paper-list mt-8 space-y-7 px-1 sm:px-4">
-                  {viewingMoments.map((moment) => (
+                  {viewingMoments.map((moment, index) => (
                     <MomentPaper
                       key={moment.id}
+                      variant={index}
                       moment={moment}
                       revealed={momentIsRevealed(moment)}
                       onReveal={(reveal) => setNsfwReveal(moment.id, reveal)}

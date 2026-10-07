@@ -65,10 +65,10 @@ export default function MemorySong({ song, editMode, onChange, onMetadata }) {
                     </label>
                   </div>
                 ) : (
-                  <>
-                    <p className="break-words text-base font-semibold leading-snug text-[#FAF7F2]">{title || "Our song"}</p>
-                    {artist && <p className="mt-1 break-words text-sm text-[#D4C8BA]">{artist}</p>}
-                  </>
+                  <div className="scrapbook-label song-label">
+                    <p className="break-words text-base font-semibold leading-snug text-[#332923]">{title || "Our song"}</p>
+                    {artist && <p className="mt-1 break-words text-sm text-[#70604F]">{artist}</p>}
+                  </div>
                 )}
                 {editMode && (
                   <div className="mt-2 flex flex-wrap gap-3 text-[10px] text-[#D4C8BA]">
