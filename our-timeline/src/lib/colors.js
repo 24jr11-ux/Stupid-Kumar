@@ -12,7 +12,7 @@ export const MUTED_CREAM = "#D4C8BA";
 export const VIVID_ORANGE = "#C85A32";
 
 // Lush, clear green paired with the primary orange in animated backgrounds.
-export const VIVID_WARM_GREEN = "#4FAF63";
+export const VIVID_WARM_GREEN = "#9EDB45";
 
 // Universal NSFW moments indicator styling (stable across all detail pages)
 export const WARM_OLIVE_GREEN = {
