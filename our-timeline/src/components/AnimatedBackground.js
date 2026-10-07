@@ -1,21 +1,21 @@
 "use client";
 
-import { Warp } from "@paper-design/shaders-react";
+import { MeshGradient } from "@paper-design/shaders-react";
 import { VIVID_ORANGE, VIVID_WARM_GREEN } from "@/lib/colors";
 
 /**
  * AnimatedBackground
  *
- * Full-page, fixed, animated backdrop built on the Paper Shaders WebGL Warp
- * component. Its animated color fields retain broad, distinct color regions
- * while softness and distortion keep their boundaries flowing smoothly.
+ * Full-page, fixed, animated backdrop built on the Paper Shaders WebGL
+ * MeshGradient component. It renders a flowing, organic multi-color blend —
+ * the closest liquid/plasma aesthetic in the library (smooth flowing color
+ * spots drifting through organic distortion and a slow swirl).
  *
  * COLORS
  *   Two vivid colors reused from the app's established palette (colors.js):
  *     - VIVID_ORANGE      #C85A32
  *     - VIVID_WARM_GREEN  #4FAF63
- *   A soft light wash lifts the transition between the color fields, avoiding
- *   the dull brown produced by directly averaging orange and green.
+ *   The colors flow together with the shader's original organic blending.
  *
  *   On detail pages, a memory's color_tag can be passed in and it is added to
  *   the palette so that specific memory's tone becomes the dominant drift.
@@ -42,15 +42,14 @@ import { VIVID_ORANGE, VIVID_WARM_GREEN } from "@/lib/colors";
  */
 
 export default function AnimatedBackground({ colorTag = null, className = "" }) {
-  // Separate orange and green fields with a light wash so their soft overlap
-  // stays luminous instead of muddy.
-  const baseColors = [VIVID_ORANGE, "#FFF0D6", VIVID_WARM_GREEN];
+  // Base two-color palette (orange + green).
+  const baseColors = [VIVID_ORANGE, VIVID_WARM_GREEN];
 
   // On detail pages, bias toward the memory's color_tag: put it in the palette
   // (first = dominant) alongside the two app colors so it leads the blend.
   const colors =
     colorTag && colorTag !== VIVID_ORANGE
-      ? [colorTag, "#FFF0D6", VIVID_ORANGE, VIVID_WARM_GREEN]
+      ? [colorTag, VIVID_ORANGE, VIVID_WARM_GREEN]
       : baseColors;
 
   return (
@@ -58,16 +57,13 @@ export default function AnimatedBackground({ colorTag = null, className = "" }) 
       aria-hidden="true"
       className={`pointer-events-none fixed inset-0 z-0 ${className}`}
     >
-      <Warp
+      <MeshGradient
         colors={colors}
         speed={0.3}
-        shape="edge"
-        shapeScale={0.55}
-        proportion={0.46}
-        softness={0.78}
-        distortion={0.24}
-        swirl={0.36}
-        swirlIterations={6}
+        distortion={0.75}
+        swirl={0.4}
+        grainMixer={0.15}
+        grainOverlay={0.05}
         fit="cover"
         maxPixelCount={700_000}
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
