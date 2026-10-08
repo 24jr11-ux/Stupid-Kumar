@@ -2,16 +2,13 @@
 
 import { photoSrc } from "@/lib/photoUrl";
 import CarouselPagination from "@/components/CarouselPagination";
-import SharedMemoryPhoto from "@/components/SharedMemoryPhoto";
 import { useSnapCarousel } from "@/lib/useSnapCarousel";
 
-export default function MemoryPhotoStack({ photos, title, memoryId }) {
+export default function MemoryPhotoStack({ photos, title }) {
   const { trackRef, active, select, onScroll, onKeyDown } = useSnapCarousel(photos.length);
 
   return <section aria-label="Memory photos" className="photo-stack">
-    {/* The fixed hero frame is the layoutId destination from app/page.js.
-        Only this outer viewport participates, never every carousel slide. */}
-    <SharedMemoryPhoto memoryId={memoryId} hero className="memory-photo-frame">
+    <div className="memory-photo-frame">
       <div ref={trackRef} className="snap-carousel photo-carousel" onScroll={onScroll}
         onKeyDown={onKeyDown} tabIndex={photos.length > 1 ? 0 : undefined}
         aria-label="Swipe to browse photos, or use the arrow keys" role="region">
@@ -25,7 +22,7 @@ export default function MemoryPhotoStack({ photos, title, memoryId }) {
             draggable={false} className="photo-foreground" loading={index === 0 ? "eager" : "lazy"} />
         </div>)}
       </div>
-    </SharedMemoryPhoto>
+    </div>
     <CarouselPagination count={photos.length} active={active} onSelect={select} itemLabel="photo" />
   </section>;
 }

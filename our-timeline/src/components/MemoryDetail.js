@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   DndContext,
@@ -19,6 +20,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import {
   AlertTriangle,
+  ArrowLeft,
   Check,
   ChevronDown,
   ChevronLeft,
@@ -656,12 +658,14 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
 
   return (
     <>
-      <article className="relative mt-4">
+      <article className="relative">
         <div className="relative z-10">
-          {/* Header metadata + Edit controls (top right) */}
-          <div className="flex items-center justify-end gap-2.5">
+          <nav aria-label="Memory navigation" className="flex items-start justify-between gap-3">
+            <Link href="/" className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border border-[#5D433C] bg-[#382722] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#D4C8BA] shadow-md transition hover:border-[#76513E] hover:text-[#FAF7F2]">
+              <ArrowLeft size={15} /> Timeline
+            </Link>
             {editMode ? (
-              <div className="ml-auto flex flex-col items-end gap-1.5">
+              <div className="ml-auto flex min-w-0 flex-col items-end gap-1.5">
                 <button
                   type="button"
                   onClick={handleSave}
@@ -703,14 +707,14 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                 onClick={() => setEditMode(true)}
                 aria-label="Edit memory"
                 title="Edit memory"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#5D433C] bg-[#382722] text-[#D4C8BA] shadow-md transition hover:border-[#76513E] hover:text-[#FAF7F2]"
+                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#5D433C] bg-[#382722] text-[#D4C8BA] shadow-md transition hover:border-[#76513E] hover:text-[#FAF7F2]"
               >
-                <Pencil size={13} />
+                <Pencil size={16} />
               </button>
             )}
-          </div>
+          </nav>
 
-          <div className="memory-heading-row mt-3 flex min-w-0 items-start justify-between gap-3 sm:gap-5">
+          <div className="mt-6 min-w-0">
             <div className="min-w-0 flex-1">
               {/* Title (UI label: "Date Title") */}
               {editMode ? (
@@ -764,18 +768,19 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
               )}
 
             </div>
-            <MemorySong
+          </div>
+
+          <MemorySong
               song={song}
               editMode={editMode}
               onChange={setSong}
               onMetadata={applySongMetadata}
             />
-          </div>
 
           {/* One uncropped photo at a time. */}
           <div className="mt-8 min-w-0">
             {photoUrlsForCarousel.length > 0 ? (
-              <MemoryPhotoStack key={memory.id} photos={photoUrlsForCarousel} title={title} memoryId={memory.id} />
+              <MemoryPhotoStack key={memory.id} photos={photoUrlsForCarousel} title={title} />
             ) : (
               <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#5D433C] py-14 text-center text-[#D4C8BA]">
                 <ImageOff size={28} className="text-[#D4C8BA]/60" />

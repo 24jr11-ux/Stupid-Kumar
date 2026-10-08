@@ -3,15 +3,13 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import dynamic from "next/dynamic";
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import LoadingTitle from "@/components/LoadingTitle";
-import { memoryPhotoTransitionName as photoLayoutId } from "@/lib/viewTransitions";
 import { LAST_READY_PAGE_KEY } from "@/lib/launch";
 
 const TransitionContext = createContext(null);
 // The first paint uses CSS; shader setup must not delay the loading title.
 const AnimatedBackground = dynamic(() => import("@/components/AnimatedBackground"), { ssr: false });
-export { photoLayoutId };
 export const useAppTransitions = () => useContext(TransitionContext);
 
 export default function AppTransitions({ children }) {
@@ -19,13 +17,10 @@ export default function AppTransitions({ children }) {
   const reducedMotion = useReducedMotion();
   const [splash, setSplash] = useState(true);
   const [gate, setGate] = useState(null);
-  const [photo, setPhoto] = useState(null);
   const [readyPath, setReadyPath] = useState(null);
   const [sessionReady, markSessionReady] = useState(false);
   const markRouteReady = useCallback(() => setReadyPath(pathname), [pathname]);
   const holdGate = useCallback((content) => setGate({ content }), []);
-  const bridgePhoto = useCallback((snapshot) => setPhoto(snapshot), []);
-  const finishPhoto = useCallback(() => setPhoto(null), []);
 
   useEffect(() => {
     // Fonts enhance the painted page instead of blocking its initial CSS.
@@ -66,19 +61,8 @@ export default function AppTransitions({ children }) {
     };
   }, [readyPath, pathname, sessionReady]);
 
-  useEffect(() => {
-    if (!photo) return;
-    // Safety cleanup for canceled/failed navigation; the hero normally clears it.
-    const timer = setTimeout(finishPhoto, 8000);
-    return () => clearTimeout(timer);
-  }, [photo, finishPhoto]);
-
   return (
-    <TransitionContext.Provider value={{ splash, holdGate, bridgePhoto, finishPhoto, photo, markRouteReady, markSessionReady }}>
-      {/* This group persists in layout.js. App Router replaces page subtrees,
-          so a fixed source bridges the unmount until the detail hero joins
-          the SAME layoutId. No router-internal context freezing needed. */}
-      <LayoutGroup id="memories">
+    <TransitionContext.Provider value={{ splash, holdGate, markRouteReady, markSessionReady }}>
         <AnimatedBackground />
         <motion.div className="app-viewport relative flex flex-1 flex-col"
           inert={splash} initial={{ opacity: 0 }} animate={{ opacity: splash ? 0 : 1 }}
@@ -97,15 +81,28 @@ export default function AppTransitions({ children }) {
             {gate.content}
           </motion.div>}
         </AnimatePresence>
-        {photo && <motion.div className="shared-photo-bridge" aria-hidden="true"
-          layoutId={photoLayoutId(photo.id)} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          style={{ top: photo.rect.top, left: photo.rect.left, width: photo.rect.width, height: photo.rect.height }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={photo.src} alt="" className="shared-photo-bridge-image" style={photo.imageStyle} />
-        </motion.div>}
-      </LayoutGroup>
     </TransitionContext.Provider>
   );
+}
+
+export function DetailPageTransition({ children, className, ...props }) {
+  const reducedMotion = useReducedMotion();
+  const { markRouteReady } = useAppTransitions();
+  useEffect(() => { markRouteReady(); }, [markRouteReady]);
+
+  return <div {...props} className={className}>
+    <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+      <motion.div className="memory-detail-backdrop absolute inset-0"
+        initial={{ x: reducedMotion ? 0 : "100%" }} animate={{ x: 0 }}
+        transition={{ duration: reducedMotion ? 0 : 0.38, ease: [0.22, 1, 0.36, 1] }} />
+    </div>
+    <motion.div className="flex w-full justify-center"
+      initial={{ opacity: reducedMotion ? 1 : 0, y: reducedMotion ? 0 : 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: reducedMotion ? 0 : 0.4, delay: reducedMotion ? 0 : 0.09, ease: [0.22, 1, 0.36, 1] }}>
+      {children}
+    </motion.div>
+  </div>;
 }
 
 export function RouteReveal({ children, detail = false }) {

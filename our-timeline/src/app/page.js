@@ -1,10 +1,9 @@
 import Image from "next/image";
+import Link from "next/link";
 import { Camera, Sparkles } from "lucide-react";
 import CountupClock from "@/components/CountupClock";
 import AddMemoryButton from "@/components/AddMemoryButton";
 import { RouteReveal } from "@/components/AppTransitions";
-import SharedMemoryPhoto from "@/components/SharedMemoryPhoto";
-import MemoryTransitionLink from "@/components/MemoryTransitionLink";
 import { readMemories } from "@/lib/memories";
 import { photoSrc } from "@/lib/photoUrl";
 import { cropImageStyle } from "@/lib/imageCrop";
@@ -86,9 +85,8 @@ export default async function Home() {
                       Crisp white/cream frame with sharp corners.
                       Solid opaque surface that pops against the vibrant background!
                       ----------------------------------------------------- */}
-                  <MemoryTransitionLink
+                  <Link
                     href={`/memory/${memory.id}`}
-                    memoryId={memory.id}
                     data-memory-card={memory.id}
                     className="timeline-photo group mx-auto block w-[min(76vw,20rem)] bg-[#FDFBF6] p-3 pb-5 transition-all duration-200 hover:-translate-y-1 sm:w-full sm:max-w-sm"
                   >
@@ -97,12 +95,7 @@ export default async function Home() {
                       {polaroidTopDate(memory.date)}
                     </div>
 
-                    {/* Shared layoutId source: SharedMemoryPhoto uses memory.id,
-                        matching the hero in memory/[id]/page.js → MemoryDetail.
-                        AppTransitions in layout.js bridges the route unmount. */}
-                    <SharedMemoryPhoto memoryId={memory.id}
-                      className="photo-display timeline-photo-display"
-                    >
+                    <div className="photo-display timeline-photo-display">
                       {coverPhoto ? (
                           <Image
                             src={photoSrc(coverPhoto)}
@@ -123,7 +116,7 @@ export default async function Home() {
                           </span>
                         </div>
                       )}
-                    </SharedMemoryPhoto>
+                    </div>
 
                     {/* BOTTOM BAND: handwritten caption — the Date Title */}
                     <div
@@ -132,7 +125,7 @@ export default async function Home() {
                     >
                       {memory.title || "Untitled"}
                     </div>
-                  </MemoryTransitionLink>
+                  </Link>
                 </li>
               );
             })}

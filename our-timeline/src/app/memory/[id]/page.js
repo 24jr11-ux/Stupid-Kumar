@@ -1,10 +1,8 @@
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 import MemoryDetail from "@/components/MemoryDetail";
-import MemoryTransitionLink from "@/components/MemoryTransitionLink";
 import { readMemories } from "@/lib/memories";
 import { memoryColorHex, memoryColorIsLight } from "@/lib/colors";
-import { RouteReveal } from "@/components/AppTransitions";
+import { DetailPageTransition } from "@/components/AppTransitions";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +26,7 @@ export default async function MemoryPage({ params, searchParams }) {
   const isNewDraft = qs?.new === "1";
 
   return (
-    <div
+    <DetailPageTransition key={memory.id}
       className={`memory-detail-page min-h-screen flex flex-1 justify-center px-4 pb-24 ${
         memoryColorIsLight(memory.color_tag) ? "memory-detail-page--light" : ""
       }`}
@@ -36,20 +34,8 @@ export default async function MemoryPage({ params, searchParams }) {
       style={{ "--date-color": memoryColorHex(memory.color_tag) }}
     >
       <main className="relative z-10 w-full max-w-2xl pt-8 sm:pt-10">
-        <nav className="text-sm">
-          <MemoryTransitionLink
-            href="/"
-            className="inline-flex items-center gap-2 rounded-full border border-[#5D433C] bg-[#382722] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#D4C8BA] shadow-md transition hover:border-[#76513E] hover:text-[#FAF7F2]"
-          >
-            <ArrowLeft size={15} />
-            Timeline
-          </MemoryTransitionLink>
-        </nav>
-
-        {/* MemoryDetail's hero uses memory.id for the same photo layoutId as
-            app/page.js. The persistent LayoutGroup lives in root layout.js. */}
-        <RouteReveal detail><MemoryDetail memory={memory} initialEdit={initialEdit} isNewDraft={isNewDraft} /></RouteReveal>
+        <MemoryDetail memory={memory} initialEdit={initialEdit} isNewDraft={isNewDraft} />
       </main>
-    </div>
+    </DetailPageTransition>
   );
 }

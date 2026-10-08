@@ -43,18 +43,19 @@ export default function MemorySong({ song, editMode, onChange, onMetadata }) {
 
   if (!id && !editMode) return null;
 
-  const fieldClass = "min-w-0 w-full rounded-lg border border-[#5D433C] bg-[#2D1E1A] px-2.5 py-1.5 text-xs text-[#FAF7F2] outline-none focus:border-[#76513E] placeholder:text-[#D4C8BA]/40";
+  const fieldClass = "min-w-0 w-full rounded-lg border border-[#5D433C] bg-[#2D1E1A] px-3 py-2 text-base text-[#FAF7F2] outline-none focus:border-[#76513E] placeholder:text-[#D4C8BA]/40 sm:text-sm";
   return (
-    <section aria-label="Memory song" className="memory-song min-w-0">
+    <section aria-label="Now playing" className="memory-song mt-6 min-w-0">
       {!id && editMode && !inputOpen && !song.url ? (
-        <button type="button" aria-label="Add a YouTube song" onClick={() => setInputOpen(true)} className="flex h-12 w-12 items-center justify-center rounded-full border border-dashed border-[#74544B] text-[#D4C8BA] transition hover:border-[#76513E] hover:text-[#FAF7F2] sm:ml-auto">
-          <Plus size={20} />
+        <button type="button" aria-label="Add a YouTube song" onClick={() => setInputOpen(true)} className="flex min-h-12 items-center justify-center gap-2 rounded-full border border-dashed border-[#74544B] px-4 text-sm text-[#D4C8BA] transition hover:border-[#76513E] hover:text-[#FAF7F2]">
+          <Plus size={20} /> Add a song
         </button>
       ) : (
         <>
           {id && (
-            <div className="flex min-w-0 items-center justify-between gap-1.5 sm:gap-3">
+            <div className="flex min-w-0 items-center justify-between gap-4 sm:gap-6">
               <div className="min-w-0 flex-1">
+                <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-[#D4C8BA]">Now playing</p>
                 {editMode ? (
                   <div className="space-y-2">
                     <label className="block text-[10px] text-[#D4C8BA]">Song title
@@ -65,15 +66,15 @@ export default function MemorySong({ song, editMode, onChange, onMetadata }) {
                     </label>
                   </div>
                 ) : (
-                  <div className="scrapbook-text">
-                    <p title={title || "Our song"} className="truncate text-xs font-semibold leading-snug sm:text-base">{title || "Our song"}</p>
-                    {artist && <p title={artist} className="mt-0.5 truncate text-[10px] sm:text-sm">{artist}</p>}
+                  <div className="text-[#FAF7F2]">
+                    <p title={title || "Our song"} className="break-words text-lg font-semibold leading-snug sm:text-2xl">{title || "Our song"}</p>
+                    {artist && <p title={artist} className="mt-2 break-words text-sm text-[#D4C8BA] sm:text-base">{artist}</p>}
                   </div>
                 )}
                 {editMode && (
                   <div className="mt-2 flex flex-wrap gap-3 text-[10px] text-[#D4C8BA]">
-                    <button type="button" onClick={() => setInputOpen((v) => !v)} className="inline-flex items-center gap-1 hover:text-white"><Pencil size={10} /> Change song</button>
-                    <button type="button" onClick={() => { onChange({ url: "", title: null, artist: null, coverUrl: null, coverPosition: { x: 50, y: 50 }, coverZoom: 1 }); setInputOpen(false); setArtOpen(false); }} className="inline-flex items-center gap-1 hover:text-[#EBCDB5]"><X size={10} /> Remove song</button>
+                    <button type="button" onClick={() => setInputOpen((v) => !v)} className="inline-flex min-h-11 items-center gap-1 hover:text-white"><Pencil size={12} /> Change song</button>
+                    <button type="button" onClick={() => { onChange({ url: "", title: null, artist: null, coverUrl: null, coverPosition: { x: 50, y: 50 }, coverZoom: 1 }); setInputOpen(false); setArtOpen(false); }} className="inline-flex min-h-11 items-center gap-1 hover:text-[#EBCDB5]"><X size={12} /> Remove song</button>
                   </div>
                 )}
               </div>
