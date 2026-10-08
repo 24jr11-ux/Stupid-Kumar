@@ -4,6 +4,7 @@ import MemoryDetail from "@/components/MemoryDetail";
 import MemoryTransitionLink from "@/components/MemoryTransitionLink";
 import { readMemories } from "@/lib/memories";
 import { memoryColorHex, memoryColorIsLight } from "@/lib/colors";
+import { RouteReveal } from "@/components/AppTransitions";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +39,6 @@ export default async function MemoryPage({ params, searchParams }) {
         <nav className="text-sm">
           <MemoryTransitionLink
             href="/"
-            targetSelector={`[data-memory-card="${memory.id}"]`}
             className="inline-flex items-center gap-2 rounded-full border border-[#5D433C] bg-[#382722] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#D4C8BA] shadow-md transition hover:border-[#76513E] hover:text-[#FAF7F2]"
           >
             <ArrowLeft size={15} />
@@ -46,7 +46,9 @@ export default async function MemoryPage({ params, searchParams }) {
           </MemoryTransitionLink>
         </nav>
 
-        <MemoryDetail memory={memory} initialEdit={initialEdit} isNewDraft={isNewDraft} />
+        {/* MemoryDetail's hero uses memory.id for the same photo layoutId as
+            app/page.js. The persistent LayoutGroup lives in root layout.js. */}
+        <RouteReveal detail><MemoryDetail memory={memory} initialEdit={initialEdit} isNewDraft={isNewDraft} /></RouteReveal>
       </main>
     </div>
   );

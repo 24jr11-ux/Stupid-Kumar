@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { isAuthorized, sanitizeNextPath } from "@/lib/auth";
 import GateForm from "./GateForm";
@@ -12,12 +12,16 @@ export default async function GatePage({ searchParams }) {
   const next = sanitizeNextPath(String(params?.next || "/"));
 
   const cookieStore = await cookies();
-  if (isAuthorized(cookieStore)) {
+  const requestHeaders = await headers();
+  // Cookie writes re-render this page as part of the unlock action response.
+  // Let GateForm receive success and retain its exit layer before navigating;
+  // ordinary visits by an already-authorized user still skip the gate.
+  if (isAuthorized(cookieStore) && !requestHeaders.has("next-action")) {
     redirect(next);
   }
 
   return (
-    <main className="min-h-screen flex flex-1 items-center justify-center bg-black px-4 py-12">
+    <main className="relative z-10 min-h-screen flex flex-1 items-center justify-center px-4 py-12">
       <GateForm next={next} />
     </main>
   );

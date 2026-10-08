@@ -56,9 +56,10 @@ export default function AddMemoryButton() {
         onClick={handleClick}
         disabled={pending}
         aria-label={pending ? "Creating memory" : "Add memory"}
-        className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[#76513E] text-white shadow-[0_4px_16px_rgba(118,81,62,0.35)] transition-all duration-200 hover:bg-[#60402F] hover:shadow-[0_6px_22px_rgba(118,81,62,0.5)] hover:scale-[1.02] active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FAF7F2] disabled:cursor-not-allowed disabled:opacity-60"
+        className="primary-button inline-flex min-h-11 items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold"
       >
         {pending ? <Loader2 size={20} className="animate-spin" aria-hidden="true" /> : <Plus size={20} aria-hidden="true" />}
+        <span>{pending ? "Creating…" : "Add Memory"}</span>
       </button>
       {error && (
         <p

@@ -45,7 +45,7 @@ export default function MemorySong({ song, editMode, onChange, onMetadata }) {
 
   const fieldClass = "min-w-0 w-full rounded-lg border border-[#5D433C] bg-[#2D1E1A] px-2.5 py-1.5 text-xs text-[#FAF7F2] outline-none focus:border-[#76513E] placeholder:text-[#D4C8BA]/40";
   return (
-    <section aria-label="Memory song" className="min-w-0 w-full sm:w-72 sm:shrink-0">
+    <section aria-label="Memory song" className="memory-song min-w-0">
       {!id && editMode && !inputOpen && !song.url ? (
         <button type="button" aria-label="Add a YouTube song" onClick={() => setInputOpen(true)} className="flex h-12 w-12 items-center justify-center rounded-full border border-dashed border-[#74544B] text-[#D4C8BA] transition hover:border-[#76513E] hover:text-[#FAF7F2] sm:ml-auto">
           <Plus size={20} />
@@ -53,7 +53,7 @@ export default function MemorySong({ song, editMode, onChange, onMetadata }) {
       ) : (
         <>
           {id && (
-            <div className="flex min-w-0 items-center justify-between gap-4">
+            <div className="flex min-w-0 items-center justify-between gap-1.5 sm:gap-3">
               <div className="min-w-0 flex-1">
                 {editMode ? (
                   <div className="space-y-2">
@@ -66,8 +66,8 @@ export default function MemorySong({ song, editMode, onChange, onMetadata }) {
                   </div>
                 ) : (
                   <div className="scrapbook-text">
-                    <p className="break-words text-base font-semibold leading-snug">{title || "Our song"}</p>
-                    {artist && <p className="mt-1 break-words text-sm">{artist}</p>}
+                    <p title={title || "Our song"} className="truncate text-xs font-semibold leading-snug sm:text-base">{title || "Our song"}</p>
+                    {artist && <p title={artist} className="mt-0.5 truncate text-[10px] sm:text-sm">{artist}</p>}
                   </div>
                 )}
                 {editMode && (

@@ -2,11 +2,11 @@ import Image from "next/image";
 import { Camera, Sparkles } from "lucide-react";
 import CountupClock from "@/components/CountupClock";
 import AddMemoryButton from "@/components/AddMemoryButton";
-import AnimatedBackground from "@/components/AnimatedBackground";
+import { RouteReveal } from "@/components/AppTransitions";
+import SharedMemoryPhoto from "@/components/SharedMemoryPhoto";
 import MemoryTransitionLink from "@/components/MemoryTransitionLink";
 import { readMemories } from "@/lib/memories";
 import { photoSrc } from "@/lib/photoUrl";
-import { cropImageStyle } from "@/lib/imageCrop";
 
 // Date formats for the polaroid card. mm/dd/yy on the top band.
 function polaroidTopDate(isoDate) {
@@ -37,8 +37,7 @@ export default async function Home() {
   const memories = await getMemories();
 
   return (
-    <div className="min-h-screen flex flex-1 justify-center px-4 pb-24">
-      <AnimatedBackground />
+    <RouteReveal><div className="min-h-screen flex flex-1 justify-center px-4 pb-24">
 
       <main className="relative z-10 w-full max-w-2xl pt-12 sm:pt-16">
         {/* Header Hero */}
@@ -59,9 +58,6 @@ export default async function Home() {
             <h2 className="text-xs font-bold uppercase tracking-widest text-[#D4C8BA]">
               Memories
             </h2>
-            <span className="rounded-full bg-[#382722] px-2.5 py-0.5 text-xs font-semibold text-[#FAF7F2] border border-[#5D433C]">
-              {memories.length}
-            </span>
           </div>
 
           <AddMemoryButton />
@@ -97,7 +93,7 @@ export default async function Home() {
                       ----------------------------------------------------- */}
                   <MemoryTransitionLink
                     href={`/memory/${memory.id}`}
-                    targetSelector={`[data-memory-page="${memory.id}"]`}
+                    memoryId={memory.id}
                     data-memory-card={memory.id}
                     className="timeline-photo group mx-auto block w-[min(76vw,20rem)] bg-[#FDFBF6] p-3 pb-5 transition-all duration-200 hover:-translate-y-1 sm:w-full sm:max-w-sm"
                   >
@@ -106,20 +102,24 @@ export default async function Home() {
                       {polaroidTopDate(memory.date)}
                     </div>
 
-                    {/* MIDDLE: square-cropped cover photo */}
-                    <div
-                      className="relative aspect-square w-full overflow-hidden bg-[#EFE8DC]"
+                    {/* Shared layoutId source: SharedMemoryPhoto uses memory.id,
+                        matching the hero in memory/[id]/page.js → MemoryDetail.
+                        AppTransitions in layout.js bridges the route unmount. */}
+                    <SharedMemoryPhoto memoryId={memory.id}
+                      className="photo-display timeline-photo-display"
                     >
                       {coverPhoto ? (
+                        <>
+                          <Image src={photoSrc(coverPhoto)} alt="" aria-hidden="true" fill sizes="(max-width: 640px) 80vw, 400px" className="photo-backdrop" unoptimized />
                           <Image
                             src={photoSrc(coverPhoto)}
                             alt={memory.title}
                             fill
                             sizes="(max-width: 640px) 80vw, 400px"
-                            style={cropImageStyle(memory.cover_photo_position, memory.cover_photo_zoom)}
-                            className="object-cover"
+                            className="photo-foreground"
                             unoptimized
                           />
+                        </>
                       ) : (
                         <div className="flex h-full w-full flex-col items-center justify-center gap-2 p-6 text-center text-[#A89F95]">
                           <div className="flex h-12 w-12 items-center justify-center bg-[#F1E9DC] text-[#A08F7F]">
@@ -130,7 +130,7 @@ export default async function Home() {
                           </span>
                         </div>
                       )}
-                    </div>
+                    </SharedMemoryPhoto>
 
                     {/* BOTTOM BAND: handwritten caption — the Date Title */}
                     <div
@@ -146,6 +146,6 @@ export default async function Home() {
           </ol>
         )}
       </main>
-    </div>
+    </div></RouteReveal>
   );
 }

@@ -1,55 +1,36 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useAppTransitions } from "@/components/AppTransitions";
 
 function isModifiedClick(event) {
   return event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
 }
 
-function prefersReducedMotion() {
-  return window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-}
-
-function waitForElement(selector) {
-  if (!selector || document.querySelector(selector)) return Promise.resolve();
-
-  return new Promise((resolve) => {
-    const observer = new MutationObserver(() => {
-      if (document.querySelector(selector)) {
-        observer.disconnect();
-        resolve();
-      }
-    });
-
-    observer.observe(document.body, { childList: true, subtree: true });
-    window.setTimeout(() => {
-      observer.disconnect();
-      resolve();
-    }, 2500);
-  });
-}
-
 export default function MemoryTransitionLink({
   href,
-  targetSelector,
+  memoryId,
   children,
   onClick,
   ...props
 }) {
-  const router = useRouter();
+  const { bridgePhoto } = useAppTransitions();
 
   function handleClick(event) {
     onClick?.(event);
     if (event.defaultPrevented || isModifiedClick(event)) return;
 
-    if (!document.startViewTransition || prefersReducedMotion()) return;
-
-    event.preventDefault();
-    document.startViewTransition(async () => {
-      router.push(href);
-      await waitForElement(targetSelector);
-    });
+    if (!memoryId || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const source = event.currentTarget.querySelector("[data-shared-photo]");
+    const image = source?.querySelector("img.photo-foreground");
+    if (!source || !image) return;
+    const rect = source.getBoundingClientRect();
+    const style = getComputedStyle(image);
+    // Capture viewport coordinates before Next scrolls/unmounts the timeline.
+    // AppTransitions retains the source with the same layoutId as the hero.
+    bridgePhoto({ id: memoryId, src: image.currentSrc || image.src,
+      rect: { top: rect.top, left: rect.left, width: rect.width, height: rect.height },
+      imageStyle: { objectFit: style.objectFit, objectPosition: style.objectPosition, transform: style.transform } });
   }
 
   return (

@@ -50,6 +50,7 @@ import { photoSrc } from "@/lib/photoUrl";
 import { compressImage } from "@/lib/imageCompression";
 import { cropPosition, cropZoom } from "@/lib/imageCrop";
 import ImageFramingEditor from "@/components/ImageFramingEditor";
+import { useSnapCarousel } from "@/lib/useSnapCarousel";
 
 // ---------------------------------------------------------------------------
 // Moments data structure
@@ -183,11 +184,13 @@ function MomentPaper({
   onReveal,
   className = "",
   variant = 0,
+  inactive = false,
 }) {
   const isNsfw = moment.is_nsfw;
 
   return (
     <li
+      inert={inactive} aria-hidden={inactive || undefined}
       className={`moment-paper moment-paper--${["taped", "ruled", "folded"][variant % 3]} ${isNsfw ? "moment-paper--nsfw" : ""} ${className}`}
     >
       <div className={`flex items-center justify-center px-6 text-center sm:px-9 ${isNsfw && !revealed ? "min-h-[5rem] py-4" : "min-h-[9rem] py-7 sm:min-h-[10rem] sm:py-8"}`}>
@@ -259,7 +262,7 @@ function CoverCropModal({ src, title, initialPos, initialZoom, onConfirm, onCanc
           <button
             type="button"
             onClick={() => onConfirm(framing)}
-            className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#76513E] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_4px_16px_rgba(118,81,62,0.4)] transition hover:bg-[#60402F]"
+            className="primary-button inline-flex min-h-11 items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition"
           >
             <Check size={15} /> Use as cover
           </button>
@@ -276,8 +279,6 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
   const [editMode, setEditMode] = useState(initialEdit);
   const [momentsEditMode, setMomentsEditMode] = useState(false);
   const [momentsView, setMomentsView] = useState("single");
-  const [activeMomentIndex, setActiveMomentIndex] = useState(0);
-  const momentTouchStart = useRef(null);
   const [forceShownIds, setForceShownIds] = useState(() => new Set());
   const [forceHiddenIds, setForceHiddenIds] = useState(() => new Set());
 
@@ -355,10 +356,9 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
     () => orderedMoments.filter((moment) => moment.text.trim() !== ""),
     [orderedMoments]
   );
-  const displayedMomentIndex = Math.min(
-    activeMomentIndex,
-    Math.max(0, viewingMoments.length - 1)
-  );
+  const { trackRef: momentTrackRef, active: displayedMomentIndex,
+    select: selectMoment, onScroll: onMomentScroll, onKeyDown: onMomentKeyDown } =
+    useSnapCarousel(viewingMoments.length, 0, momentsView + String(editMode) + String(momentsEditMode));
   const hasAnyMoment = moments.some((m) => m.text.trim() !== "");
 
   const isStillEmptyDraft =
@@ -654,14 +654,6 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
     );
   }
 
-  function previousMoment() {
-    setActiveMomentIndex((current) => Math.max(0, current - 1));
-  }
-
-  function nextMoment() {
-    setActiveMomentIndex((current) => Math.min(viewingMoments.length - 1, current + 1));
-  }
-
   return (
     <>
       <article className="relative mt-4">
@@ -674,7 +666,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                   type="button"
                   onClick={handleSave}
                   disabled={saving}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-[#76513E] px-5 py-2 text-xs font-bold uppercase tracking-wider text-white shadow-[0_4px_16px_rgba(118,81,62,0.4)] transition hover:bg-[#60402F] disabled:opacity-60"
+                  className="primary-button inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-xs font-bold uppercase tracking-wider transition disabled:opacity-60"
                 >
                   {saving ? (
                     <>
@@ -718,7 +710,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
             )}
           </div>
 
-          <div className="mt-3 flex min-w-0 flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+          <div className="memory-heading-row mt-3 flex min-w-0 items-start justify-between gap-3 sm:gap-5">
             <div className="min-w-0 flex-1">
               {/* Title (UI label: "Date Title") */}
               {editMode ? (
@@ -740,13 +732,13 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
               {/* Calendar date */}
               <div className="memory-page-date mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 font-handwriting text-xl text-[#D4C8BA]">
                 {editMode ? (
-                  <label className="inline-flex items-center gap-2 font-sans text-sm text-[#D4C8BA]">
+                  <label className="inline-flex min-w-0 max-w-full items-center gap-2 font-sans text-sm text-[#D4C8BA]">
                       Date
                       <input
                         type="date"
                         value={dateStr}
                         onChange={(e) => setDateStr(e.target.value)}
-                        className="rounded-xl border border-[#5D433C] bg-[#2D1E1A] px-3 py-1.5 font-semibold text-[#FAF7F2] outline-none focus:border-[#76513E]"
+                        className="min-w-0 rounded-xl border border-[#5D433C] bg-[#2D1E1A] px-2 py-1.5 font-semibold text-[#FAF7F2] outline-none focus:border-[#76513E]"
                       />
                   </label>
                 ) : (
@@ -783,7 +775,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
           {/* One uncropped photo at a time. */}
           <div className="mt-8 min-w-0">
             {photoUrlsForCarousel.length > 0 ? (
-              <MemoryPhotoStack photos={photoUrlsForCarousel} title={title} />
+              <MemoryPhotoStack photos={photoUrlsForCarousel} title={title} memoryId={memory.id} coverPhoto={cover?.id} />
             ) : (
               <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#5D433C] py-14 text-center text-[#D4C8BA]">
                 <ImageOff size={28} className="text-[#D4C8BA]/60" />
@@ -874,11 +866,6 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
           {/* Paper memories */}
           <section
             className="mt-10"
-            onKeyDown={(event) => {
-              if (momentsEditMode || momentsView !== "single" || !hasAnyMoment) return;
-              if (event.key === "ArrowLeft") previousMoment();
-              if (event.key === "ArrowRight") nextMoment();
-            }}
           >
             <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#5D433C] pb-4">
               <h2
@@ -990,7 +977,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                     type="button"
                     onClick={saveMoments}
                     disabled={savingMoments}
-                    className="ml-auto inline-flex items-center gap-2 rounded-full bg-[#76513E] px-5 py-2.5 text-xs font-semibold text-white shadow-[0_4px_16px_rgba(118,81,62,0.4)] transition hover:bg-[#60402F] disabled:opacity-60"
+                    className="primary-button ml-auto inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-xs font-semibold transition disabled:opacity-60"
                   >
                     {savingMoments ? (
                       <>
@@ -1008,38 +995,22 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
               /* ---------------- MOMENTS VIEWING ---------------- */
               hasAnyMoment ? momentsView === "single" ? (
                 <div className="mt-6">
-                  <div className="mx-auto max-w-xl touch-pan-y"
-                    onTouchStart={(event) => {
-                      if (event.touches.length === 1) {
-                        momentTouchStart.current = { x: event.touches[0].clientX, y: event.touches[0].clientY };
-                      } else momentTouchStart.current = null;
-                    }}
-                    onTouchEnd={(event) => {
-                      if (!momentTouchStart.current || viewingMoments.length < 2) return;
-                      const dx = momentTouchStart.current.x - event.changedTouches[0].clientX;
-                      const dy = momentTouchStart.current.y - event.changedTouches[0].clientY;
-                      if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.2) {
-                        if (dx > 0) nextMoment();
-                        else previousMoment();
-                      }
-                      momentTouchStart.current = null;
-                    }}
-                    onTouchCancel={() => { momentTouchStart.current = null; }}>
-                    <ul aria-live="polite">
-                      <MomentPaper
-                        key={viewingMoments[displayedMomentIndex].id}
-                        variant={displayedMomentIndex}
-                        moment={viewingMoments[displayedMomentIndex]}
-                        revealed={momentIsRevealed(viewingMoments[displayedMomentIndex])}
-                        onReveal={(reveal) =>
-                          setNsfwReveal(viewingMoments[displayedMomentIndex].id, reveal)
-                        }
-                      />
+                  <div className="mx-auto max-w-xl">
+                    {/* Native scroll only browses this date's moments. Each
+                        paper occupies one track width, just like the photos. */}
+                    <ul ref={momentTrackRef} className="snap-carousel moment-carousel" tabIndex={0}
+                      aria-label="Swipe to browse this date's moments, or use the arrow keys"
+                      onScroll={onMomentScroll} onKeyDown={onMomentKeyDown}>
+                      {viewingMoments.map((moment, index) => <MomentPaper
+                        key={moment.id} className="snap-slide" variant={index} moment={moment}
+                        inactive={index !== displayedMomentIndex} revealed={momentIsRevealed(moment)}
+                        onReveal={(reveal) => setNsfwReveal(moment.id, reveal)} />)}
                     </ul>
+                    <p className="sr-only" aria-live="polite">Moment {displayedMomentIndex + 1} of {viewingMoments.length}</p>
                   </div>
 
                   <CarouselPagination count={viewingMoments.length} active={displayedMomentIndex}
-                    onSelect={setActiveMomentIndex} itemLabel="memory card" />
+                    onSelect={selectMoment} itemLabel="memory card" />
                 </div>
               ) : (
                 <ul className="moment-paper-list mt-8 space-y-7 px-1 sm:px-4">
@@ -1115,7 +1086,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                 type="button"
                 onClick={deleteMemoryRow}
                 disabled={deleting}
-                className="inline-flex items-center gap-2 rounded-full bg-[#76513E] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_4px_16px_rgba(118,81,62,0.4)] transition hover:bg-[#60402F] disabled:opacity-60"
+                className="primary-button inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition disabled:opacity-60"
               >
                 {deleting ? (
                   <>

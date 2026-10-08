@@ -6,7 +6,8 @@ import { verifyAnswer, getQuestionById } from "@/lib/questions";
 
 // Server action behind the /gate form. Verifies the submitted answer against
 // the randomized question, then stores an auth cookie. Navigation itself is
-// driven client-side so the gate can animate the lava "flowing out" first.
+// driven client-side so the persistent transition layer can cross-fade the
+// gate content with the destination without resetting the animated background.
 export async function unlock(prevState, formData) {
   const questionId = Number(formData.get("questionId"));
   const answer = String(formData.get("answer") || "").trim();

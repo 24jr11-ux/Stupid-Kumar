@@ -108,7 +108,7 @@ export function MusicPlayer({ src, coverArt, coverPosition, coverZoom, title = "
   }
 
   return (
-    <div className={cn("relative w-28 shrink-0 sm:w-32", className)}>
+    <div className={cn("memory-vinyl relative shrink-0", className)}>
       <div ref={hostRef} className="pointer-events-none absolute h-px w-px overflow-hidden opacity-0" aria-hidden="true" />
       <button
         type="button"
