@@ -49,8 +49,12 @@ export default function GateForm({ next }) {
   const [answer, setAnswer] = useState("");
   const [state, formAction] = useActionState(unlock, initialState);
   const router = useRouter();
-  const { splash, holdGate } = useAppTransitions();
+  const { splash, holdGate, markRouteReady } = useAppTransitions();
   const answerRef = useRef(null);
+
+  useEffect(() => {
+    if (challenge || questionError) markRouteReady();
+  }, [challenge, questionError, markRouteReady]);
 
   useEffect(() => {
     const controller = new AbortController();

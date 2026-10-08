@@ -1,5 +1,5 @@
-import LoadingTitle from "@/components/LoadingTitle";
+import LoadingIndicator from "@/components/LoadingIndicator";
 
 export default function Loading() {
-  return <LoadingTitle />;
+  return <LoadingIndicator />;
 }

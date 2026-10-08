@@ -2,6 +2,7 @@ import "./globals.css";
 import SWRegister from "@/components/SWRegister";
 import SessionGuard from "@/components/SessionGuard";
 import AppTransitions from "@/components/AppTransitions";
+import { launchBootstrap } from "@/lib/launch";
 
 export const metadata = {
   title: {
@@ -33,7 +34,8 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className="h-full antialiased">
+    <html lang="en" className="h-full antialiased" suppressHydrationWarning>
+      <head><script dangerouslySetInnerHTML={{ __html: launchBootstrap }} /></head>
       <body className="min-h-full flex flex-col text-[#FAF7F2]" suppressHydrationWarning>
         <AppTransitions><SessionGuard>{children}</SessionGuard></AppTransitions>
         {/* Registers the service worker that makes the app installable / offline-aware. */}

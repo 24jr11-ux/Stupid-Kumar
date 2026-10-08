@@ -6,7 +6,7 @@ export default function manifest() {
     short_name: "S&K",
     description: "The ever-growing timeline of us.",
     id: "/",
-    start_url: "/",
+    start_url: "/?resume=1",
     display: "standalone",
     background_color: "#96B82D",
     theme_color: "#96B82D",

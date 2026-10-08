@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "framer-motion";
 import LoadingTitle from "@/components/LoadingTitle";
 import { memoryPhotoTransitionName as photoLayoutId } from "@/lib/viewTransitions";
+import { LAST_READY_PAGE_KEY } from "@/lib/launch";
 
 const TransitionContext = createContext(null);
 // The first paint uses CSS; shader setup must not delay the loading title.
@@ -19,6 +20,9 @@ export default function AppTransitions({ children }) {
   const [splash, setSplash] = useState(true);
   const [gate, setGate] = useState(null);
   const [photo, setPhoto] = useState(null);
+  const [readyPath, setReadyPath] = useState(null);
+  const [sessionReady, markSessionReady] = useState(false);
+  const markRouteReady = useCallback(() => setReadyPath(pathname), [pathname]);
   const holdGate = useCallback((content) => setGate({ content }), []);
   const bridgePhoto = useCallback((snapshot) => setPhoto(snapshot), []);
   const finishPhoto = useCallback(() => setPhoto(null), []);
@@ -32,9 +36,35 @@ export default function AppTransitions({ children }) {
       fonts.href = "https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap";
       document.head.appendChild(fonts);
     }
-    const timer = setTimeout(() => setSplash(false), reducedMotion ? 0 : 450);
-    return () => clearTimeout(timer);
-  }, [reducedMotion]);
+    if (!document.documentElement.classList.contains("warm-launch")) return;
+    const frame = requestAnimationFrame(() => setSplash(false));
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  useEffect(() => {
+    if (readyPath !== pathname || !sessionReady) return;
+    // Dismiss only when the initial route and its session check are ready.
+    // Subsequent navigation never sets splash back to true.
+    const frame = requestAnimationFrame(() => setSplash(false));
+    if (pathname === "/gate") return () => cancelAnimationFrame(frame);
+    const remember = () => {
+      try {
+        localStorage.setItem(LAST_READY_PAGE_KEY, JSON.stringify({
+          path: window.location.pathname + window.location.search,
+          readyAt: Date.now(),
+        }));
+      } catch { /* Resume is optional when storage is unavailable. */ }
+    };
+    const visibility = () => { if (document.visibilityState === "hidden") remember(); };
+    remember();
+    window.addEventListener("pagehide", remember);
+    document.addEventListener("visibilitychange", visibility);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("pagehide", remember);
+      document.removeEventListener("visibilitychange", visibility);
+    };
+  }, [readyPath, pathname, sessionReady]);
 
   useEffect(() => {
     if (!photo) return;
@@ -44,7 +74,7 @@ export default function AppTransitions({ children }) {
   }, [photo, finishPhoto]);
 
   return (
-    <TransitionContext.Provider value={{ splash, holdGate, bridgePhoto, finishPhoto, photo }}>
+    <TransitionContext.Provider value={{ splash, holdGate, bridgePhoto, finishPhoto, photo, markRouteReady, markSessionReady }}>
       {/* This group persists in layout.js. App Router replaces page subtrees,
           so a fixed source bridges the unmount until the detail hero joins
           the SAME layoutId. No router-internal context freezing needed. */}
@@ -56,7 +86,7 @@ export default function AppTransitions({ children }) {
           {children}
         </motion.div>
         <AnimatePresence onExitComplete={() => { if (pathname !== "/gate") setGate(null); }}>
-          {splash && <motion.div key="splash"
+          {splash && <motion.div key="splash" className="launch-splash fixed inset-0 z-40"
             exit={{ opacity: 0 }} transition={{ duration: reducedMotion ? 0 : 0.45 }}>
             <LoadingTitle />
           </motion.div>}
@@ -80,6 +110,8 @@ export default function AppTransitions({ children }) {
 
 export function RouteReveal({ children, detail = false }) {
   const reducedMotion = useReducedMotion();
+  const { markRouteReady } = useAppTransitions();
+  useEffect(() => { markRouteReady(); }, [markRouteReady]);
   return <motion.div className="flex flex-1 flex-col"
     initial={{ opacity: reducedMotion ? 1 : 0, y: detail || reducedMotion ? 0 : 18 }}
     animate={{ opacity: 1, y: 0 }}

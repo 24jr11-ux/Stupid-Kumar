@@ -2,13 +2,19 @@
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import LoadingTitle from "@/components/LoadingTitle";
+import LoadingIndicator from "@/components/LoadingIndicator";
+import { useAppTransitions } from "@/components/AppTransitions";
 import { inactivityExpired, LAST_ACTIVE_KEY, SESSION_HEARTBEAT_MS, SESSION_IDLE_MS } from "@/lib/session";
 
 export default function SessionGuard({ children }) {
   const pathname = usePathname();
   const publicPage = pathname === "/gate";
   const [verified, setVerified] = useState(false);
+  const { markSessionReady } = useAppTransitions();
+
+  useEffect(() => {
+    markSessionReady(publicPage || verified);
+  }, [publicPage, verified, markSessionReady]);
 
   useEffect(() => {
     if (publicPage) return;
@@ -70,7 +76,7 @@ export default function SessionGuard({ children }) {
   }, [publicPage]);
 
   return <>
-    {!publicPage && !verified && <LoadingTitle />}
+    {!publicPage && !verified && <LoadingIndicator />}
     <div className="min-h-full flex flex-1 flex-col" inert={!publicPage && !verified}
       style={{ visibility: publicPage || verified ? "visible" : "hidden" }}>{children}</div>
   </>;
