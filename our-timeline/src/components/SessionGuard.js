@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import LoadingTitle from "@/components/LoadingTitle";
 import { inactivityExpired, LAST_ACTIVE_KEY, SESSION_HEARTBEAT_MS, SESSION_IDLE_MS } from "@/lib/session";
 
 export default function SessionGuard({ children }) {
@@ -68,6 +69,9 @@ export default function SessionGuard({ children }) {
     };
   }, [publicPage]);
 
-  return <div className="min-h-full flex flex-1 flex-col" inert={!publicPage && !verified}
-    style={{ visibility: publicPage || verified ? "visible" : "hidden" }}>{children}</div>;
+  return <>
+    {!publicPage && !verified && <LoadingTitle />}
+    <div className="min-h-full flex flex-1 flex-col" inert={!publicPage && !verified}
+      style={{ visibility: publicPage || verified ? "visible" : "hidden" }}>{children}</div>
+  </>;
 }

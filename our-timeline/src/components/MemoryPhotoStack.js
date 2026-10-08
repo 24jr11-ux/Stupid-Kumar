@@ -5,10 +5,8 @@ import CarouselPagination from "@/components/CarouselPagination";
 import SharedMemoryPhoto from "@/components/SharedMemoryPhoto";
 import { useSnapCarousel } from "@/lib/useSnapCarousel";
 
-export default function MemoryPhotoStack({ photos, title, memoryId, coverPhoto }) {
-  // Start on the timeline cover so the shared photo remains the same image.
-  const initialIndex = Math.max(0, photos.indexOf(coverPhoto));
-  const { trackRef, active, select, onScroll, onKeyDown } = useSnapCarousel(photos.length, initialIndex);
+export default function MemoryPhotoStack({ photos, title, memoryId }) {
+  const { trackRef, active, select, onScroll, onKeyDown } = useSnapCarousel(photos.length);
 
   return <section aria-label="Memory photos" className="photo-stack">
     {/* The fixed hero frame is the layoutId destination from app/page.js.
@@ -24,7 +22,7 @@ export default function MemoryPhotoStack({ photos, title, memoryId, coverPhoto }
           <img src={photoSrc(photo)} alt="" aria-hidden="true" draggable={false} className="photo-backdrop" />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={photoSrc(photo)} alt={`${title || "Memory"} - photo ${index + 1}`}
-            draggable={false} className="photo-foreground" loading={index === initialIndex ? "eager" : "lazy"} />
+            draggable={false} className="photo-foreground" loading={index === 0 ? "eager" : "lazy"} />
         </div>)}
       </div>
     </SharedMemoryPhoto>

@@ -56,10 +56,9 @@ export default function AddMemoryButton() {
         onClick={handleClick}
         disabled={pending}
         aria-label={pending ? "Creating memory" : "Add memory"}
-        className="primary-button inline-flex min-h-11 items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold"
+        className="primary-button inline-flex h-11 w-11 items-center justify-center text-sm font-semibold"
       >
         {pending ? <Loader2 size={20} className="animate-spin" aria-hidden="true" /> : <Plus size={20} aria-hidden="true" />}
-        <span>{pending ? "Creating…" : "Add Memory"}</span>
       </button>
       {error && (
         <p

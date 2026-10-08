@@ -1,9 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 :root {
-  /* Dark fallback while page backgrounds initialize or an expired session locks. */
-  --background: #261A16;
+  /* Paint immediately, before JavaScript or the WebGL shader is ready. */
+  --background: #96B82D;
+  --app-top-inset: 0px;
   --shadow-paper: 0 2px 3px rgba(30, 19, 13, 0.16), 0 7px 14px rgba(30, 19, 13, 0.18), 0 18px 30px -12px rgba(30, 19, 13, 0.22);
   --shadow-photo: 0 2px 4px rgba(30, 19, 13, 0.2), 0 9px 18px rgba(30, 19, 13, 0.24), 0 24px 38px -14px rgba(30, 19, 13, 0.3);
   /* Cream body text for high-contrast WCAG AA readability */
@@ -46,20 +46,26 @@
 
 body {
   background-color: var(--background);
+  background-image: linear-gradient(135deg, #F47A1F, #96B82D 65%, #9EDB45);
+  background-attachment: fixed;
   color: var(--foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
-  min-height: 100vh;
+  min-height: 100svh;
 }
 
 /* Installed iOS PWAs draw into the status-bar area with viewport-fit=cover.
    Keep page content below the clock and notch while the fixed page background
    continues behind them. Browser and desktop layouts remain unchanged. */
 @media (display-mode: standalone) {
+  :root { --app-top-inset: env(safe-area-inset-top, 0px); }
   body {
-    padding-top: env(safe-area-inset-top, 0px);
+    padding-top: var(--app-top-inset);
   }
 }
+
+.app-viewport, .gate-page { min-height: calc(100svh - var(--app-top-inset)); }
+.gate-page { padding-bottom: max(2rem, env(safe-area-inset-bottom, 0px)); }
 
 .font-handwriting {
   font-family: var(--font-handwriting);
@@ -84,7 +90,9 @@ body {
   padding: 3rem 1rem;
   pointer-events: none;
 }
-.gate-content { text-shadow: none; }
+.loading-title { font-size: clamp(2.75rem, 12vw, 6rem); text-align: center; }
+.gate-content { text-shadow: none; transform: translateY(-0.75rem); }
+.gate-transition-overlay { padding-top: calc(2rem + var(--app-top-inset)); padding-bottom: max(2rem, env(safe-area-inset-bottom, 0px)); }
 .gate-transition-overlay { z-index: 30; }
 .shared-photo-bridge {
   position: fixed;
@@ -263,7 +271,7 @@ body {
 .snap-carousel:focus-visible { outline: 2px solid #f4ead7; outline-offset: 4px; }
 .snap-slide { flex: 0 0 100%; min-width: 0; scroll-snap-align: start; }
 .photo-display { position: relative; overflow: hidden; background: #efe8dc; }
-.timeline-photo-display { height: clamp(13rem, 65vw, 22.5rem); }
+.timeline-photo-display { aspect-ratio: 1; }
 .detail-photo-display { height: clamp(16rem, 58svh, 32rem); }
 .photo-backdrop, .photo-foreground {
   position: absolute;

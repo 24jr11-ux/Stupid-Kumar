@@ -7,6 +7,7 @@ import SharedMemoryPhoto from "@/components/SharedMemoryPhoto";
 import MemoryTransitionLink from "@/components/MemoryTransitionLink";
 import { readMemories } from "@/lib/memories";
 import { photoSrc } from "@/lib/photoUrl";
+import { cropImageStyle } from "@/lib/imageCrop";
 
 // Date formats for the polaroid card. mm/dd/yy on the top band.
 function polaroidTopDate(isoDate) {
@@ -43,7 +44,7 @@ export default async function Home() {
         {/* Header Hero */}
         <div className="text-center">
           <h1
-            className="scrapbook-text home-title-label font-handwriting text-5xl font-bold tracking-tight text-[#FAF7F2] sm:text-7xl transition-all"
+            className="scrapbook-text home-title-label font-handwriting text-[3.4rem] font-bold tracking-tight text-[#FAF7F2] sm:text-[4.75rem] transition-all"
           >
             Stupid &amp; Kumar
           </h1>
@@ -53,13 +54,7 @@ export default async function Home() {
         <CountupClock startDateIso={RELATIONSHIP_START_DATE.toISOString()} />
 
         {/* Action bar */}
-        <div className="mt-14 flex items-center justify-between gap-4 border-b border-[#5D433C] pb-4">
-          <div className="flex items-center gap-2.5">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-[#D4C8BA]">
-              Memories
-            </h2>
-          </div>
-
+        <div className="mt-14 flex items-center justify-end gap-4 border-b border-[#5D433C] pb-4">
           <AddMemoryButton />
         </div>
 
@@ -109,17 +104,15 @@ export default async function Home() {
                       className="photo-display timeline-photo-display"
                     >
                       {coverPhoto ? (
-                        <>
-                          <Image src={photoSrc(coverPhoto)} alt="" aria-hidden="true" fill sizes="(max-width: 640px) 80vw, 400px" className="photo-backdrop" unoptimized />
                           <Image
                             src={photoSrc(coverPhoto)}
                             alt={memory.title}
                             fill
                             sizes="(max-width: 640px) 80vw, 400px"
                             className="photo-foreground"
+                            style={cropImageStyle(memory.cover_photo_position, memory.cover_photo_zoom)}
                             unoptimized
                           />
-                        </>
                       ) : (
                         <div className="flex h-full w-full flex-col items-center justify-center gap-2 p-6 text-center text-[#A89F95]">
                           <div className="flex h-12 w-12 items-center justify-center bg-[#F1E9DC] text-[#A08F7F]">

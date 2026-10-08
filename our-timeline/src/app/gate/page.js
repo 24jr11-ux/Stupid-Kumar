@@ -21,7 +21,7 @@ export default async function GatePage({ searchParams }) {
   }
 
   return (
-    <main className="relative z-10 min-h-screen flex flex-1 items-center justify-center px-4 py-12">
+    <main className="gate-page relative z-10 flex flex-1 items-center justify-center px-4 py-8">
       <GateForm next={next} />
     </main>
   );

@@ -33,7 +33,7 @@ function GateContent({ challenge, questionError, state, next, answer, setAnswer,
         </label>
         <input ref={answerRef} id="answer" type="text" name="answer" required
           disabled={!challenge || state?.success} value={answer} onChange={event => setAnswer(event.target.value)}
-          className="mt-2.5 w-full rounded-2xl border border-[#FAF7F2]/60 bg-[#FAF7F2] px-4 py-3.5 text-sm text-[#332923] shadow-md outline-none transition focus:ring-2 focus:ring-[#332923]/50" />
+          className="mt-2.5 w-full rounded-2xl border border-[#FAF7F2]/60 bg-[#FAF7F2] px-4 py-3.5 text-base text-[#332923] shadow-md outline-none transition focus:ring-2 focus:ring-[#332923]/50" />
       </div>
       {state?.error && <p role="alert" className="mt-4 rounded-xl bg-[#FAF7F2] p-3 text-sm font-medium text-[#332923] shadow-md">{state.error}</p>}
       {questionError && <button type="button" className="scrapbook-text mt-4 text-sm underline" onClick={retry}>Try loading again</button>}
@@ -62,11 +62,14 @@ export default function GateForm({ next }) {
   }, [questionAttempt]);
 
   useEffect(() => {
-    if (!splash && challenge) answerRef.current?.focus({ preventScroll: true });
+    if (!splash && challenge && window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+      answerRef.current?.focus({ preventScroll: true });
+    }
   }, [splash, challenge]);
 
   useLayoutEffect(() => {
     if (!state?.success) return;
+    answerRef.current?.blur();
     try { localStorage.setItem(LAST_ACTIVE_KEY, String(Date.now())); } catch { /* Cookie expiry still applies. */ }
     // Retain this gate in the root AnimatePresence while App Router replaces
     // the page. Its 450ms exit overlaps the timeline's fade/slide entrance.

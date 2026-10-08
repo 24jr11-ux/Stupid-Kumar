@@ -32,8 +32,8 @@ export function useSnapCarousel(count, initialIndex = 0, resetKey = "") {
   useLayoutEffect(() => {
     const track = trackRef.current;
     if (!track) return;
-    // Keep the same slide after orientation/viewport changes. Initial cover
-    // placement happens before paint, without sliding past unrelated photos.
+    // Keep the same slide after orientation/viewport changes and align the
+    // initial slide before paint, without sliding past unrelated photos.
     const align = () => {
       activeRef.current = Math.max(0, Math.min(activeRef.current, count - 1));
       track.scrollTo({ left: activeRef.current * track.clientWidth, behavior: "instant" });

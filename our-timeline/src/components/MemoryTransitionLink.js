@@ -30,7 +30,8 @@ export default function MemoryTransitionLink({
     // AppTransitions retains the source with the same layoutId as the hero.
     bridgePhoto({ id: memoryId, src: image.currentSrc || image.src,
       rect: { top: rect.top, left: rect.left, width: rect.width, height: rect.height },
-      imageStyle: { objectFit: style.objectFit, objectPosition: style.objectPosition, transform: style.transform } });
+      imageStyle: { objectFit: style.objectFit, objectPosition: style.objectPosition,
+        transformOrigin: style.transformOrigin, transform: style.transform } });
   }
 
   return (

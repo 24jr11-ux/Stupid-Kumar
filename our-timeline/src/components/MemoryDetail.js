@@ -775,7 +775,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
           {/* One uncropped photo at a time. */}
           <div className="mt-8 min-w-0">
             {photoUrlsForCarousel.length > 0 ? (
-              <MemoryPhotoStack photos={photoUrlsForCarousel} title={title} memoryId={memory.id} coverPhoto={cover?.id} />
+              <MemoryPhotoStack key={memory.id} photos={photoUrlsForCarousel} title={title} memoryId={memory.id} />
             ) : (
               <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#5D433C] py-14 text-center text-[#D4C8BA]">
                 <ImageOff size={28} className="text-[#D4C8BA]/60" />
