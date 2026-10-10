@@ -110,9 +110,7 @@ function MomentTextarea({ value, onChange, onPasteParagraphs, placeholder, isNsf
         onPasteParagraphs(paragraphs, e.currentTarget.selectionStart, e.currentTarget.selectionEnd);
       }}
       placeholder={placeholder}
-      className={`w-full resize-none overflow-hidden bg-transparent text-sm leading-6 outline-none ${
-        isNsfw ? "italic text-[#664838]" : "text-[#332923]"
-      } placeholder:text-[#806F5B]/55`}
+      className={`w-full resize-none overflow-hidden bg-transparent text-sm leading-6 text-[#332923] outline-none placeholder:text-[#806F5B]/55 ${isNsfw ? "italic" : ""}`}
     />
   );
 }
@@ -130,11 +128,7 @@ function SortableMomentRow({ moment, onChange, onRemove, onPasteParagraphs, acce
     <li
       ref={setNodeRef}
       style={style}
-      className={`flex items-start gap-2.5 border p-3.5 text-[#332923] shadow-[0_8px_20px_rgba(0,0,0,0.22)] transition ${
-        moment.is_nsfw
-          ? "border-[#C8A88F] bg-[#F8EBDD] italic"
-          : "border-[#B7A98D] bg-[#FBF3DF]"
-      } ${isDragging ? "z-20 opacity-95 shadow-2xl scale-[1.01]" : ""}`}
+      className={`moment-paper flex items-start gap-2.5 p-3.5 transition ${isDragging ? "z-20 opacity-95 shadow-2xl scale-[1.01]" : ""}`}
     >
       {/* Drag handle */}
       <button
@@ -194,7 +188,7 @@ function MomentPaper({
   return (
     <li
       inert={inactive} aria-hidden={inactive || undefined}
-      className={`moment-paper moment-paper--${["taped", "ruled", "folded"][variant % 3]} ${isNsfw ? "moment-paper--nsfw" : ""} ${className}`}
+      className={`moment-paper moment-paper--${["taped", "clipped", "folded"][variant % 3]} ${className}`}
     >
       <div className={`flex items-center justify-center px-6 text-center sm:px-9 ${isNsfw && !revealed ? "min-h-[5rem] py-4" : "min-h-[9rem] py-7 sm:min-h-[10rem] sm:py-8"}`}>
         {isNsfw ? (

@@ -103,6 +103,8 @@ export default function MemorySong({ song, editMode, onChange, onMetadata }) {
         </>
       )}
       <span className="console-suitcase-handle" aria-hidden="true" />
+      <span className="console-latch console-latch--left" aria-hidden="true" />
+      <span className="console-latch console-latch--right" aria-hidden="true" />
     </section>
   );
 }

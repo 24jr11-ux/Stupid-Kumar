@@ -198,33 +198,30 @@ export function MusicPlayer({ src, coverArt, coverPosition, coverZoom, title = "
   return (
     <div className={cn("record-player", className)}>
       <div ref={hostRef} className="pointer-events-none absolute h-px w-px overflow-hidden opacity-0" aria-hidden="true" />
-      <div className="console-copy">
-        {children}
-        <div className="console-hardware">
-          <label className="console-volume">
-            <input type="range" min="0" max="100" step="1" value={volume}
-              onChange={(event) => changeVolume(event.target.value)} aria-label={`Volume for ${title}`}
-              aria-valuetext={volume === 0 ? "Muted" : `${volume} percent`} />
-            {volume === 0 ? <VolumeX size={14} aria-hidden="true" /> : <Volume2 size={14} aria-hidden="true" />}
-          </label>
-          <span className="sr-only">{isPlaying ? "Power light on: playing" : "Power light off"}</span>
-          <div className="console-switches">
-            <button type="button" onClick={sendHearts} className="console-love console-round-button"
-              aria-label="Left console button">
-              <span aria-hidden="true" className="console-hearts">
-                {hearts.map((heart) => <Heart key={heart.id} size={12} fill="currentColor" className="console-floating-heart"
-                  style={{ "--heart-drift": `${heart.drift}px`, "--heart-tilt": `${heart.tilt}deg` }}
-                  onAnimationEnd={() => setHearts((previous) => previous.filter((item) => item.id !== heart.id))} />)}
-              </span>
-            </button>
-            <button type="button" onClick={flashGatsbyLight} aria-label="Right console button"
-              className="console-gatsby console-round-button" />
-            <span key={greenFlash} className={`console-led ${isPlaying ? "console-led--on" : ""} ${greenFlashing ? "console-led--gatsby" : ""}`}
-              onAnimationEnd={() => setGreenFlashing(false)} aria-hidden="true" />
-            <span className="console-speaker" aria-hidden="true" />
-          </div>
-        </div>
-      </div>
+      <div className="console-copy">{children}</div>
+      <span className="console-power">
+        <span key={greenFlash} className={`console-led ${isPlaying ? "console-led--on" : ""} ${greenFlashing ? "console-led--gatsby" : ""}`}
+          onAnimationEnd={() => setGreenFlashing(false)} aria-hidden="true" />
+        <span className="sr-only">{greenFlashing ? "Signal light flashing green" : isPlaying ? "Signal light pulsing red" : "Signal light off"}</span>
+      </span>
+      <button type="button" onClick={flashGatsbyLight} aria-label="Flash the signal light green"
+        className="console-gatsby console-round-button" />
+      <label className="console-volume">
+        <input type="range" min="0" max="100" step="1" value={volume}
+          onChange={(event) => changeVolume(event.target.value)} aria-label={`Volume for ${title}`}
+          aria-orientation="vertical"
+          aria-valuetext={volume === 0 ? "Muted" : `${volume} percent`} />
+        {volume === 0 ? <VolumeX size={14} aria-hidden="true" /> : <Volume2 size={14} aria-hidden="true" />}
+      </label>
+      <span className="console-speaker" aria-hidden="true" />
+      <button type="button" onClick={sendHearts} className="console-love console-round-button"
+        aria-label="Send a stream of hearts">
+        <span aria-hidden="true" className="console-hearts">
+          {hearts.map((heart) => <Heart key={heart.id} size={12} fill="currentColor" className="console-floating-heart"
+            style={{ "--heart-drift": `${heart.drift}px`, "--heart-tilt": `${heart.tilt}deg` }}
+            onAnimationEnd={() => setHearts((previous) => previous.filter((item) => item.id !== heart.id))} />)}
+        </span>
+      </button>
       <div className="memory-vinyl relative shrink-0">
       <div className="console-transport">
         <button type="button" onClick={restart} disabled={!ready} aria-label={`Restart ${title}`} title="Replay" className="console-replay console-round-button">
