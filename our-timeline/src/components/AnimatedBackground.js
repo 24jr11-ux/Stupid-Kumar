@@ -12,15 +12,16 @@ import { VIVID_WARM_GREEN } from "@/lib/colors";
 const BACKGROUND_ORANGE = "#F47A1F";
 
 // Keep MeshGradient's original positions, distortion, swirl, and timing, while
-// making the nearest color hold its hue more strongly. Dimming the shared
-// field keeps orange/green overlaps in dusk midtones rather than neon yellow.
+// making each region hold its hue more strongly. A small, neutral luminance
+// restraint preserves the glow without turning overlaps brown or neon yellow.
 const flowingColorShader = meshGradientFragmentShader
-  .replace("dist = pow(dist, 3.5);", "dist = pow(dist, 5.0);")
+  .replace("dist = pow(dist, 3.5);", "dist = pow(dist, 6.0);")
+  .replace("float weight = 1. / (dist + 1e-3);", "float weight = 1. / (dist + 1e-4);")
   .replace("float totalWeight = 0.;", "float totalWeight = 0.;\n  float strongestWeight = 0.;")
   .replace("totalWeight += weight;", "totalWeight += weight;\n    strongestWeight = max(strongestWeight, weight);")
   .replace(
     "color /= max(1e-4, totalWeight);",
-    "color /= max(1e-4, totalWeight);\n  float overlap = 1. - strongestWeight / max(1e-4, totalWeight);\n  color *= 0.76 - 0.20 * overlap;"
+    "color /= max(1e-4, totalWeight);\n  float overlap = 1. - strongestWeight / max(1e-4, totalWeight);\n  color *= 0.94 + 0.035 * overlap;"
   );
 
 /**

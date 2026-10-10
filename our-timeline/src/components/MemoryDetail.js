@@ -29,7 +29,7 @@ import {
   Flame,
   GripVertical,
   ImageOff,
-  Grid2X2,
+  GalleryVerticalEnd,
   RectangleHorizontal,
   Image as ImageIcon,
   Loader2,
@@ -890,7 +890,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                           : "text-[#D4C8BA] hover:text-white"
                       }`}
                     >
-                      <Grid2X2 size={18} aria-hidden="true" />
+                      <GalleryVerticalEnd size={18} aria-hidden="true" />
                     </button>
                   </div>
                 )}

@@ -1,11 +1,14 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import dynamic from "next/dynamic";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import LoadingTitle from "@/components/LoadingTitle";
 import { LAST_READY_PAGE_KEY } from "@/lib/launch";
+import MemoryTransitionOverlay from "@/components/MemoryTransitionOverlay";
+import { MEMORY_TRANSITION } from "@/lib/memoryTransition";
+import { photoSrc } from "@/lib/photoUrl";
 
 const TransitionContext = createContext(null);
 // The first paint uses CSS; shader setup must not delay the loading title.
@@ -19,8 +22,48 @@ export default function AppTransitions({ children }) {
   const [gate, setGate] = useState(null);
   const [readyPath, setReadyPath] = useState(null);
   const [sessionReady, markSessionReady] = useState(false);
+  const [memoryTransition, setMemoryTransition] = useState(null);
+  const beginMemoryTransition = useCallback(({ card, ...memory }) => {
+    const photo = card?.querySelector(".timeline-photo-display");
+    const image = photo?.querySelector("img");
+    // Empty/broken covers and reduced motion use the ordinary route reveal.
+    if (reducedMotion || !image?.complete || !image.naturalWidth) return;
+    const paper = card.cloneNode(true);
+    paper.removeAttribute("href");
+    paper.removeAttribute("data-memory-card");
+    paper.querySelector(".timeline-photo-display").style.visibility = "hidden";
+    if (memory.firstPhoto) {
+      const preload = new window.Image();
+      preload.src = photoSrc(memory.firstPhoto);
+    }
+    setMemoryTransition({ ...memory, phase: "lift", source: {
+      paper, photo: photo.cloneNode(true),
+      paperRect: card.getBoundingClientRect(), photoRect: photo.getBoundingClientRect(),
+    } });
+  }, [reducedMotion]);
+  const registerMemoryTarget = useCallback((id, target) => {
+    setMemoryTransition((current) => current?.id === id && !current.target
+      ? { ...current, target, phase: "flight" } : current);
+  }, []);
+  const landMemoryTransition = useCallback((id) => {
+    setMemoryTransition((current) => current?.id === id ? { ...current, phase: "landed" } : current);
+  }, []);
+  const completeMemoryTransition = useCallback((id) => {
+    setMemoryTransition((current) => current?.id === id ? null : current);
+  }, []);
   const markRouteReady = useCallback(() => setReadyPath(pathname), [pathname]);
   const holdGate = useCallback((content) => setGate({ content }), []);
+
+  useEffect(() => {
+    if (!memoryTransition) return;
+    // Back, auth redirects, missing dates, or slow/failed navigation must never
+    // leave an inert page or an orphaned cover blocking the app.
+    const id = memoryTransition.id;
+    const timeout = window.setTimeout(() => completeMemoryTransition(id), 2500);
+    const frame = pathname !== "/" && pathname !== memoryTransition.href
+      ? requestAnimationFrame(() => completeMemoryTransition(id)) : null;
+    return () => { window.clearTimeout(timeout); if (frame !== null) cancelAnimationFrame(frame); };
+  }, [memoryTransition, pathname, completeMemoryTransition]);
 
   useEffect(() => {
     // Fonts enhance the painted page instead of blocking its initial CSS.
@@ -62,13 +105,21 @@ export default function AppTransitions({ children }) {
   }, [readyPath, pathname, sessionReady]);
 
   return (
-    <TransitionContext.Provider value={{ splash, holdGate, markRouteReady, markSessionReady }}>
+    <TransitionContext.Provider value={{ splash, holdGate, markRouteReady, markSessionReady,
+      memoryTransition, beginMemoryTransition, registerMemoryTarget }}>
         <AnimatedBackground />
-        <motion.div className="app-viewport relative flex flex-1 flex-col"
-          inert={splash} initial={{ opacity: 0 }} animate={{ opacity: splash ? 0 : 1 }}
+        {memoryTransition && <motion.div aria-hidden="true"
+          className="memory-flight-backdrop memory-detail-backdrop"
+          style={{ "--date-color": memoryTransition.color }}
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+          transition={{ duration: 0.39, ease: "easeInOut" }} />}
+        <motion.div className="app-viewport relative z-10 flex flex-1 flex-col"
+          inert={splash || Boolean(memoryTransition)} initial={{ opacity: 0 }} animate={{ opacity: splash ? 0 : 1 }}
           transition={{ duration: reducedMotion ? 0 : 0.45 }}>
           {children}
         </motion.div>
+        {memoryTransition && <MemoryTransitionOverlay transition={memoryTransition}
+          onLand={landMemoryTransition} onComplete={completeMemoryTransition} />}
         <AnimatePresence onExitComplete={() => { if (pathname !== "/gate") setGate(null); }}>
           {splash && <motion.div key="splash" className="launch-splash fixed inset-0 z-40"
             exit={{ opacity: 0 }} transition={{ duration: reducedMotion ? 0 : 0.45 }}>
@@ -87,19 +138,37 @@ export default function AppTransitions({ children }) {
 
 export function DetailPageTransition({ children, className, ...props }) {
   const reducedMotion = useReducedMotion();
-  const { markRouteReady } = useAppTransitions();
+  const { markRouteReady, memoryTransition, registerMemoryTarget } = useAppTransitions();
+  const ref = useRef(null);
+  const id = props["data-memory-page"];
+  const shared = memoryTransition?.id === id;
+  const flying = shared && memoryTransition.phase !== "landed";
   useEffect(() => { markRouteReady(); }, [markRouteReady]);
+  useLayoutEffect(() => {
+    if (!shared) return;
+    let frame;
+    // Next's scroll reset happens with route commit. Measure the actual first
+    // slide after that reset, without giving the gallery a different index.
+    const first = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(() => {
+        const target = ref.current?.querySelector(".detail-photo-display");
+        if (target) registerMemoryTarget(id, target);
+      });
+    });
+    return () => { cancelAnimationFrame(first); cancelAnimationFrame(frame); };
+  }, [shared, id, registerMemoryTarget]);
 
-  return <div {...props} className={className}>
+  return <div {...props} ref={ref} className={className} data-cover-flying={flying || undefined}>
     <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
       <motion.div className="memory-detail-backdrop absolute inset-0"
-        initial={{ x: reducedMotion ? 0 : "100%" }} animate={{ x: 0 }}
-        transition={{ duration: reducedMotion ? 0 : 0.38, ease: [0.22, 1, 0.36, 1] }} />
+        initial={{ opacity: shared ? 0 : 1 }} animate={{ opacity: shared ? 0 : 1 }}
+        transition={{ duration: 0 }} />
     </div>
     <motion.div className="flex w-full justify-center"
-      initial={{ opacity: reducedMotion ? 1 : 0, y: reducedMotion ? 0 : 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: reducedMotion ? 0 : 0.4, delay: reducedMotion ? 0 : 0.09, ease: [0.22, 1, 0.36, 1] }}>
+      initial={{ opacity: reducedMotion ? 1 : 0, y: shared || reducedMotion ? 0 : 8 }}
+      animate={{ opacity: shared && !memoryTransition.target ? 0 : 1, y: 0 }}
+      transition={{ duration: reducedMotion ? 0 : shared ? MEMORY_TRANSITION.reveal / 1000 : 0.25,
+        delay: shared ? MEMORY_TRANSITION.revealDelay / 1000 : 0, ease: [0.22, 1, 0.36, 1] }}>
       {children}
     </motion.div>
   </div>;
@@ -107,12 +176,12 @@ export function DetailPageTransition({ children, className, ...props }) {
 
 export function RouteReveal({ children, detail = false }) {
   const reducedMotion = useReducedMotion();
-  const { markRouteReady } = useAppTransitions();
+  const { markRouteReady, memoryTransition } = useAppTransitions();
   useEffect(() => { markRouteReady(); }, [markRouteReady]);
   return <motion.div className="flex flex-1 flex-col"
     initial={{ opacity: reducedMotion ? 1 : 0, y: detail || reducedMotion ? 0 : 18 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: reducedMotion ? 0 : 0.45, delay: detail && !reducedMotion ? 0.12 : 0 }}>
+    animate={{ opacity: memoryTransition ? 0.12 : 1, y: 0 }}
+    transition={{ duration: reducedMotion ? 0 : memoryTransition ? 0.16 : 0.45, delay: detail && !reducedMotion ? 0.12 : 0 }}>
     {children}
   </motion.div>;
 }

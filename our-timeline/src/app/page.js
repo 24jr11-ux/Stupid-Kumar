@@ -1,5 +1,5 @@
 import Image from "next/image";
-import Link from "next/link";
+import TimelineMemoryLink from "@/components/TimelineMemoryLink";
 import { Camera, Sparkles } from "lucide-react";
 import CountupClock from "@/components/CountupClock";
 import AddMemoryButton from "@/components/AddMemoryButton";
@@ -7,6 +7,7 @@ import { RouteReveal } from "@/components/AppTransitions";
 import { readMemories } from "@/lib/memories";
 import { photoSrc } from "@/lib/photoUrl";
 import { cropImageStyle } from "@/lib/imageCrop";
+import { memoryColorHex } from "@/lib/colors";
 
 // Date formats for the polaroid card. mm/dd/yy on the top band.
 function polaroidTopDate(isoDate) {
@@ -85,9 +86,12 @@ export default async function Home() {
                       Crisp white/cream frame with sharp corners.
                       Solid opaque surface that pops against the vibrant background!
                       ----------------------------------------------------- */}
-                  <Link
+                  <TimelineMemoryLink
                     href={`/memory/${memory.id}`}
-                    data-memory-card={memory.id}
+                    memoryId={memory.id}
+                    color={memoryColorHex(memory.color_tag)}
+                    coverPhoto={coverPhoto}
+                    firstPhoto={photos[0]}
                     className="timeline-photo group mx-auto block w-[min(76vw,20rem)] bg-[#FDFBF6] p-3 pb-5 transition-all duration-200 hover:-translate-y-1 sm:w-full sm:max-w-sm"
                   >
                     {/* TOP BAND: calendar date, mm/dd/yy */}
@@ -125,7 +129,7 @@ export default async function Home() {
                     >
                       {memory.title || "Untitled"}
                     </div>
-                  </Link>
+                  </TimelineMemoryLink>
                 </li>
               );
             })}
