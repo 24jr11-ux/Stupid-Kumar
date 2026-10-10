@@ -4,7 +4,7 @@
 // Keeps the circular record and swinging tonearm; uses confirmed YouTube events.
 import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { Heart, Loader2, Pause, Play, RotateCcw, Volume2, VolumeX } from "lucide-react";
+import { Heart, Loader2, Pause, Play, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { youtubeVideoId, youtubeCoverUrls } from "@/lib/player";
 import { loadYoutubeApi } from "@/lib/youtube";
@@ -198,22 +198,21 @@ export function MusicPlayer({ src, coverArt, coverPosition, coverZoom, title = "
   return (
     <div className={cn("record-player", className)}>
       <div ref={hostRef} className="pointer-events-none absolute h-px w-px overflow-hidden opacity-0" aria-hidden="true" />
-      <div className="console-copy">{children}</div>
       <span className="console-power">
         <span key={greenFlash} className={`console-led ${isPlaying ? "console-led--on" : ""} ${greenFlashing ? "console-led--gatsby" : ""}`}
           onAnimationEnd={() => setGreenFlashing(false)} aria-hidden="true" />
         <span className="sr-only">{greenFlashing ? "Signal light flashing green" : isPlaying ? "Signal light pulsing red" : "Signal light off"}</span>
       </span>
-      <button type="button" onClick={flashGatsbyLight} aria-label="Flash the signal light green"
-        className="console-gatsby console-round-button" />
+      <div className="console-copy">
       <label className="console-volume">
         <input type="range" min="0" max="100" step="1" value={volume}
           onChange={(event) => changeVolume(event.target.value)} aria-label={`Volume for ${title}`}
           aria-orientation="vertical"
           aria-valuetext={volume === 0 ? "Muted" : `${volume} percent`} />
-        {volume === 0 ? <VolumeX size={14} aria-hidden="true" /> : <Volume2 size={14} aria-hidden="true" />}
       </label>
-      <span className="console-speaker" aria-hidden="true" />
+      {children}
+      </div>
+      <div className="console-switches">
       <button type="button" onClick={sendHearts} className="console-love console-round-button"
         aria-label="Send a stream of hearts">
         <span aria-hidden="true" className="console-hearts">
@@ -222,6 +221,10 @@ export function MusicPlayer({ src, coverArt, coverPosition, coverZoom, title = "
             onAnimationEnd={() => setHearts((previous) => previous.filter((item) => item.id !== heart.id))} />)}
         </span>
       </button>
+      <button type="button" onClick={flashGatsbyLight} aria-label="Flash the signal light green"
+        className="console-gatsby console-round-button" />
+      <span className="console-speaker" aria-hidden="true" />
+      </div>
       <div className="memory-vinyl relative shrink-0">
       <div className="console-transport">
         <button type="button" onClick={restart} disabled={!ready} aria-label={`Restart ${title}`} title="Replay" className="console-replay console-round-button">
