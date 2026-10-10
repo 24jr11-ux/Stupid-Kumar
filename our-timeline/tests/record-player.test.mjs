@@ -1,6 +1,36 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { applyPlayerVolume, createHeartStream } from "../src/lib/recordPlayer.js";
+import { applyPlayerVolume, createHeartStream, resetPlayerPlayback, uprightRewindFrames } from "../src/lib/recordPlayer.js";
+
+test("replay resets the runtime and leaves both playing and finished songs paused", () => {
+  for (const initialState of ["playing", "finished", "paused"]) {
+    let state = initialState;
+    let runtime = 90;
+    const player = {
+      pauseVideo: () => { state = "paused"; },
+      seekTo: (time) => { runtime = time; state = "playing"; },
+      playVideo: () => assert.fail("Replay must not start playback"),
+    };
+    resetPlayerPlayback(player);
+    assert.equal(runtime, 0);
+    assert.equal(state, "paused");
+  }
+});
+
+test("rewind begins at the displayed angle and lands upright rather than at the paused angle", () => {
+  for (const [matrix, angle] of [
+    ["matrix(0, 1, -1, 0, 0, 0)", 90],
+    ["matrix(0, -1, 1, 0, 0, 0)", 270],
+    ["matrix(-1, 0, 0, -1, 0, 0)", 180],
+    ["matrix3d(0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)", 90],
+    ["none", 0],
+  ]) {
+    const frames = uprightRewindFrames(matrix);
+    assert.equal(frames[0].transform, `rotate(${angle}deg)`);
+    assert.equal(frames.at(-1).transform, "rotate(-360deg)");
+    assert.equal(frames.at(-2).transform, frames.at(-1).transform);
+  }
+});
 
 test("volume reaches the playback API, mutes at zero, and unmutes when raised", () => {
   const calls = [];

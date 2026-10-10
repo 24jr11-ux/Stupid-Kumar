@@ -9,18 +9,17 @@ import { cn } from "@/lib/utils";
 import { youtubeVideoId, youtubeCoverUrls } from "@/lib/player";
 import { loadYoutubeApi } from "@/lib/youtube";
 import { cropImageStyle } from "@/lib/imageCrop";
-import { applyPlayerVolume, createHeartStream } from "@/lib/recordPlayer";
+import { applyPlayerVolume, createHeartStream, resetPlayerPlayback, uprightRewindFrames } from "@/lib/recordPlayer";
 
 export function MusicPlayer({ src, coverArt, coverPosition, coverZoom, title = "song", className, onCoverChange, children }) {
   const id = youtubeVideoId(src);
   const hostRef = useRef(null);
   const playerRef = useRef(null);
   const volumeRef = useRef(65);
-  const repeatRef = useRef(false);
   const rewindRef = useRef(null);
+  const spinAnimationRef = useRef(null);
   const rewindAnimationRef = useRef(null);
   const rewindGenerationRef = useRef(0);
-  const rewindingRef = useRef(false);
   const heartStreamRef = useRef(null);
   const heartNumberRef = useRef(0);
   const [ready, setReady] = useState(false);
@@ -29,15 +28,34 @@ export function MusicPlayer({ src, coverArt, coverPosition, coverZoom, title = "
   const [attempt, setAttempt] = useState(0);
   const [artwork, setArtwork] = useState(null);
   const [volume, setVolume] = useState(65);
-  const [repeat, setRepeat] = useState(false);
   const [rewinding, setRewinding] = useState(false);
   const [greenFlash, setGreenFlash] = useState(0);
+  const [greenFlashing, setGreenFlashing] = useState(false);
+  const [knobTurn, setKnobTurn] = useState(0);
   const [hearts, setHearts] = useState([]);
   const reducedMotion = useReducedMotion();
   const isPlaying = state === 1;
   const coverUrls = id ? [...new Set([coverArt, ...youtubeCoverUrls(id)].filter(Boolean))] : [];
   const coverIndex = artwork?.source === coverArt ? artwork.index : 0;
   const cover = coverUrls[coverIndex];
+
+  useEffect(() => {
+    const record = rewindRef.current;
+    if (!record || reducedMotion) return;
+    const spin = record.animate([{ transform: "rotate(0deg)" }, { transform: "rotate(360deg)" }], {
+      duration: 4000, iterations: Infinity,
+    });
+    spin.pause();
+    spinAnimationRef.current = spin;
+    return () => { spin.cancel(); spinAnimationRef.current = null; };
+  }, [reducedMotion]);
+
+  useEffect(() => {
+    const spin = spinAnimationRef.current;
+    if (!spin) return;
+    if (isPlaying && !rewinding) spin.play();
+    else spin.pause();
+  }, [isPlaying, rewinding, reducedMotion]);
 
   useEffect(() => () => {
     heartStreamRef.current?.dispose();
@@ -79,10 +97,6 @@ export function MusicPlayer({ src, coverArt, coverPosition, coverZoom, title = "
             if (disposed) return;
             setState(event.data);
             if (event.data === 1) setError("");
-            if (event.data === 0 && repeatRef.current && !rewindingRef.current) {
-              event.target.seekTo(0, true);
-              event.target.playVideo();
-            }
           },
           onError: (event) => {
             if (disposed) return;
@@ -118,7 +132,6 @@ export function MusicPlayer({ src, coverArt, coverPosition, coverZoom, title = "
     if (!ready || !player) return;
     rewindGenerationRef.current += 1;
     rewindAnimationRef.current?.cancel();
-    rewindingRef.current = false;
     setRewinding(false);
     if (isPlaying || state === 3) player.pauseVideo();
     else {
@@ -132,24 +145,26 @@ export function MusicPlayer({ src, coverArt, coverPosition, coverZoom, title = "
     const player = playerRef.current;
     if (!ready || !player) return;
     const generation = ++rewindGenerationRef.current;
+    setKnobTurn((count) => count + 1);
+    player.pauseVideo();
+    setState(2);
+    const frames = uprightRewindFrames(rewindRef.current ? getComputedStyle(rewindRef.current).transform : "none");
     rewindAnimationRef.current?.cancel();
+    spinAnimationRef.current?.pause();
+    if (spinAnimationRef.current) spinAnimationRef.current.currentTime = 0;
     const replay = () => {
       if (generation !== rewindGenerationRef.current || player !== playerRef.current) return;
-      rewindingRef.current = false;
+      rewindAnimationRef.current?.cancel();
+      rewindAnimationRef.current = null;
       setRewinding(false);
-      player.seekTo(0, true);
-      applyPlayerVolume(player, volumeRef.current);
-      player.playVideo();
+      resetPlayerPlayback(player);
+      setState(2);
     };
     if (reducedMotion || !rewindRef.current) { replay(); return; }
-    player.pauseVideo();
-    rewindingRef.current = true;
     setRewinding(true);
-    const animation = rewindRef.current.animate([
-      { transform: "rotate(0deg)" },
-      { transform: "rotate(-390deg)", offset: 0.82 },
-      { transform: "rotate(-360deg)" },
-    ], { duration: 420, easing: "cubic-bezier(0.2, 0.65, 0.3, 1)" });
+    const animation = rewindRef.current.animate(frames, {
+      duration: 420, easing: "cubic-bezier(0.2, 0.65, 0.3, 1)", fill: "forwards",
+    });
     rewindAnimationRef.current = animation;
     animation.finished.then(replay, () => {});
   }
@@ -161,9 +176,8 @@ export function MusicPlayer({ src, coverArt, coverPosition, coverZoom, title = "
     if (ready && playerRef.current) applyPlayerVolume(playerRef.current, next);
   }
 
-  function toggleRepeat() {
-    repeatRef.current = !repeatRef.current;
-    setRepeat(repeatRef.current);
+  function flashGatsbyLight() {
+    setGreenFlashing(true);
     setGreenFlash((count) => count + 1);
   }
 
@@ -188,31 +202,25 @@ export function MusicPlayer({ src, coverArt, coverPosition, coverZoom, title = "
         {children}
         <div className="console-hardware">
           <label className="console-volume">
-            <span className="console-volume-caption">
-              <span>{volume === 0 ? <VolumeX size={12} aria-hidden="true" /> : <Volume2 size={12} aria-hidden="true" />} Volume</span>
-              <span key={greenFlash} className={`console-led ${isPlaying ? "console-led--on" : ""} ${greenFlash ? "console-led--gatsby" : ""}`}
-                aria-hidden="true" />
-            </span>
             <input type="range" min="0" max="100" step="1" value={volume}
               onChange={(event) => changeVolume(event.target.value)} aria-label={`Volume for ${title}`}
               aria-valuetext={volume === 0 ? "Muted" : `${volume} percent`} />
+            {volume === 0 ? <VolumeX size={14} aria-hidden="true" /> : <Volume2 size={14} aria-hidden="true" />}
           </label>
           <span className="sr-only">{isPlaying ? "Power light on: playing" : "Power light off"}</span>
           <div className="console-switches">
             <button type="button" onClick={sendHearts} className="console-love console-round-button"
-              aria-label="Send a two-second stream of hearts" title="A little love">
-              <Heart size={13} aria-hidden="true" />
+              aria-label="Left console button">
               <span aria-hidden="true" className="console-hearts">
                 {hearts.map((heart) => <Heart key={heart.id} size={12} fill="currentColor" className="console-floating-heart"
                   style={{ "--heart-drift": `${heart.drift}px`, "--heart-tilt": `${heart.tilt}deg` }}
                   onAnimationEnd={() => setHearts((previous) => previous.filter((item) => item.id !== heart.id))} />)}
               </span>
             </button>
-            <button type="button" onClick={toggleRepeat} aria-pressed={repeat} aria-label="Repeat song"
-              title={repeat ? "Repeat on" : "Repeat off"} className="console-repeat">
-              <span className="console-repeat-track" aria-hidden="true"><span /></span>
-              <span className="console-repeat-label">Loop</span>
-            </button>
+            <button type="button" onClick={flashGatsbyLight} aria-label="Right console button"
+              className="console-gatsby console-round-button" />
+            <span key={greenFlash} className={`console-led ${isPlaying ? "console-led--on" : ""} ${greenFlashing ? "console-led--gatsby" : ""}`}
+              onAnimationEnd={() => setGreenFlashing(false)} aria-hidden="true" />
             <span className="console-speaker" aria-hidden="true" />
           </div>
         </div>
@@ -220,6 +228,7 @@ export function MusicPlayer({ src, coverArt, coverPosition, coverZoom, title = "
       <div className="memory-vinyl relative shrink-0">
       <div className="console-transport">
         <button type="button" onClick={restart} disabled={!ready} aria-label={`Restart ${title}`} title="Replay" className="console-replay console-round-button">
+          <span key={knobTurn} aria-hidden="true" className={`console-replay-knob ${knobTurn ? "console-replay-knob--turn" : ""}`} />
           <RotateCcw size={13} aria-hidden="true" />
         </button>
       </div>
@@ -231,10 +240,9 @@ export function MusicPlayer({ src, coverArt, coverPosition, coverZoom, title = "
         aria-pressed={isPlaying}
         className="vinyl-platter group relative block aspect-square w-full rounded-full outline-none focus-visible:ring-2 focus-visible:ring-[#76513E] focus-visible:ring-offset-4 focus-visible:ring-offset-black disabled:cursor-wait"
       >
-        <div ref={rewindRef} className="relative h-full w-full rounded-full">
         <div
-          className="relative h-full w-full animate-spin overflow-hidden rounded-full border-[5px] border-[#2D1E1A] bg-[#382722] shadow-[0_4px_18px_rgba(0,0,0,0.5)]"
-          style={{ animationDuration: "4s", animationPlayState: isPlaying && !rewinding && !reducedMotion ? "running" : "paused" }}
+          ref={rewindRef}
+          className="relative h-full w-full overflow-hidden rounded-full border-[5px] border-[#202020] bg-[#252525] shadow-[0_4px_18px_rgba(0,0,0,0.5)]"
         >
           {cover && (
             // Raw image allows thumbnail resolution fallback without introducing image-host config.
@@ -259,7 +267,6 @@ export function MusicPlayer({ src, coverArt, coverPosition, coverZoom, title = "
           <div className="absolute left-1/2 top-1/2 flex h-1/4 w-1/4 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-[#74544B] bg-[#2D1E1A]">
             <span className="h-2 w-2 rounded-full bg-[#D4C8BA]" />
           </div>
-        </div>
         </div>
         <motion.div
           aria-hidden="true"

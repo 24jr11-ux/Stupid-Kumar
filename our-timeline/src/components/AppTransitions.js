@@ -66,12 +66,13 @@ export default function AppTransitions({ children }) {
   }, [memoryTransition, pathname, completeMemoryTransition]);
 
   useEffect(() => {
-    // Fonts enhance the painted page instead of blocking its initial CSS.
+    // Handwriting is local and preloaded by RootLayout; only the body font
+    // is enhanced here. Never discover the splash font after its first paint.
     if (!document.getElementById("app-fonts")) {
       const fonts = document.createElement("link");
       fonts.id = "app-fonts";
       fonts.rel = "stylesheet";
-      fonts.href = "https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap";
+      fonts.href = "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap";
       document.head.appendChild(fonts);
     }
     if (!document.documentElement.classList.contains("warm-launch")) return;

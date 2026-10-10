@@ -55,7 +55,6 @@ export default function MemorySong({ song, editMode, onChange, onMetadata }) {
           {id && (
             <MusicPlayer key={id} src={youtubeSongUrl(song.url)} coverArt={cover} coverPosition={song.coverPosition} coverZoom={song.coverZoom} title={title || "song"} onCoverChange={(url) => onChange((current) => youtubeVideoId(current.url) === id && current.coverUrl !== url ? { ...current, coverUrl: url } : current)}>
               <div className="song-copy min-w-0">
-                <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.2em] text-[#88705B]">Our little soundtrack</p>
                 {editMode ? (
                   <div className="space-y-2">
                     <label className="block text-[10px] text-[#665140]">Song title
