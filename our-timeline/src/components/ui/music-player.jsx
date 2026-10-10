@@ -11,7 +11,7 @@ import { loadYoutubeApi } from "@/lib/youtube";
 import { cropImageStyle } from "@/lib/imageCrop";
 import { applyPlayerVolume, createHeartStream, resetPlayerPlayback, uprightRewindFrames } from "@/lib/recordPlayer";
 
-export function MusicPlayer({ src, coverArt, coverPosition, coverZoom, title = "song", className, onCoverChange, children }) {
+export function MusicPlayer({ src, coverArt, coverPosition, coverZoom, title = "song", className, onCoverChange, artworkControls, children }) {
   const id = youtubeVideoId(src);
   const hostRef = useRef(null);
   const playerRef = useRef(null);
@@ -286,6 +286,7 @@ export function MusicPlayer({ src, coverArt, coverPosition, coverZoom, title = "
           </span>
         </span>
       </button>
+      {artworkControls}
       </div>
       {error && (
         <div className="console-error mt-2 text-xs text-[#8D422B]" role="status">

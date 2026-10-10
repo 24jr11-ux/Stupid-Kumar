@@ -8,6 +8,7 @@ import {
   DndContext,
   closestCenter,
   PointerSensor,
+  KeyboardSensor,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
@@ -15,6 +16,8 @@ import {
   arrayMove,
   SortableContext,
   useSortable,
+  rectSortingStrategy,
+  sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -172,6 +175,62 @@ function SortableMomentRow({ moment, onChange, onRemove, onPasteParagraphs, acce
         </button>
       </div>
     </li>
+  );
+}
+
+function photoSortId(photo) {
+  return `${photo.kind}:${photo.id}`;
+}
+
+function SortablePhotoCard({ target, index, src, current, count, onRemove, onMove, onCover }) {
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } =
+    useSortable({ id: photoSortId(target) });
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={`group relative overflow-hidden rounded-2xl border bg-[#261A16] ${current ? "border-2 border-[#76513E]" : "border-[#5D433C]"} ${isDragging ? "z-20 opacity-90 shadow-2xl" : ""}`}
+    >
+      <div className="relative aspect-square">
+        <Image src={src} alt={`Photo ${index + 1}`} fill sizes="25vw" className="object-cover" unoptimized draggable={false} />
+        {current && (
+          <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-[#76513E] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">
+            <ImageIcon size={10} /> Cover
+          </span>
+        )}
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label={`Remove photo ${index + 1}`}
+          className="absolute right-2 top-2 rounded-full bg-[#261A16]/90 p-1.5 text-white transition hover:bg-[#76513E]"
+        >
+          <X size={13} />
+        </button>
+        <button
+          ref={setActivatorNodeRef}
+          type="button"
+          {...attributes}
+          {...listeners}
+          aria-label={`Drag to reorder photo ${index + 1}`}
+          className="absolute bottom-2 left-2 flex h-9 w-9 cursor-grab touch-none items-center justify-center rounded-lg bg-[#261A16]/90 text-white transition hover:bg-[#76513E] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white active:cursor-grabbing"
+        >
+          <GripVertical size={18} />
+        </button>
+      </div>
+      <div className="flex items-center justify-center gap-1 border-t border-[#5D433C] bg-[#2D1E1A] py-1 text-[#D4C8BA]">
+        <button type="button" onClick={() => onMove(index, -1)} disabled={index === 0} aria-label={`Move photo ${index + 1} earlier`} className="rounded p-1.5 hover:text-white disabled:opacity-30"><ChevronLeft size={17} /></button>
+        <span className="min-w-5 text-center text-[11px] tabular-nums">{index + 1}</span>
+        <button type="button" onClick={() => onMove(index, 1)} disabled={index === count - 1} aria-label={`Move photo ${index + 1} later`} className="rounded p-1.5 hover:text-white disabled:opacity-30"><ChevronRight size={17} /></button>
+      </div>
+      <button
+        type="button"
+        onClick={onCover}
+        className={`min-h-11 w-full border-t px-2 py-2 text-center text-[11px] font-semibold transition ${current ? "border-[#76513E]/50 bg-[#76513E]/20 text-[#EBCDB5]" : "border-[#5D433C] bg-[#2D1E1A] text-[#D4C8BA] hover:bg-[#382722] hover:text-white"}`}
+      >
+        {current ? "Edit cover position" : "Set as cover photo"}
+      </button>
+    </div>
   );
 }
 
@@ -334,6 +393,10 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
   );
+  const photoSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   const pastObjectUrls = useRef([]);
   useEffect(() => {
@@ -459,6 +522,15 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
     setPhotoOrder((prev) => {
       const destination = index + direction;
       return destination < 0 || destination >= prev.length ? prev : arrayMove(prev, index, destination);
+    });
+  }
+  function handlePhotoDragEnd({ active, over }) {
+    if (!over || active.id === over.id) return;
+    setPhotoOrder((prev) => {
+      const oldIndex = prev.findIndex((photo) => photoSortId(photo) === active.id);
+      const newIndex = prev.findIndex((photo) => photoSortId(photo) === over.id);
+      if (oldIndex === -1 || newIndex === -1) return prev;
+      return arrayMove(prev, oldIndex, newIndex);
     });
   }
 
@@ -763,62 +835,30 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                 </p>
 
                 {photoOrder.length > 0 && (
-                  <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-4">
-                    {photoOrder.map((target, i) => {
-                      const current = isCover(target);
-                      const entry = target.kind === "new" ? newFiles.find((file) => file.id === target.id) : null;
-                      return (
-                        <div
-                          key={`${target.kind}:${target.id}`}
-                          className={`group relative rounded-2xl overflow-hidden bg-[#261A16] border transition ${
-                            current
-                              ? "border-2 border-[#76513E]"
-                              : "border-[#5D433C]"
-                          }`}
-                        >
-                          <div className="relative aspect-square">
-                            <Image
-                              src={target.kind === "existing" ? photoSrc(target.id) : entry.objectUrl}
-                              alt={`Photo ${i + 1}`}
-                              fill
-                              sizes="25vw"
-                              className="object-cover"
-                              unoptimized
-                            />
-                            {current && (
-                              <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-[#76513E] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">
-                                <ImageIcon size={10} /> Cover
-                              </span>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => target.kind === "existing" ? removeStoredPhoto(target.id) : removeNewFile(target.id)}
-                              aria-label="Remove photo"
-                              className="absolute right-2 top-2 rounded-full bg-[#261A16]/90 p-1.5 text-white transition hover:bg-[#76513E]"
-                            >
-                              <X size={13} />
-                            </button>
-                          </div>
-                          <div className="flex items-center justify-center gap-1 border-t border-[#5D433C] bg-[#2D1E1A] py-1 text-[#D4C8BA]">
-                            <button type="button" onClick={() => movePhoto(i, -1)} disabled={i === 0} aria-label={`Move photo ${i + 1} earlier`} className="rounded p-1.5 hover:text-white disabled:opacity-30"><ChevronLeft size={17} /></button>
-                            <span className="min-w-5 text-center text-[11px] tabular-nums">{i + 1}</span>
-                            <button type="button" onClick={() => movePhoto(i, 1)} disabled={i === photoOrder.length - 1} aria-label={`Move photo ${i + 1} later`} className="rounded p-1.5 hover:text-white disabled:opacity-30"><ChevronRight size={17} /></button>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => openCoverCrop(target)}
-                            className={`min-h-11 w-full border-t px-2 py-2 text-center text-[11px] font-semibold transition ${
-                              current
-                                ? "border-[#76513E]/50 bg-[#76513E]/20 text-[#EBCDB5]"
-                                : "border-[#5D433C] bg-[#2D1E1A] text-[#D4C8BA] hover:bg-[#382722] hover:text-white"
-                            }`}
-                          >
-                            {current ? "Edit cover position" : "Set as cover photo"}
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
+                  <DndContext
+                    sensors={photoSensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handlePhotoDragEnd}
+                  >
+                    <p className="mt-2 text-xs text-[#D4C8BA]">Drag the handles to reorder photos.</p>
+                    <SortableContext items={photoOrder.map(photoSortId)} strategy={rectSortingStrategy}>
+                      <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-4">
+                        {photoOrder.map((target, i) => (
+                          <SortablePhotoCard
+                            key={photoSortId(target)}
+                            target={target}
+                            index={i}
+                            src={coverSrcFor(target)}
+                            current={isCover(target)}
+                            count={photoOrder.length}
+                            onRemove={() => target.kind === "existing" ? removeStoredPhoto(target.id) : removeNewFile(target.id)}
+                            onMove={movePhoto}
+                            onCover={() => openCoverCrop(target)}
+                          />
+                        ))}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
                 )}
 
                 <label className="mt-4 inline-flex cursor-pointer items-center gap-2 rounded-xl border-2 border-dashed border-[#5D433C] bg-[#2D1E1A] px-4 py-2.5 text-xs font-semibold text-[#D4C8BA] transition hover:border-[#76513E] hover:text-[#FAF7F2]">

@@ -53,7 +53,11 @@ export default function MemorySong({ song, editMode, onChange, onMetadata }) {
       ) : (
         <>
           {id && (
-            <MusicPlayer key={id} src={youtubeSongUrl(song.url)} coverArt={cover} coverPosition={song.coverPosition} coverZoom={song.coverZoom} title={title || "song"} onCoverChange={(url) => onChange((current) => youtubeVideoId(current.url) === id && current.coverUrl !== url ? { ...current, coverUrl: url } : current)}>
+            <MusicPlayer key={id} className={editMode ? "record-player--editing" : undefined} src={youtubeSongUrl(song.url)} coverArt={cover} coverPosition={song.coverPosition} coverZoom={song.coverZoom} title={title || "song"} onCoverChange={(url) => onChange((current) => youtubeVideoId(current.url) === id && current.coverUrl !== url ? { ...current, coverUrl: url } : current)}
+              artworkControls={editMode && cover ? (
+                <button type="button" onClick={() => setArtOpen((open) => !open)} aria-expanded={artOpen} className="vinyl-artwork-control inline-flex min-h-11 items-center justify-center gap-2 text-xs font-semibold text-[#665140] underline underline-offset-4"><Pencil size={14} className="shrink-0" /> Frame vinyl artwork</button>
+              ) : null}
+            >
               <div className="song-copy min-w-0">
                 {editMode ? (
                   <div className="space-y-2">
@@ -71,7 +75,7 @@ export default function MemorySong({ song, editMode, onChange, onMetadata }) {
                   </div>
                 )}
                 {editMode && (
-                  <div className="mt-2 flex flex-wrap gap-3 text-[10px] text-[#78614F]">
+                  <div className="mt-0 flex flex-wrap gap-x-3 text-[10px] text-[#78614F]">
                     <button type="button" onClick={() => setInputOpen((v) => !v)} className="inline-flex min-h-11 items-center gap-1 hover:text-[#332923]"><Pencil size={12} /> Change song</button>
                     <button type="button" onClick={() => { onChange({ url: "", title: null, artist: null, coverUrl: null, coverPosition: { x: 50, y: 50 }, coverZoom: 1 }); setInputOpen(false); setArtOpen(false); }} className="inline-flex min-h-11 items-center gap-1 hover:text-[#A44228]"><X size={12} /> Remove song</button>
                   </div>
@@ -79,16 +83,11 @@ export default function MemorySong({ song, editMode, onChange, onMetadata }) {
               </div>
             </MusicPlayer>
           )}
-          {id && editMode && cover && (
-            <div className="mt-2">
-              <button type="button" onClick={() => setArtOpen((open) => !open)} aria-expanded={artOpen} className="inline-flex min-h-11 items-center gap-2 text-xs font-semibold text-[#665140] underline underline-offset-4"><Pencil size={14} /> Frame vinyl artwork</button>
-              {artOpen && (
-                <div className="mt-2 rounded-2xl border border-[#5D433C] bg-[#2D1E1A] p-3">
-                  <ImageFramingEditor src={cover} alt={`${title || "Song"} cover artwork preview`} position={song.coverPosition} zoom={song.coverZoom} label="Artwork"
-                    onChange={({ position, zoom }) => onChange((current) => ({ ...current, coverPosition: cropPosition(position), coverZoom: cropZoom(zoom) }))} />
-                  <p className="mt-2 text-xs text-[#D4C8BA]">The record above shows this framing. Save the memory to keep it.</p>
-                </div>
-              )}
+          {id && editMode && cover && artOpen && (
+            <div className="mt-2 rounded-2xl border border-[#5D433C] bg-[#2D1E1A] p-3">
+              <ImageFramingEditor src={cover} alt={`${title || "Song"} cover artwork preview`} position={song.coverPosition} zoom={song.coverZoom} label="Artwork"
+                onChange={({ position, zoom }) => onChange((current) => ({ ...current, coverPosition: cropPosition(position), coverZoom: cropZoom(zoom) }))} />
+              <p className="mt-2 text-xs text-[#D4C8BA]">The record above shows this framing. Save the memory to keep it.</p>
             </div>
           )}
           {editMode && (!id || inputOpen) && (
