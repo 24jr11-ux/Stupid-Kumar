@@ -36,7 +36,6 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className="h-full antialiased" suppressHydrationWarning>
       <head>
-        <link rel="preload" href="/fonts/Caveat-Latin.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
         <script dangerouslySetInnerHTML={{ __html: launchBootstrap }} />
       </head>
       <body className="min-h-full flex flex-col text-[#FAF7F2]" suppressHydrationWarning>

@@ -1,15 +1,5 @@
 @import "tailwindcss";
 
-/* Discover the handwriting font before hydration. The matching head preload
-   and short block period prevent the splash from painting generic cursive. */
-@font-face {
-  font-family: "Caveat";
-  src: url("/fonts/Caveat-Latin.woff2") format("woff2");
-  font-style: normal;
-  font-weight: 400 700;
-  font-display: block;
-}
-
 :root {
   /* Paint immediately, before JavaScript or the WebGL shader is ready. */
   --background: #352E23;
@@ -18,8 +8,10 @@
   --shadow-photo: 0 2px 4px rgba(30, 19, 13, 0.2), 0 9px 18px rgba(30, 19, 13, 0.24), 0 24px 38px -14px rgba(30, 19, 13, 0.3);
   /* Cream body text for high-contrast WCAG AA readability */
   --foreground: #FAF7F2;
-  --font-his-handwriting: "Caveat", cursive;
-  --font-her-handwriting: "Caveat", cursive;
+  /* Swap either custom variable to a local WOFF2 later. Caveat remains the
+     intentional fallback until those personal handwriting fonts exist. */
+  --font-his-handwriting: 'Caveat', cursive;
+  --font-her-handwriting: 'Caveat', cursive;
   --font-handwriting: var(--font-his-handwriting), var(--font-her-handwriting), cursive;
   --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
