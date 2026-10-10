@@ -27,7 +27,7 @@ export const viewport = {
   initialScale: 1,
   viewportFit: "cover",
   themeColor: [
-    { media: "(display-mode: standalone)", color: "#352E23" },
+    { media: "(display-mode: standalone)", color: "#96B82D" },
     { media: "(display-mode: browser)", color: "#000000" },
   ],
 };

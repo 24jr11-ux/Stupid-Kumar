@@ -2,7 +2,7 @@
 
 :root {
   /* Paint immediately, before JavaScript or the WebGL shader is ready. */
-  --background: #352E23;
+  --background: #96B82D;
   --ambient-fallback: linear-gradient(rgba(35, 27, 21, 0.08), rgba(35, 27, 21, 0.08)), linear-gradient(135deg, #F47A1F 15%, #9EDB45 85%);
   --app-top-inset: 0px;
   --shadow-paper: 0 2px 3px rgba(30, 19, 13, 0.16), 0 7px 14px rgba(30, 19, 13, 0.18), 0 18px 30px -12px rgba(30, 19, 13, 0.22);
@@ -47,7 +47,7 @@
 
 /* Paint the same backdrop across the document canvas, including mobile
    viewport gaps before the shader mounts or the browser chrome settles. */
-html { background-color: #9EDB45; background-image: var(--ambient-fallback); }
+html { background-color: var(--background); background-image: var(--ambient-fallback); }
 body {
   background-color: var(--background);
   background-image: var(--ambient-fallback);
@@ -55,7 +55,7 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
-  min-height: 100svh;
+  min-height: 100dvh;
 }
 
 /* Installed iOS PWAs draw into the status-bar area with viewport-fit=cover.
@@ -77,7 +77,6 @@ body {
 /* Extend the shader past viewport rounding and the mobile home-indicator area. */
 .ambient-background {
   bottom: calc(-1px - env(safe-area-inset-bottom, 0px));
-  min-height: calc(100lvh + 1px + env(safe-area-inset-bottom, 0px));
   background-image: var(--ambient-fallback);
 }
 .countup-clock { text-shadow: 0 2px 5px rgba(30, 19, 13, 0.6); }

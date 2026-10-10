@@ -897,7 +897,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
             {editMode ? (
               /* ---------------- MOMENTS EDITING ---------------- */
               <div className="mt-6 bg-[#382722]/70 p-4 shadow-xl sm:p-5">
-                <p className="mb-4 text-xs text-[#D4C8BA]">Paste a write-up with blank lines between paragraphs to make a card for each paragraph.</p>
+                <p className="mb-4 text-xs text-[#D4C8BA]">Add, delete, and reorder memories</p>
                 <DndContext
                   sensors={sensors}
                   collisionDetection={closestCenter}
