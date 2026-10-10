@@ -29,6 +29,8 @@ import {
   Flame,
   GripVertical,
   ImageOff,
+  Grid2X2,
+  RectangleHorizontal,
   Image as ImageIcon,
   Loader2,
   Pencil,
@@ -279,7 +281,6 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
 
   // --- view state ----------------------------------------------------------
   const [editMode, setEditMode] = useState(initialEdit);
-  const [momentsEditMode, setMomentsEditMode] = useState(false);
   const [momentsView, setMomentsView] = useState("single");
   const [forceShownIds, setForceShownIds] = useState(() => new Set());
   const [forceHiddenIds, setForceHiddenIds] = useState(() => new Set());
@@ -325,7 +326,6 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
 
   // --- status flags ---------------------------------------------------------
   const [saving, setSaving] = useState(false);
-  const [savingMoments, setSavingMoments] = useState(false);
   const [status, setStatus] = useState("");
   const [error, setError] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -360,7 +360,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
   );
   const { trackRef: momentTrackRef, active: displayedMomentIndex,
     select: selectMoment, onScroll: onMomentScroll, onKeyDown: onMomentKeyDown } =
-    useSnapCarousel(viewingMoments.length, 0, momentsView + String(editMode) + String(momentsEditMode));
+    useSnapCarousel(viewingMoments.length, 0, momentsView + String(editMode));
   const hasAnyMoment = moments.some((m) => m.text.trim() !== "");
 
   const isStillEmptyDraft =
@@ -433,35 +433,6 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
       }));
     });
   }
-  async function saveMoments() {
-    setSavingMoments(true);
-    setError(null);
-    setStatus("");
-    try {
-      const clean = moments
-        .filter((m) => m.text.trim() !== "")
-        .map((m, i) => ({
-          id: m.id,
-          text: m.text.trim(),
-          is_nsfw: m.is_nsfw,
-          position: i,
-        }));
-
-      const data = await memoryRequest(`/api/memories/${memory.id}`, {
-        method: "PATCH", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ moments: clean }),
-      });
-      setMoments(normalizeMoments(data.moments ?? []));
-      setMomentsEditMode(false);
-      router.refresh();
-    } catch (err) {
-      console.error("Failed to save moments:", err);
-      setError(err?.message || "Failed to save moments. Please try again.");
-    } finally {
-      setSavingMoments(false);
-    }
-  }
-
   // --- photo helpers --------------------------------------------------------
   function onFilesPicked(e) {
     const files = Array.from(e.target.files ?? []);
@@ -563,9 +534,13 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
       }
 
       setStatus("Saving memory…");
+      const cleanMoments = moments.filter((moment) => moment.text.trim()).map((moment, position) => ({
+        ...moment, text: moment.text.trim(), position,
+      }));
       await memoryRequest(`/api/memories/${memory.id}`, {
         method: "PATCH", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          moments: cleanMoments,
           title: title.trim() || "New Date",
           date: dateStr,
           color_tag: colorTag || DEFAULT_COLOR_TAG,
@@ -585,6 +560,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
         }),
       });
 
+      setMoments(cleanMoments);
       setPhotoUrls(finalPhotoUrls);
       setPhotoOrder(finalPhotoUrls.map((id) => ({ kind: "existing", id })));
       setNewFiles([]);
@@ -643,7 +619,6 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
       setCoverPos(cropPosition(memory.cover_photo_position));
       setCoverZoom(cropZoom(memory.cover_photo_zoom));
       setMoments(normalizeMoments(memory.moments ?? []));
-      setMomentsEditMode(false);
       setError(null);
     }
     setEditMode(false);
@@ -872,9 +847,9 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
           <section
             className="mt-10"
           >
-            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#5D433C] pb-4">
+            <div className="flex items-center justify-between gap-3 border-b border-[#5D433C] pb-4">
               <h2
-                className="memory-page-heading font-handwriting text-3xl font-bold tracking-tight leading-tight text-[#FAF7F2]"
+                className="memory-page-heading min-w-0 flex-1 break-words font-handwriting text-3xl font-bold tracking-tight leading-tight text-[#FAF7F2]"
                 style={{
                   textShadow: `0 0 24px ${colorConfig.hex}50, 0 2px 6px rgba(0, 0, 0, 0.5)`,
                 }}
@@ -883,61 +858,47 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
               </h2>
 
               <div className="flex shrink-0 items-center gap-2">
-                {!momentsEditMode && hasAnyMoment && (
+                {!editMode && hasAnyMoment && (
                   <div
-                    className="mr-1 inline-flex rounded-full border border-[#5D433C] bg-[#2D1E1A] p-1"
+                    className="inline-flex rounded-full border border-[#5D433C] bg-[#2D1E1A] p-1"
+                    role="group"
                     aria-label="Memory view"
                   >
                     <button
                       type="button"
                       onClick={() => setMomentsView("single")}
+                      aria-label="One memory card at a time"
+                      title="One at a time"
                       aria-pressed={momentsView === "single"}
-                      className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider transition ${
+                      className={`flex h-10 w-10 items-center justify-center rounded-full transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F4EFE6] ${
                         momentsView === "single"
                           ? "bg-[#F4EFE6] text-[#382722]"
                           : "text-[#D4C8BA] hover:text-white"
                       }`}
                     >
-                      One at a time
+                      <RectangleHorizontal size={18} aria-hidden="true" />
                     </button>
                     <button
                       type="button"
                       onClick={() => setMomentsView("all")}
+                      aria-label="All memory cards"
+                      title="All cards"
                       aria-pressed={momentsView === "all"}
-                      className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider transition ${
+                      className={`flex h-10 w-10 items-center justify-center rounded-full transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F4EFE6] ${
                         momentsView === "all"
                           ? "bg-[#F4EFE6] text-[#382722]"
                           : "text-[#D4C8BA] hover:text-white"
                       }`}
                     >
-                      All
+                      <Grid2X2 size={18} aria-hidden="true" />
                     </button>
                   </div>
                 )}
-                {/* Edit moments toggle */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (momentsEditMode) {
-                      setMoments(normalizeMoments(memory.moments ?? []));
-                    }
-                    setMomentsEditMode((v) => !v);
-                  }}
-                  aria-pressed={momentsEditMode}
-                  aria-label={momentsEditMode ? "Finish editing moments" : "Edit moments"}
-                  className="flex h-9 w-9 items-center justify-center rounded-full border transition"
-                  style={{
-                    backgroundColor: momentsEditMode ? colorConfig.bgLight : "#2D1E1A",
-                    borderColor: momentsEditMode ? colorConfig.border : "#5D433C",
-                    color: momentsEditMode ? colorConfig.text : "#D4C8BA",
-                  }}
-                >
-                  <Pencil size={15} />
-                </button>
+
               </div>
             </div>
 
-            {momentsEditMode ? (
+            {editMode ? (
               /* ---------------- MOMENTS EDITING ---------------- */
               <div className="mt-6 bg-[#382722]/70 p-4 shadow-xl sm:p-5">
                 <p className="mb-4 text-xs text-[#D4C8BA]">Paste a write-up with blank lines between paragraphs to make a card for each paragraph.</p>
@@ -963,7 +924,8 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                             onChange={updateMoment}
                             onRemove={removeMoment}
                             onPasteParagraphs={pasteMomentParagraphs}
-                                        />
+                            accent={colorConfig.hex}
+                          />
                         ))}
                       </ul>
                     )}
@@ -977,22 +939,6 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                     className="inline-flex items-center gap-1.5 rounded-full bg-[#2D1E1A] border border-[#5D433C] px-4 py-2 text-xs font-semibold text-[#FAF7F2] transition hover:border-[#76513E]"
                   >
                     <Plus size={14} /> Add Moment
-                  </button>
-                  <button
-                    type="button"
-                    onClick={saveMoments}
-                    disabled={savingMoments}
-                    className="primary-button ml-auto inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-xs font-semibold transition disabled:opacity-60"
-                  >
-                    {savingMoments ? (
-                      <>
-                        <Loader2 size={14} className="animate-spin" /> Saving…
-                      </>
-                    ) : (
-                      <>
-                        <Check size={14} /> Save Moments
-                      </>
-                    )}
                   </button>
                 </div>
               </div>
@@ -1034,7 +980,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                   <p className="font-handwriting text-2xl text-[#FAF7F2]">
                     No moments yet
                   </p>
-                  <p className="text-sm">Tap the pencil to add some.</p>
+                  <p className="text-sm">Use the page Edit button to add some.</p>
                 </div>
               )
             )}

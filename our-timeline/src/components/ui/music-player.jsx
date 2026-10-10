@@ -116,7 +116,7 @@ export function MusicPlayer({ src, coverArt, coverPosition, coverZoom, title = "
         disabled={!ready || !id}
         aria-label={`${isPlaying || state === 3 ? "Pause" : "Play"} ${title}`}
         aria-pressed={isPlaying}
-        className="group relative block aspect-square w-full rounded-full outline-none focus-visible:ring-2 focus-visible:ring-[#76513E] focus-visible:ring-offset-4 focus-visible:ring-offset-black disabled:cursor-wait"
+        className="vinyl-platter group relative block aspect-square w-full rounded-full outline-none focus-visible:ring-2 focus-visible:ring-[#76513E] focus-visible:ring-offset-4 focus-visible:ring-offset-black disabled:cursor-wait"
       >
         <div
           className="relative h-full w-full animate-spin overflow-hidden rounded-full border-[5px] border-[#2D1E1A] bg-[#382722] shadow-[0_4px_18px_rgba(0,0,0,0.5)]"
@@ -164,13 +164,13 @@ export function MusicPlayer({ src, coverArt, coverPosition, coverZoom, title = "
           </span>
         </span>
       </button>
-      <div className="mt-1 flex min-h-5 justify-center">
-        <button type="button" onClick={restart} disabled={!ready} aria-label={`Restart ${title}`} className="rounded-full p-1 text-[#D4C8BA]/70 transition hover:text-[#FAF7F2] disabled:opacity-30">
-          <RotateCcw size={12} />
+      <div className="console-transport">
+        <button type="button" onClick={restart} disabled={!ready} aria-label={`Restart ${title}`} title="Replay" className="console-replay">
+          <RotateCcw size={16} aria-hidden="true" />
         </button>
       </div>
       {error && (
-        <div className="mt-1 text-xs text-[#EBCDB5]" role="status">
+        <div className="console-error mt-2 text-xs text-[#FAF7F2]" role="status">
           {error}
           <button type="button" className="mt-1 block underline" onClick={() => { setReady(false); setState(-1); setError(""); setAttempt((n) => n + 1); }}>Try again</button>
         </div>

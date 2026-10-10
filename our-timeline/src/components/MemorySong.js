@@ -53,9 +53,9 @@ export default function MemorySong({ song, editMode, onChange, onMetadata }) {
       ) : (
         <>
           {id && (
-            <div className="flex min-w-0 items-center justify-between gap-4 sm:gap-6">
+            <div className="turntable-layout">
               <div className="min-w-0 flex-1">
-                <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-[#D4C8BA]">Now playing</p>
+                <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.2em] text-[#E8E2D9]/75">Now playing</p>
                 {editMode ? (
                   <div className="space-y-2">
                     <label className="block text-[10px] text-[#D4C8BA]">Song title
@@ -67,10 +67,15 @@ export default function MemorySong({ song, editMode, onChange, onMetadata }) {
                   </div>
                 ) : (
                   <div className="text-[#FAF7F2]">
-                    <p title={title || "Our song"} className="break-words text-lg font-semibold leading-snug sm:text-2xl">{title || "Our song"}</p>
-                    {artist && <p title={artist} className="mt-2 break-words text-sm text-[#D4C8BA] sm:text-base">{artist}</p>}
+                    <p title={title || "Our song"} className="break-words text-sm font-semibold leading-snug sm:text-lg">{title || "Our song"}</p>
+                    {artist && <p title={artist} className="mt-1 break-words text-xs text-[#E8E2D9]/80 sm:text-sm">{artist}</p>}
                   </div>
                 )}
+                <div className="console-details" aria-hidden="true">
+                  <span className="console-knob" /><span className="console-knob console-knob--small" />
+                  <span className="console-fader"><span /></span>
+                  <span className="console-led" />
+                </div>
                 {editMode && (
                   <div className="mt-2 flex flex-wrap gap-3 text-[10px] text-[#D4C8BA]">
                     <button type="button" onClick={() => setInputOpen((v) => !v)} className="inline-flex min-h-11 items-center gap-1 hover:text-white"><Pencil size={12} /> Change song</button>

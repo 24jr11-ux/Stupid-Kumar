@@ -90,7 +90,7 @@ export default function CountupClock({ startDateIso }) {
   }, []);
 
   return (
-    <div className="scrapbook-label mx-auto mt-7 max-w-md rounded-2xl px-4 py-4 text-center sm:px-8" role="timer" aria-label="Time together">
+    <div className="scrapbook-text countup-clock mx-auto mt-7 max-w-md px-4 py-4 text-center sm:px-8" role="timer" aria-label="Time together">
       <div className="grid grid-cols-3 items-baseline gap-3 sm:gap-6">
         {MAIN_UNITS.map(([key, label]) => (
           <div key={key} className="min-w-0 flex-1">
@@ -100,7 +100,7 @@ export default function CountupClock({ startDateIso }) {
         ))}
       </div>
       {/* Identical three-column grids keep both rows centered on the same axes. */}
-      <div className="mt-3 grid grid-cols-3 items-baseline gap-3 border-t border-[#806F5B]/25 pt-3 sm:gap-6">
+      <div className="mt-3 grid grid-cols-3 items-baseline gap-3 border-t border-[#FAF7F2]/25 pt-3 sm:gap-6">
         {SMALL_UNITS.map(([key, label]) => (
           <span key={key} className="inline-flex min-w-0 items-baseline justify-center gap-0.5 font-mono text-base tabular-nums sm:text-lg">
             {String(parts[key]).padStart(2, "0")}{label}

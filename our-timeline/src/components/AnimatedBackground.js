@@ -12,15 +12,15 @@ import { VIVID_WARM_GREEN } from "@/lib/colors";
 const BACKGROUND_ORANGE = "#F47A1F";
 
 // Keep MeshGradient's original positions, distortion, swirl, and timing, while
-// making the nearest color hold its hue more strongly. A restrained lift in
-// the shared field keeps the smaller transition soft and luminous.
+// making the nearest color hold its hue more strongly. Dimming the shared
+// field keeps orange/green overlaps in dusk midtones rather than neon yellow.
 const flowingColorShader = meshGradientFragmentShader
   .replace("dist = pow(dist, 3.5);", "dist = pow(dist, 5.0);")
   .replace("float totalWeight = 0.;", "float totalWeight = 0.;\n  float strongestWeight = 0.;")
   .replace("totalWeight += weight;", "totalWeight += weight;\n    strongestWeight = max(strongestWeight, weight);")
   .replace(
     "color /= max(1e-4, totalWeight);",
-    "color /= max(1e-4, totalWeight);\n  float overlap = 1. - strongestWeight / max(1e-4, totalWeight);\n  color *= 1. + 0.12 * overlap;"
+    "color /= max(1e-4, totalWeight);\n  float overlap = 1. - strongestWeight / max(1e-4, totalWeight);\n  color *= 0.76 - 0.20 * overlap;"
   );
 
 /**
@@ -52,7 +52,7 @@ const flowingColorShader = meshGradientFragmentShader
  *
  * LEGIBILITY
  *   Text-bearing surfaces (polaroid cards, clock cards, panels) are kept
- *   opaque on the calling pages; no dimming overlay is added on top of the
+ *   opaque on the calling pages; dusk luminance is handled inside the
  *   shader.
  *
  * PERFORMANCE
@@ -93,7 +93,7 @@ export default function AnimatedBackground({ colorTag = null, className = "" }) 
   return (
     <div
       aria-hidden="true"
-      className={`pointer-events-none fixed inset-0 z-0 ${className}`}
+      className={`ambient-background pointer-events-none fixed inset-0 z-0 ${className}`}
     >
       <ShaderMount
         fragmentShader={flowingColorShader}
