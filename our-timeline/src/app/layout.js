@@ -1,8 +1,19 @@
 import "./globals.css";
+import localFont from "next/font/local";
 import SWRegister from "@/components/SWRegister";
 import SessionGuard from "@/components/SessionGuard";
 import AppTransitions from "@/components/AppTransitions";
 import { launchBootstrap } from "@/lib/launch";
+
+const handwriting = localFont({
+  src: "../../public/fonts/Caveat-Latin.woff2",
+  variable: "--font-chosen-handwriting",
+  weight: "400 700",
+  display: "block",
+  preload: true,
+  adjustFontFallback: false,
+  fallback: [],
+});
 
 export const metadata = {
   title: {
@@ -34,9 +45,8 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className="h-full antialiased" suppressHydrationWarning>
+    <html lang="en" className={`h-full antialiased ${handwriting.variable}`} suppressHydrationWarning>
       <head>
-        <link rel="preload" href="/fonts/Caveat-Latin.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
         <script dangerouslySetInnerHTML={{ __html: launchBootstrap }} />
       </head>
       <body className="min-h-full flex flex-col text-[#FAF7F2]" suppressHydrationWarning>

@@ -9,6 +9,7 @@ import { LAST_READY_PAGE_KEY } from "@/lib/launch";
 import MemoryTransitionOverlay from "@/components/MemoryTransitionOverlay";
 import { MEMORY_TRANSITION } from "@/lib/memoryTransition";
 import { photoSrc } from "@/lib/photoUrl";
+import { loadHandwritingFont } from "@/lib/handwritingFont";
 
 const TransitionContext = createContext(null);
 // The first paint uses CSS; shader setup must not delay the loading title.
@@ -93,8 +94,9 @@ export default function AppTransitions({ children }) {
   useEffect(() => {
     // The local handwriting face is preloaded; reveal titles only in that face.
     let disposed = false;
-    document.fonts.load('700 48px "Caveat"', "Stupid & Kumar").then((faces) => {
-      if (!disposed && faces.length) document.documentElement.classList.add("handwriting-ready");
+    const family = getComputedStyle(document.documentElement).getPropertyValue("--font-chosen-handwriting");
+    loadHandwritingFont(document.fonts, family).then((loaded) => {
+      if (!disposed && loaded) document.documentElement.classList.add("handwriting-ready");
     }).catch(() => {});
     if (!document.getElementById("app-fonts")) {
       const fonts = document.createElement("link");

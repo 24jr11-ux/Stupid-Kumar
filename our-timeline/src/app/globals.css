@@ -1,13 +1,5 @@
 @import "tailwindcss";
 
-@font-face {
-  font-family: 'Caveat';
-  src: url('/fonts/Caveat-Latin.woff2') format('woff2');
-  font-weight: 400 700;
-  font-style: normal;
-  font-display: swap;
-}
-
 :root {
   /* Paint immediately, before JavaScript or the WebGL shader is ready. */
   --background: #96B82D;
@@ -17,11 +9,8 @@
   --shadow-photo: 0 2px 4px rgba(30, 19, 13, 0.2), 0 9px 18px rgba(30, 19, 13, 0.24), 0 24px 38px -14px rgba(30, 19, 13, 0.3);
   /* Cream body text for high-contrast WCAG AA readability */
   --foreground: #FAF7F2;
-  /* Swap either custom variable to a local WOFF2 later. Caveat remains the
-     intentional fallback until those personal handwriting fonts exist. */
-  --font-his-handwriting: 'Caveat', cursive;
-  --font-her-handwriting: 'Caveat', cursive;
-  --font-handwriting: var(--font-his-handwriting), var(--font-her-handwriting), cursive;
+  /* One bundled face for every handwriting element, without a cursive fallback. */
+  --font-handwriting: var(--font-chosen-handwriting);
   --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
@@ -29,7 +18,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
-  --font-handwriting: var(--font-handwriting);
+  --font-handwriting: var(--font-chosen-handwriting);
 
   --color-espresso-950: #261A16;
   --color-espresso-900: #352520;
@@ -94,8 +83,10 @@ body {
 .handwriting-ready .font-ready-title { opacity: 1; }
 
 .font-handwriting {
-  font-family: var(--font-handwriting);
+  font-family: var(--font-chosen-handwriting);
+  visibility: hidden;
 }
+.handwriting-ready .font-handwriting { visibility: visible; }
 
 /* Solid opaque panel styling */
 .solid-panel {
