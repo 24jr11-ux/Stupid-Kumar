@@ -4,7 +4,7 @@
 // Keeps the circular record and swinging tonearm; uses confirmed YouTube events.
 import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { Heart, Loader2, Pause, Play, RotateCcw } from "lucide-react";
+import { Heart, Loader2, Pause, Play, RotateCcw, Volume2, VolumeX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { youtubeVideoId, youtubeCoverUrls } from "@/lib/player";
 import { loadYoutubeApi } from "@/lib/youtube";
@@ -209,6 +209,7 @@ export function MusicPlayer({ src, coverArt, coverPosition, coverZoom, title = "
           onChange={(event) => changeVolume(event.target.value)} aria-label={`Volume for ${title}`}
           aria-orientation="vertical"
           aria-valuetext={volume === 0 ? "Muted" : `${volume} percent`} />
+        {volume === 0 ? <VolumeX size={16} aria-hidden="true" /> : <Volume2 size={16} aria-hidden="true" />}
       </label>
       {children}
       </div>
@@ -221,9 +222,9 @@ export function MusicPlayer({ src, coverArt, coverPosition, coverZoom, title = "
             onAnimationEnd={() => setHearts((previous) => previous.filter((item) => item.id !== heart.id))} />)}
         </span>
       </button>
+      <span className="console-speaker" aria-hidden="true" />
       <button type="button" onClick={flashGatsbyLight} aria-label="Flash the signal light green"
         className="console-gatsby console-round-button" />
-      <span className="console-speaker" aria-hidden="true" />
       </div>
       <div className="memory-vinyl relative shrink-0">
       <div className="console-transport">

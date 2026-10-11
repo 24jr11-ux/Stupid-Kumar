@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
+import TimelineReturnLink from "@/components/TimelineReturnLink";
 import { useRouter } from "next/navigation";
 import {
   DndContext,
@@ -701,9 +701,9 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
       <article className="relative">
         <div className="relative z-10">
           <nav aria-label="Memory navigation" className="flex items-start justify-between gap-3">
-            <Link href="/" className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border border-[#5D433C] bg-[#382722] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#D4C8BA] shadow-md transition hover:border-[#76513E] hover:text-[#FAF7F2]">
+            <TimelineReturnLink memory={memory} className="primary-button inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full px-4 py-2 text-xs font-bold uppercase tracking-wider">
               <ArrowLeft size={15} /> Timeline
-            </Link>
+            </TimelineReturnLink>
             {editMode ? (
               <div className="ml-auto flex min-w-0 flex-col items-end gap-1.5">
                 <button
@@ -747,7 +747,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                 onClick={() => setEditMode(true)}
                 aria-label="Edit memory"
                 title="Edit memory"
-                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#5D433C] bg-[#382722] text-[#D4C8BA] shadow-md transition hover:border-[#76513E] hover:text-[#FAF7F2]"
+                className="primary-button inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
               >
                 <Pencil size={16} />
               </button>
@@ -893,7 +893,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
               <div className="flex shrink-0 items-center gap-2">
                 {!editMode && hasAnyMoment && (
                   <div
-                    className="inline-flex rounded-full border border-[#5D433C] bg-[#2D1E1A] p-1"
+                    className="memory-view-toggle inline-flex rounded-full p-1"
                     role="group"
                     aria-label="Memory view"
                   >
@@ -903,11 +903,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                       aria-label="One memory card at a time"
                       title="One at a time"
                       aria-pressed={momentsView === "single"}
-                      className={`flex h-10 w-10 items-center justify-center rounded-full transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F4EFE6] ${
-                        momentsView === "single"
-                          ? "bg-[#F4EFE6] text-[#382722]"
-                          : "text-[#D4C8BA] hover:text-white"
-                      }`}
+                      className="flex h-10 w-10 items-center justify-center rounded-full transition"
                     >
                       <RectangleHorizontal size={18} aria-hidden="true" />
                     </button>
@@ -917,11 +913,7 @@ export default function MemoryDetail({ memory, initialEdit = false, isNewDraft =
                       aria-label="All memory cards"
                       title="All cards"
                       aria-pressed={momentsView === "all"}
-                      className={`flex h-10 w-10 items-center justify-center rounded-full transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F4EFE6] ${
-                        momentsView === "all"
-                          ? "bg-[#F4EFE6] text-[#382722]"
-                          : "text-[#D4C8BA] hover:text-white"
-                      }`}
+                      className="flex h-10 w-10 items-center justify-center rounded-full transition"
                     >
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                         <rect x="5" y="1" width="14" height="9" rx="2" />

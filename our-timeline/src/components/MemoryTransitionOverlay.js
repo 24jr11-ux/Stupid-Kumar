@@ -8,6 +8,73 @@ const box = (rect) => ({ left: `${rect.left}px`, top: `${rect.top}px`, width: `$
 
 // Lives in the root layout, so the photo survives App Router replacing home.
 export default function MemoryTransitionOverlay({ transition, onLand, onComplete }) {
+  return transition.direction === "return"
+    ? <ReturnMemoryOverlay transition={transition} onLand={onLand} onComplete={onComplete} />
+    : <ForwardMemoryOverlay transition={transition} onLand={onLand} onComplete={onComplete} />;
+}
+
+function ReturnMemoryOverlay({ transition, onLand, onComplete }) {
+  const ref = useRef(null);
+  const { id, source, target } = transition;
+  useLayoutEffect(() => {
+    const host = ref.current;
+    const photo = source.photo.cloneNode(true);
+    Object.assign(photo.style, box(source.photoRect), { position: "absolute", margin: "0", transform: "none" });
+    host.append(photo);
+    return () => host.replaceChildren();
+  }, [source]);
+
+  useLayoutEffect(() => {
+    if (!target) return;
+    const host = ref.current;
+    const photo = host.firstElementChild;
+    const destinationPhoto = target.querySelector(".timeline-photo-display");
+    if (!photo || !destinationPhoto) { onComplete(id); return; }
+    const cover = destinationPhoto.cloneNode(true);
+    const coverImage = cover.querySelector("img");
+    if (coverImage) coverImage.loading = "eager";
+    Object.assign(cover.style, { position: "absolute", inset: "0", width: "100%", height: "100%", opacity: "0", zIndex: "3" });
+    photo.append(cover);
+    const paper = target.cloneNode(true);
+    paper.removeAttribute("href");
+    paper.removeAttribute("data-memory-card");
+    paper.querySelector(".timeline-photo-display").style.visibility = "hidden";
+    Object.assign(paper.style, box(target.getBoundingClientRect()), { position: "absolute", margin: "0", visibility: "visible", opacity: "0", transform: "none" });
+    host.prepend(paper);
+    const animations = [];
+    const animate = (element, frames, options) => {
+      const animation = element.animate(frames, { fill: "forwards", easing, ...options });
+      animations.push(animation);
+      return animation;
+    };
+    let disposed = false;
+    const cancel = () => onComplete(id);
+    const blockWheel = (event) => event.preventDefault();
+    host.addEventListener("wheel", blockWheel, { passive: false });
+    window.addEventListener("resize", cancel);
+    (async () => {
+      await coverImage?.decode?.().catch(() => {});
+      if (disposed) return;
+      const landing = animate(photo, [box(source.photoRect), box(destinationPhoto.getBoundingClientRect())], { duration: MEMORY_TRANSITION.flight });
+      animate(cover, [{ opacity: 0 }, { opacity: 1 }], { duration: MEMORY_TRANSITION.flight });
+      animate(paper, [{ opacity: 0 }, { opacity: 1 }], { duration: MEMORY_TRANSITION.flight, delay: 80 });
+      await landing.finished.catch(() => {});
+      if (disposed) return;
+      onLand(id);
+      await animate(host, [{ opacity: 1 }, { opacity: 0 }], { duration: 180 }).finished.catch(() => {});
+      if (!disposed) onComplete(id);
+    })();
+    return () => {
+      disposed = true;
+      animations.forEach((animation) => animation.cancel());
+      host.removeEventListener("wheel", blockWheel);
+      window.removeEventListener("resize", cancel);
+    };
+  }, [id, source, target, onLand, onComplete]);
+  return <div ref={ref} className="memory-flight-overlay" aria-hidden="true" />;
+}
+
+function ForwardMemoryOverlay({ transition, onLand, onComplete }) {
   const ref = useRef(null);
   const flightRef = useRef(null);
   const { id, source, coverPhoto, firstPhoto, target } = transition;

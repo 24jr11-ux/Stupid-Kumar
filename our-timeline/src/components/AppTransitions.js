@@ -23,7 +23,10 @@ export default function AppTransitions({ children }) {
   const [readyPath, setReadyPath] = useState(null);
   const [sessionReady, markSessionReady] = useState(false);
   const [memoryTransition, setMemoryTransition] = useState(null);
+  const timelineScroll = useRef(null);
+  const pendingTimelineReturn = useRef(null);
   const beginMemoryTransition = useCallback(({ card, ...memory }) => {
+    timelineScroll.current = window.scrollY;
     const photo = card?.querySelector(".timeline-photo-display");
     const image = photo?.querySelector("img");
     // Empty/broken covers and reduced motion use the ordinary route reveal.
@@ -41,6 +44,28 @@ export default function AppTransitions({ children }) {
       paperRect: card.getBoundingClientRect(), photoRect: photo.getBoundingClientRect(),
     } });
   }, [reducedMotion]);
+  const beginTimelineReturn = useCallback(({ page, ...memory }) => {
+    pendingTimelineReturn.current = { id: memory.id, scrollY: timelineScroll.current };
+    const photo = page?.querySelector('.detail-photo-display[aria-hidden="false"]');
+    const image = photo?.querySelector(".photo-foreground");
+    if (reducedMotion || !image?.complete || !image.naturalWidth) return;
+    setMemoryTransition({ ...memory, direction: "return", phase: "lift",
+      source: { photo: photo.cloneNode(true), photoRect: photo.getBoundingClientRect() } });
+  }, [reducedMotion]);
+  const restoreTimelineScroll = useCallback((page) => {
+    const pending = pendingTimelineReturn.current;
+    if (!pending) return;
+    pendingTimelineReturn.current = null;
+    const card = Array.from(page?.querySelectorAll("[data-memory-card]") || [])
+      .find((element) => element.dataset.memoryCard === pending.id);
+    if (pending.scrollY !== null) window.scrollTo({ top: pending.scrollY, behavior: "instant" });
+    if (card) {
+      const rect = card.getBoundingClientRect();
+      if (pending.scrollY === null || rect.bottom < 0 || rect.top > window.innerHeight) {
+        card.scrollIntoView({ block: "center", behavior: "instant" });
+      }
+    }
+  }, []);
   const registerMemoryTarget = useCallback((id, target) => {
     setMemoryTransition((current) => current?.id === id && !current.target
       ? { ...current, target, phase: "flight" } : current);
@@ -59,24 +84,28 @@ export default function AppTransitions({ children }) {
     // Back, auth redirects, missing dates, or slow/failed navigation must never
     // leave an inert page or an orphaned cover blocking the app.
     const id = memoryTransition.id;
-    const timeout = window.setTimeout(() => completeMemoryTransition(id), 2500);
+    const timeout = window.setTimeout(() => completeMemoryTransition(id), 5000);
     const frame = pathname !== "/" && pathname !== memoryTransition.href
       ? requestAnimationFrame(() => completeMemoryTransition(id)) : null;
     return () => { window.clearTimeout(timeout); if (frame !== null) cancelAnimationFrame(frame); };
   }, [memoryTransition, pathname, completeMemoryTransition]);
 
   useEffect(() => {
-    // Fonts enhance the painted page instead of blocking its initial CSS.
+    // The local handwriting face is preloaded; reveal titles only in that face.
+    let disposed = false;
+    document.fonts.load('700 48px "Caveat"', "Stupid & Kumar").then((faces) => {
+      if (!disposed && faces.length) document.documentElement.classList.add("handwriting-ready");
+    }).catch(() => {});
     if (!document.getElementById("app-fonts")) {
       const fonts = document.createElement("link");
       fonts.id = "app-fonts";
       fonts.rel = "stylesheet";
-      fonts.href = "https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap";
+      fonts.href = "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap";
       document.head.appendChild(fonts);
     }
-    if (!document.documentElement.classList.contains("warm-launch")) return;
-    const frame = requestAnimationFrame(() => setSplash(false));
-    return () => cancelAnimationFrame(frame);
+    const frame = document.documentElement.classList.contains("warm-launch")
+      ? requestAnimationFrame(() => setSplash(false)) : null;
+    return () => { disposed = true; if (frame !== null) cancelAnimationFrame(frame); };
   }, []);
 
   useEffect(() => {
@@ -106,13 +135,14 @@ export default function AppTransitions({ children }) {
 
   return (
     <TransitionContext.Provider value={{ splash, holdGate, markRouteReady, markSessionReady,
-      memoryTransition, beginMemoryTransition, registerMemoryTarget }}>
+      memoryTransition, beginMemoryTransition, beginTimelineReturn, restoreTimelineScroll, registerMemoryTarget }}>
         <AnimatedBackground />
         {memoryTransition && <motion.div aria-hidden="true"
           className="memory-flight-backdrop memory-detail-backdrop"
           style={{ "--date-color": memoryTransition.color }}
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-          transition={{ duration: 0.39, ease: "easeInOut" }} />}
+          initial={{ opacity: memoryTransition.direction === "return" ? 1 : 0 }}
+          animate={{ opacity: memoryTransition.direction === "return" && memoryTransition.target ? 0 : 1 }}
+          transition={{ duration: MEMORY_TRANSITION.flight / 1000, ease: "easeInOut" }} />}
         <motion.div className="app-viewport relative z-10 flex flex-1 flex-col"
           inert={splash || Boolean(memoryTransition)} initial={{ opacity: 0 }} animate={{ opacity: splash ? 0 : 1 }}
           transition={{ duration: reducedMotion ? 0 : 0.45 }}>
@@ -141,7 +171,7 @@ export function DetailPageTransition({ children, className, ...props }) {
   const { markRouteReady, memoryTransition, registerMemoryTarget } = useAppTransitions();
   const ref = useRef(null);
   const id = props["data-memory-page"];
-  const shared = memoryTransition?.id === id;
+  const shared = memoryTransition?.id === id && memoryTransition.direction !== "return";
   const flying = shared && memoryTransition.phase !== "landed";
   useEffect(() => { markRouteReady(); }, [markRouteReady]);
   useLayoutEffect(() => {
@@ -176,11 +206,22 @@ export function DetailPageTransition({ children, className, ...props }) {
 
 export function RouteReveal({ children, detail = false }) {
   const reducedMotion = useReducedMotion();
-  const { markRouteReady, memoryTransition } = useAppTransitions();
+  const { markRouteReady, memoryTransition, restoreTimelineScroll, registerMemoryTarget } = useAppTransitions();
+  const ref = useRef(null);
+  const returning = memoryTransition?.direction === "return";
+  useLayoutEffect(() => { restoreTimelineScroll(ref.current); }, [restoreTimelineScroll]);
+  useLayoutEffect(() => {
+    if (!returning || memoryTransition.target) return;
+    const card = Array.from(ref.current?.querySelectorAll("[data-memory-card]") || [])
+      .find((element) => element.dataset.memoryCard === memoryTransition.id);
+    if (!card) return;
+    const frame = requestAnimationFrame(() => registerMemoryTarget(memoryTransition.id, card));
+    return () => cancelAnimationFrame(frame);
+  }, [returning, memoryTransition, registerMemoryTarget]);
   useEffect(() => { markRouteReady(); }, [markRouteReady]);
-  return <motion.div className="flex flex-1 flex-col"
-    initial={{ opacity: reducedMotion ? 1 : 0, y: detail || reducedMotion ? 0 : 18 }}
-    animate={{ opacity: memoryTransition ? 0.12 : 1, y: 0 }}
+  return <motion.div ref={ref} className="flex flex-1 flex-col"
+    initial={{ opacity: reducedMotion || returning ? 1 : 0, y: detail || reducedMotion || returning ? 0 : 18 }}
+    animate={{ opacity: memoryTransition && !returning ? 0.12 : 1, y: 0 }}
     transition={{ duration: reducedMotion ? 0 : memoryTransition ? 0.16 : 0.45, delay: detail && !reducedMotion ? 0.12 : 0 }}>
     {children}
   </motion.div>;

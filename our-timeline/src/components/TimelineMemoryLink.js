@@ -10,7 +10,7 @@ export default function TimelineMemoryLink({ memoryId, color, coverPhoto, firstP
 
   return <Link {...props} ref={ref}
     data-memory-card={memoryId}
-    style={{ visibility: memoryTransition?.id === memoryId ? "hidden" : undefined }}
+    style={{ visibility: memoryTransition?.id === memoryId && memoryTransition.phase !== "landed" ? "hidden" : undefined }}
     onNavigate={(event) => {
       // onNavigate excludes modified clicks, downloads, and new-tab navigation.
       if (memoryTransition) { event.preventDefault(); return; }

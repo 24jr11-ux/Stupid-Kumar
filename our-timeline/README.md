@@ -24,4 +24,6 @@ npm run dev
 
 Open `http://localhost:3000`, answer the gate, and use the timeline. `npm run build` uses webpack for next-pwa compatibility. Set the relationship start date in `src/app/page.js`.
 
+Run `npm run generate:icons` to regenerate the PWA icons, Apple touch icon, and favicons. The generator freezes the timeline's modified mesh gradient and draws the local Caveat lettering as paths. Its Paper Shaders attribution and license are in `scripts/`. When replacing the icons again, bump their version query in `src/app/manifest.js` and `src/app/layout.js` so cached icons refresh.
+
 The single JSON Blob is suitable for this small private app. Writes are serialized within each server instance and merge changes into the latest Blob contents. Every write rewrites the whole JSON file, so a substantially larger timeline or frequent edits across multiple instances would need a database.

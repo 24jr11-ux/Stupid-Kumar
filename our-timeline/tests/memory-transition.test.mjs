@@ -10,14 +10,15 @@ test("a different cover dissolves only after the first gallery photo is decoded"
     coverPhoto: "cover.jpg", firstPhoto: "first.jpg",
     firstImage: { complete: false, decode: () => { events.push("decode"); return decoded; } },
     isCancelled: () => false,
+    wait: async duration => { events.push(["settle", duration]); },
     dissolve: async duration => { events.push(["dissolve", duration]); },
   });
   assert.deepEqual(events, ["decode"]);
   ready();
   await transition;
-  assert.deepEqual(events, ["decode", ["dissolve", 150]]);
-  const total = MEMORY_TRANSITION.lift + MEMORY_TRANSITION.flight + MEMORY_TRANSITION.crossfade;
-  assert.ok(total >= 400 && total <= 550);
+  assert.deepEqual(events, ["decode", ["settle", 180], ["dissolve", 420]]);
+  const total = MEMORY_TRANSITION.lift + MEMORY_TRANSITION.flight + MEMORY_TRANSITION.settle + MEMORY_TRANSITION.crossfade;
+  assert.ok(total >= 1000 && total <= 1200);
 });
 
 test("the cover already being the first photo skips decoding and the final dissolve", async () => {
@@ -51,4 +52,15 @@ test("an image decode failure still allows transition cleanup", async () => {
     isCancelled: () => false, dissolve: async () => { dissolved = true; },
   });
   assert.equal(dissolved, true);
+});
+
+test("cancelling during the landed pause prevents the dissolve", async () => {
+  let cancelled = false;
+  await crossfadeLandedCover({
+    coverPhoto: "cover.jpg", firstPhoto: "first.jpg",
+    firstImage: { complete: true, decode: async () => {} },
+    isCancelled: () => cancelled,
+    wait: async () => { cancelled = true; },
+    dissolve: () => assert.fail("A cancelled landing must not dissolve"),
+  });
 });
